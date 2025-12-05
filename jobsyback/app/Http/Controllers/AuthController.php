@@ -2,79 +2,63 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
+use App\Http\Requests\RegisterRequest;
+use App\Http\Requests\LoginRequest;
+use App\Services\AuthServices;
 
 class AuthController extends Controller
 {
-    /**
-     * Inscription
-     */
-    public function register(Request $request)
+    protected $authService;
+
+    public function __construct(AuthServices $authService)
     {
-        $validated = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
-            'password' => 'required|min:6|confirmed',
-        ]);
-
-        $user = User::create([
-            'name'     => $validated['name'],
-            'email'    => $validated['email'],
-            'password' => Hash::make($validated['password']),
-        ]);
-
-        return response()->json([
-            'message' => 'Inscription réussie.',
-            'user'    => $user,
-        ]);
+        $this->authService = $authService;
     }
 
-    /**
-     * Connexion (Sanctum session-based)
-     */
-    public function login(Request $request)
+    public function register(RegisterRequest $request)
     {
-        $validated = $request->validate([
-            'email'    => 'required|email',
-            'password' => 'required',
-        ]);
+        $user = $this->authService->register($request->validated());
 
-        $user = User::where('email', $validated['email'])->first();
+        return apiResponse(
+            $user,
+            'Inscription réussie',
+            'success',
+            201
+        );
+    }
 
-        if (! $user || ! Hash::check($validated['password'], $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['Les identifiants sont invalides.'],
-            ]);
+    public function login(LoginRequest $request)
+    {
+        $user = $this->authService->login($request->email, $request->password);
+
+        if (!$user) {
+            return apiResponse(
+                null,
+                'Identifiants invalides',
+                'error',
+                401
+            );
         }
-        // Connexion avec Sanctum (cookie de session)
-        Auth::login($user);
-        return response()->json([
-            'message' => 'Connexion réussie.',
-            'user'    => $user,
-        ]);
+
+        $token = $user->createToken('jobsy-token')->plainTextToken;
+
+        return apiResponse(
+            [
+                'token' => $token,
+                'user' => $user
+            ],
+            'Connexion réussie'
+        );
     }
 
-    /**
-     * Récupérer l'utilisateur connecté
-     */
-    public function me(Request $request)
-    {
-        return response()->json($request->user());
-    }
-
-    /**
-     * Déconnexion
-     */
     public function logout(Request $request)
     {
-        auth()->guard('web')->logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        $request->user()->tokens()->delete();
 
-        return response()->json(['message' => 'Déconnexion effectuée.']);
+        return apiResponse(
+            null,
+            'Déconnexion réussie'
+        );
     }
 }

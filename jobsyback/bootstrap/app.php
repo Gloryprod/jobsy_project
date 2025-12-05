@@ -5,6 +5,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\HandleCors;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+use App\Http\Middleware\RoleMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,19 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
 
-        // 📌 Active CORS pour l'API
         $middleware->group('api', [
             HandleCors::class,
             EnsureFrontendRequestsAreStateful::class,
-        ]);
+            RoleMiddleware::class,
 
-        // 📌 Configuration CORS pour Next.js
-        config([
-            'cors.paths' => ['api/*', 'sanctum/csrf-cookie', 'login', 'logout'],
-            'cors.allowed_origins' => ['http://localhost:3001'], // FRONTEND
-            'cors.allowed_headers' => ['*'],
-            'cors.allowed_methods' => ['*'],
-            'cors.supports_credentials' => true, // IMPORTANT pour Sanctum
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
