@@ -13,9 +13,12 @@ class AppServiceProvider extends ServiceProvider
     {
         config([
             'cors.paths' => ['api/*', 'sanctum/csrf-cookie', 'login', 'logout'],
-            'cors.allowed_origins' => ['http://localhost:3001'],
+            'cors.allowed_origins' => ['http://localhost:3000'],
+            'cors.allowed_origins_patterns' => [],
             'cors.allowed_headers' => ['*'],
             'cors.allowed_methods' => ['*'],
+            'cors.exposed_headers' => [],
+            'cors.max_age' => 0,
             'cors.supports_credentials' => true,
         ]);
     }

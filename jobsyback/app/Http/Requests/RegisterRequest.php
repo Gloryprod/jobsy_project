@@ -14,7 +14,7 @@ class RegisterRequest extends FormRequest
     public function rules()
     {
         return [
-            'nom' => 'required|string|max:255',
+            'nom' => 'nullable|string|max:255',
             'prenom' => 'nullable|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:6',
@@ -28,4 +28,4 @@ class RegisterRequest extends FormRequest
             'site_web' => 'nullable|string',
         ];
     }
-}
+}   

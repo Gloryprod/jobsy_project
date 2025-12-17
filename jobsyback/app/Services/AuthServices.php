@@ -11,8 +11,9 @@ class AuthServices
 {
     public function register(array $data)
     {
+
         $user = User::create([
-            'nom' => $data['nom'],
+            'nom' => $data['nom'] ?? null,
             'prenom' => $data['prenom'] ?? null,
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
@@ -53,4 +54,5 @@ class AuthServices
 
         return $user;
     }
+
 }
