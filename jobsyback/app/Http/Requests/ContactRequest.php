@@ -6,7 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class PasswordResetRequest extends FormRequest
+class ContactRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,20 +24,14 @@ class PasswordResetRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'token' => 'required',
-            'email' => 'required|email',
-            'password' => [
-                'required',
-                'confirmed',
-                'min:8',
-                'regex:/[A-Z]/',      // majuscule
-                'regex:/[0-9]/',      // chiffre
-                'regex:/[^a-zA-Z0-9]/'// caractère spécial
-            ],
+            'telephone' => 'nullable|string',
+            'email_secondaire' => 'nullable|email',
+            'linkedin' => 'nullable|url',
+            'whatsapp' => 'nullable|string',
         ];
     }
 
-     public function failedValidation(Validator $validator)
+    public function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response()->json([
             'status' => 'error',

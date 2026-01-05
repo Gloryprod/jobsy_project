@@ -6,28 +6,30 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class RegisterRequest extends FormRequest
+class ProfileInfoRequest extends FormRequest
 {
-    public function authorize()
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
     {
         return true;
     }
 
-    public function rules()
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
     {
         return [
-            'nom' => 'nullable|string|max:255',
-            'prenom' => 'nullable|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6',
-            'role' => 'required|in:JEUNE,ENTREPRISE',
+            'date_naissance' => 'nullable|date',
+            'sexe' => 'nullable|string',
+            'nationalite' => 'nullable|string',
+            'ville' => 'nullable|string',
             'bio' => 'nullable|string',
             'adresse' => 'nullable|string',
-            'nom_entreprise' => 'nullable|string',
-            'secteur_activite' => 'nullable|string',
-            'localisation' => 'nullable|string',
-            'description' => 'nullable|string',
-            'site_web' => 'nullable|string',
         ];
     }
 
@@ -39,4 +41,4 @@ class RegisterRequest extends FormRequest
             'errors' => $validator->errors(),
         ], 422));
     }
-}   
+}

@@ -54,7 +54,7 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
-     public function jeune()
+     public function candidat()
     {
         return $this->hasOne(Candidat::class, 'user_id');
     }

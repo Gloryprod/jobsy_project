@@ -6,7 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class PasswordResetRequest extends FormRequest
+class DiplomeRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,20 +24,17 @@ class PasswordResetRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'token' => 'required',
-            'email' => 'required|email',
-            'password' => [
-                'required',
-                'confirmed',
-                'min:8',
-                'regex:/[A-Z]/',      // majuscule
-                'regex:/[0-9]/',      // chiffre
-                'regex:/[^a-zA-Z0-9]/'// caractère spécial
-            ],
+            'id' => 'nullable|exists:diplomes,id',
+            'intitule' => 'required|string|max:255|unique:diplomes,intitule,' . $this->input('id'),
+            'niveau' => 'required|string|max:100',
+            'etablissement' => 'nullable|string|max:255',
+            'pays' => 'nullable|string|max:100',
+            'annee_obtention' => 'nullable|integer|min:1950|max:' . date('Y'),
+            'fichier' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
         ];
     }
 
-     public function failedValidation(Validator $validator)
+    public function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response()->json([
             'status' => 'error',

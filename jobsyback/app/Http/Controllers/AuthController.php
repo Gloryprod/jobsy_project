@@ -57,12 +57,26 @@ class AuthController extends Controller
             );
         }
 
-        $token = $user->createToken('jobsy-token')->plainTextToken;
+        $user->tokens()->delete();
+
+        $accessToken = $user->createToken('jobsy-access-token');
+        $accessToken->accessToken->update([
+            'type' => 'access',
+            'expires_at' => now()->addMinutes(30),
+        ]);
+
+        // 🔄 Refresh token (long)
+        $refreshToken = $user->createToken('jobsy-refresh-token');
+        $refreshToken->accessToken->update([
+            'type' => 'refresh',
+            'expires_at' => now()->addDays(14), 
+        ]);
 
 
         return apiResponse(
             [
-                'token' => $token,
+                'accessToken' => $accessToken->plainTextToken,
+                'refreshToken' => $refreshToken->plainTextToken,
                 'user' => $user
             ],
             'Connexion réussie'
@@ -78,7 +92,7 @@ class AuthController extends Controller
             'Déconnexion réussie'
         );
     }
-
+ 
     public function forgotPassword(Request $request){
         $request->validate(['email' => 'required|email']);
 
