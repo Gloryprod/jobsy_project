@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'nlp' => [
+        'key' => env('NLP_SERVICE_KEY'),
+    ],
+
 ];

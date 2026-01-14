@@ -5,6 +5,7 @@ use App\Http\Controllers\Candidat\CandidatController;
 use App\Http\Controllers\Candidat\DiplomeController;
 use App\Http\Controllers\Candidat\FormationController;
 use App\Http\Controllers\Auth\RefreshTokenController;
+use App\Http\Controllers\Candidat\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -82,6 +83,8 @@ Route::middleware(['auth:sanctum', 'access.token', 'role:JEUNE'])->group(functio
     Route::delete('/candidat/formations/{id}', [CandidatController::class, 'deleteFormation']);
     Route::delete('/candidat/concours/{id}', [CandidatController::class, 'deleteConcours']);
     Route::delete('/candidat/communautes/{id}', [CandidatController::class, 'deleteCommunaute']);
+
+    Route::get('/candidat/profile-elements', [ProfileController::class, 'setProfileElements']);
 });
 
 // Route::middleware(['auth:sanctum', 'role:ADMIN'])->group(function() {
