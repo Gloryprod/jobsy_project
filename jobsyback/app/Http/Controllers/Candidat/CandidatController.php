@@ -12,12 +12,18 @@ use App\Http\Requests\DiplomeRequest;
 use App\Http\Requests\ProfileInfoRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Jobs\AnalyzeCVJob;
 
-class CandidatController extends Controller
+    class CandidatController extends Controller
 {
     public function candidatProfile(Request $request)
     {
-        $candidat = $request->user()->candidat()->with('contact')->with('cv')->first();
+        $candidat = $request->user()->candidat()
+            ->with('contact')
+            ->with('cv')
+            ->with('diplomes')
+            ->with('rank')
+            ->first();
 
         return apiResponse(
             $candidat,
@@ -71,44 +77,24 @@ class CandidatController extends Controller
 
     public function createDiplome(DiplomeRequest $request)
     {
-
+        
         $candidat = $request->user()->candidat;
+        
+        $path = $request->file('fichier')->store('diplomes', 'public');
 
-        $diplome = null;
-        if ($request->filled('id')) {
-            $diplome = $candidat->diplomes()
-                ->where('id', $request->id)
-                ->firstOrFail();
-        }
+        $data = $request->only([
+            'intitule',
+        ]);
 
         if ($request->hasFile('fichier')) {
-
-            // Supprimer l'ancien fichier si update
-            if ($diplome && $diplome->fichier) {
-                Storage::disk('public')->delete($diplome->fichier);
-            }
-
-            $path = $request->file('fichier')->store('diplomes', 'public');
-        }
-
-        $data = $request->except(['id', 'fichier']);
-
-        if (isset($path)) {
             $data['fichier'] = $path;
         }
-
-        if ($diplome) {
-            $diplome->update($data);
-            $message = 'Diplôme mis à jour avec succès';
-            $status = 200;
-        } else {
-            $candidat->diplomes()->create($data);
-            $message = 'Diplôme ajouté avec succès';
-            $status = 201;
-        }
+       
+        $candidat->diplomes()->create($data);
+        $message = 'Diplôme ajouté avec succès';
+        $status = 201;
 
         return apiResponse(
-            null,
             $message,
             'success',
             $status
@@ -176,7 +162,9 @@ class CandidatController extends Controller
             'is_active' => true,
         ]);
 
-        event(new CvUploaded($candidat->cv->id));
+        // event(new CvUploaded($candidat->cv->id));
+
+        AnalyzeCVJob::dispatch($path, $candidat->id);
 
         return apiResponse(null, 'CV mis à jour avec succès', 'success', 201);
     }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Candidat;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DiplomeRequest;
+use App\Models\CvDatas;
 use Illuminate\Http\Request;
 
 class DiplomeController extends Controller

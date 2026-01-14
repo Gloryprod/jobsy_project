@@ -19,6 +19,7 @@ class Candidat extends Model
         'niveau_experience',
         'niveau_etude',
         'disponibilite',
+        'rank_id'
     ];
 
     public function user()
@@ -54,5 +55,10 @@ class Candidat extends Model
     public function communautes()
     {
         return $this->hasMany(Communaute::class);
+    }
+
+    public function rank()
+    {
+        return $this->belongsTo(Rank::class, 'rank_id');
     }
 }

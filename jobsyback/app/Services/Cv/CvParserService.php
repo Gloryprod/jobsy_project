@@ -2,101 +2,98 @@
 
 namespace App\Services\Cv;
 
-class CvParserService
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
+class CVParserService
 {
-    private array $diplomaRank = [
-        'phd' => 5,
-        'doctorat' => 5,
-        'master' => 4,
-        'msc' => 4,
-        'licence' => 3,
-        'bachelor' => 3,
-        'bts' => 2,
-        'dut' => 2,
-        'cap' => 1,
-        'bepc' => 1,
-        'cep' => 0,
-    ];
+    protected string $apiKey;
+    protected string $apiUrl;
+    protected string $content;
 
-    public function parse(string $text): array
+    public function __construct()
     {
-        $text = $this->normalize($text);
+        $this->apiKey = config('services.nlp.key');
+        $this->apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
+        $this->content = 'You are an expert recruitment assistant specializing in data extraction. Your task is to parse the provided text and extract specific professional information into a structured JSON format.
 
-        $title = $this->extractTitle($text);
-        $diplomas = $this->extractDiplomas($text);
-        $lastDiploma = $this->getLastDiploma($diplomas);
+        ### Instructions:
+        1. **Name**: Extract the full name of the person.
+        2. **Title**: Identify a professional title or "quality" based on the context. If no clear title is found or implied, leave this field as an empty string ("").
+        3. **Skills**: Extract all technical and soft skills as an array of strings.
+        4. **Education (Degrees)**: ONLY include formal academic degrees (Bac, BTS, Licence, Master, PhD/Doctorat, etc.). 
+        5. **OtherCertifications**: Extract non-degree training, professional certifications, workshops, or short-term courses.
+        6. **Experiences**: Extract professional experiences (JobTitle, Company, Duration, Description).
 
-        return [
-            'title' => $title,
-            'last_diploma' => $lastDiploma,
-            'all_diplomas' => $diplomas,
-        ];
-    }
+        ### Constraints:
+        - Return ONLY valid JSON.
+        - Ensure a clear distinction between formal degrees and short-term certifications.
+        - If a section is missing in the text, return an empty array [].
 
-    private function normalize(string $text): string
-    {
-        $text = strtolower($text);
-        $text = preg_replace('/\s+/', ' ', $text);
-        return trim($text);
-    }
-
-    private function extractTitle(string $text): ?string
-    {
-        $lines = preg_split('/[\r\n]+/', $text);
-
-        $keywords = [
-            'développeur', 'developer', 'ingénieur',
-            'data', 'analyste', 'designer',
-            'étudiant', 'fullstack', 'backend', 'frontend'
-        ];
-
-        foreach (array_slice($lines, 0, 15) as $line) {
-            foreach ($keywords as $keyword) {
-                if (str_contains($line, $keyword)) {
-                    return ucfirst(trim($line));
-                }
+        ### Expected JSON Structure:
+        {
+        "Name": "Full Name",
+        "Title": "Professional Title",
+        "Skills": ["Skill 1", "Skill 2"],
+        "Education": [
+            {
+            "Degree": "Degree name (Formal)",
+            "Institution": "University/School",
+            "Duration": "Period"
             }
-        }
-
-        return null;
+        ],
+        "OtherCertifications": [
+            {
+            "CourseName": "Training or Certification name",
+            "Provider": "Organization",
+            "Date": "Year or Period"
+            }
+        ],
+        "Experiences": [
+            {
+            "JobTitle": "Position",
+            "Company": "Company",
+            "Duration": "Period",
+            "Description": "Tasks"
+            }
+        ]
+        }';
     }
 
-    private function extractDiplomas(string $text): array
+    public function parse(string $rawText): array
     {
-        $patterns = [
-            '/(licence|bachelor)[^\.]{0,80}/i',
-            '/(master|msc)[^\.]{0,80}/i',
-            '/(doctorat|phd)[^\.]{0,80}/i',
-            '/(dut|bts)[^\.]{0,80}/i',
-        ];
+        try {
+            $response = Http::withToken($this->apiKey)
+                ->timeout(30)
+                ->post($this->apiUrl, [
+                    'model' => 'llama-3.3-70b-versatile', // Modèle ultra performant et gratuit
+                    'messages' => [
+                        [
+                            'role' => 'system',
+                            'content' => $this->content
+                        ],
+                        [
+                            'role' => 'user',
+                            'content' => "Extract from this CV: " . mb_substr($rawText, 0, 4000)
+                        ]
+                    ],
+                    'response_format' => ['type' => 'json_object'] // Force la sortie en JSON
+                ]);
 
-        $diplomas = [];
-
-        foreach ($patterns as $pattern) {
-            if (preg_match_all($pattern, $text, $matches)) {
-                foreach ($matches[0] as $match) {
-                    $diplomas[] = trim($match);
-                }
+            if ($response->failed()) {
+                Log::error("Erreur Groq : " . $response->body());
+                return [];
             }
+
+            $data = $response->json();
+            // Récupération du contenu JSON généré
+            $content = $data['choices'][0]['message']['content'] ?? '{}';
+
+            return json_decode($content, true);
+
+        } catch (\Exception $e) {
+            Log::error("Échec Groq : " . $e->getMessage());
+            return [];
         }
-
-        return array_unique($diplomas);
-    }
-
-    private function getLastDiploma(array $diplomas): ?string
-    {
-        $best = null;
-        $bestRank = -1;
-
-        foreach ($diplomas as $diploma) {
-            foreach ($this->diplomaRank as $key => $rank) {
-                if (str_contains(strtolower($diploma), $key) && $rank > $bestRank) {
-                    $best = $diploma;
-                    $bestRank = $rank;
-                }
-            }
-        }
-
-        return $best;
     }
 }

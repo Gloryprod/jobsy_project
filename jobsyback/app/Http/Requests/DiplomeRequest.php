@@ -26,7 +26,7 @@ class DiplomeRequest extends FormRequest
         return [
             'id' => 'nullable|exists:diplomes,id',
             'intitule' => 'required|string|max:255|unique:diplomes,intitule,' . $this->input('id'),
-            'niveau' => 'required|string|max:100',
+            'niveau' => 'nullable|string|max:100',
             'etablissement' => 'nullable|string|max:255',
             'pays' => 'nullable|string|max:100',
             'annee_obtention' => 'nullable|integer|min:1950|max:' . date('Y'),
