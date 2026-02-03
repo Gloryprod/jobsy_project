@@ -13,8 +13,10 @@ use App\Http\Requests\ProfileInfoRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Jobs\AnalyzeCVJob;
+use App\Models\Candidat;
 
-    class CandidatController extends Controller
+
+class CandidatController extends Controller
 {
     public function candidatProfile(Request $request)
     {
@@ -272,8 +274,13 @@ use App\Jobs\AnalyzeCVJob;
         return apiResponse(null, 'Communauté supprimée avec succès', 'success', 200);
     }
 
+    public function showProfile(Request $request, $id){
+        $candidat = Candidat::with(['rank', 'skills.category', 'user', 'cv_datas'])->find($id);
 
+        if (!$candidat) {
+            return apiResponse(null, 'Candidat non trouvé', 'error', 404);
+        }
 
-
-    
+       return apiResponse($candidat, 'Candidat récupéré avec succès', 'success', 200);
+    }    
 }

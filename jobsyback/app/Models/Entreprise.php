@@ -13,11 +13,20 @@ class Entreprise extends Model
         'localisation',
         'description',
         'site_web',
+        'date_creation',
+        'nom_officiel',
+        'taille',
+        'logo',
     ];
 
     // Relation inverse vers User
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function contact_entreprise()
+    {
+        return $this->hasOne(ContactEntreprises::class);
     }
 }

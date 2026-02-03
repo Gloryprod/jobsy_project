@@ -13,8 +13,7 @@ return new class extends Migration
     {
         Schema::create('cv_datas', function (Blueprint $table) {
             $table->id();
-            // Relation avec l'utilisateur (le candidat)
-            $table->foreignId('candidat_id')->constrained()->onDelete('cascade');      
+            $table->foreignId('candidat_id')->constrained('candidats')->onDelete('cascade');      
             $table->string('candidate_name')->nullable();
             $table->json('skills')->nullable(); 
             $table->json('education')->nullable();

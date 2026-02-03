@@ -11,6 +11,7 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;  
 use Illuminate\Support\Facades\Hash;
+use App\Models\Entreprise; 
 
 
 class AuthController extends Controller
@@ -43,7 +44,7 @@ class AuthController extends Controller
             return apiResponse(
                 null,
                 'Identifiants invalides',
-                'error',
+                'error',    
                 401
             );
         }
@@ -134,6 +135,13 @@ class AuthController extends Controller
             null,
             'Mot de passe réinitialisé avec succès.'
         );
+    }
+
+    public function userProfile(Request $request) {
+        
+        $user = $request->user();
+        $user = $user->load('entreprise.contact_entreprise');
+        return $user;
     }
 
 }

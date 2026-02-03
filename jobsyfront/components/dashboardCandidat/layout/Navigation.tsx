@@ -68,11 +68,6 @@ export default function Navigation() {
                     >
                         <item.icon className="w-6 h-6" />
                         <span>{item.name}</span>
-                        {item.badge && (
-                        <span className="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                            {item.badge}
-                        </span>
-                        )}
                     </button>
                 </Link>
             ))}

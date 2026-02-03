@@ -3,13 +3,12 @@ import axios from "axios";
 const api = axios.create({
   baseURL: "http://localhost:8000/api",
   headers: {
-    Accept: "application/json",
+    Accept: "application/json",                               
+    'X-Requested-With': 'XMLHttpRequest',
+    'Content-Type': 'application/json'
   },
 });
 
-// ==============================
-// 🔐 REQUEST INTERCEPTOR
-// ==============================
 api.interceptors.request.use(
   (config) => {
     const accessToken = localStorage.getItem("accessToken");
@@ -23,9 +22,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ==============================
-// 🔁 RESPONSE INTERCEPTOR
-// ==============================
+
 let isRefreshing = false;
 let failedQueue: any[] = [];
 
@@ -67,6 +64,7 @@ api.interceptors.response.use(
 
       try {
         const refreshToken = localStorage.getItem("refreshToken");
+        console.log("Tentative de refresh avec :", refreshToken); // LOG 1
 
         if (!refreshToken) {
           throw new Error("Refresh token manquant");
@@ -82,6 +80,7 @@ api.interceptors.response.use(
             },
           }
         );
+        console.log("Réponse du serveur au refresh :", response.data); // LOG 2
 
         const newAccessToken = response.data.data.access_token;
 

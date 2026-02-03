@@ -23,7 +23,6 @@ class DiplomeController extends Controller
 
     public function update(DiplomeRequest $request, $id)
     {
-
         $diplome = $request->user()
             ->candidat
             ->diplomes()

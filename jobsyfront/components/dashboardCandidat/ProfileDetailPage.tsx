@@ -260,15 +260,15 @@ const deleteDiplome = async (id: number) => {
             </div>);
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[#000080] to-black pt-20 pb-24">
-        <div className="max-w-6xl mx-auto px-4 text-center">
-          <p className="text-red-400 text-xl">Erreur: {error?.message || 'Une erreur est survenue lors du chargement du profil.'}</p>
-        </div>
-      </div>
-    );
-  }
+        if (error) {
+          return (
+            <div className="min-h-screen bg-gradient-to-b from-[#000080] to-black pt-20 pb-24">
+              <div className="max-w-6xl mx-auto px-4 text-center">
+                <p className="text-red-400 text-xl">Erreur: {error?.message || 'Une erreur est survenue lors du chargement du profil.'}</p>
+              </div>
+            </div>
+          );
+        }
 
   return (
       <div className="min-h-screen bg-gradient-to-b from-[#000080] to-black pt-20 pb-24">
@@ -309,9 +309,11 @@ const deleteDiplome = async (id: number) => {
           >
             {editing === 'info' ? (
               <>
-                <Input label="Ville" value={infoForm.ville} onChange={v => setInfoForm({ ...infoForm, ville: v })} />
-                <Input label="Nationalité" value={infoForm.nationalite} onChange={v => setInfoForm({ ...infoForm, nationalite: v })} />
-                <Textarea label="Bio" value={infoForm.bio} onChange={v => setInfoForm({ ...infoForm, bio: v })} />
+                <Input label="Sexe" value={infoForm.sexe} onChange={(v: string) => setInfoForm({ ...infoForm, sexe: v})} />
+                <Input label="Ville" value={infoForm.ville} onChange={(v: string) => setInfoForm({ ...infoForm, ville: v})} />
+                <Input label="Date de naissance" value={infoForm.date_naissance} onChange={(v: string) => setInfoForm({ ...infoForm, date_naissance: v })} type="date" />
+                <Input label="Nationalité" value={infoForm.nationalite} onChange={(v: string) => setInfoForm({ ...infoForm, nationalite: v })} />
+                <Textarea label="Bio" value={infoForm.bio} onChange={(v: string) => setInfoForm({ ...infoForm, bio: v })} />
 
                 <SaveButton onClick={saveInfo} />
               </>
@@ -331,9 +333,9 @@ const deleteDiplome = async (id: number) => {
           >
             {editing === 'contact' ? (
               <>
-                <PhoneInput value={contactForm.telephone || ''} onChange={v => setContactForm({ ...contactForm, telephone: v })} />
-                <Input label="LinkedIn" value={contactForm.linkedin} onChange={v => setContactForm({ ...contactForm, linkedin: v })} />
-                <Input label="Email secondaire" value={contactForm.email_secondaire} onChange={v => setContactForm({ ...contactForm, email_secondaire: v })} />
+                <PhoneInput value={contactForm.telephone || ''} onChange={(v: string) => setContactForm({ ...contactForm, telephone: v })} />
+                <Input label="LinkedIn" value={contactForm.linkedin} onChange={(v: string)=> setContactForm({ ...contactForm, linkedin: v })} />
+                <Input label="Email secondaire" value={contactForm.email_secondaire} onChange={(v: string) => setContactForm({ ...contactForm, email_secondaire: v })} />
 
                 <SaveButton onClick={saveContact} />
               </>
@@ -407,7 +409,7 @@ const deleteDiplome = async (id: number) => {
 
             <div className="mt-4">
               <div className='mb-4'>
-                <Input placeholder="Intitule du diplome"  value={intitule} onChange={i => setIntitule(i)} />
+                <Input placeholder="Intitule du diplome"  value={intitule} onChange={(i: string) => setIntitule(i)} />
               </div>
               <div className='' >
                 <input
@@ -465,7 +467,7 @@ function Section({ title, icon: Icon, children, onEdit }: any) {
   );
 }
 
-function Input({ label, value, onChange, placeholder }: any) {
+function Input({ label, value, onChange, placeholder, type }: any) {
   return (
     <div>
       <label className="text-white/80">{label}</label>
@@ -474,6 +476,7 @@ function Input({ label, value, onChange, placeholder }: any) {
         value={value || ''}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
+        type={type}
       />
     </div>
   );

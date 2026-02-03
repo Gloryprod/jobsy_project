@@ -83,7 +83,7 @@ export default function RegisterJeunePage() {
 
     } catch (error: any) {
       if (error.response) {
-        setErrorMsg(error.response.data.message || "Erreur serveur");
+        setErrorMsg(error.response.data.message || "Une erreur est survenue.");
 
         Swal.fire({
           icon: "error",

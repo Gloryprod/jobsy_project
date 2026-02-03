@@ -21,12 +21,12 @@ class LoginRequest extends FormRequest
         ];
     }
 
-     public function failedValidation(Validator $validator)
-    {
-        throw new HttpResponseException(response()->json([
-            'status' => 'error',
-            'message' => 'Erreur de validation',
-            'errors' => $validator->errors(),
-        ], 422));
-    }
+    //  public function failedValidation(Validator $validator)
+    // {
+    //     throw new HttpResponseException(response()->json([
+    //         'status' => 'error',
+    //         'message' => 'Erreur de validation',
+    //         'errors' => $validator->errors(),
+    //     ], 422));
+    // }
 }

@@ -51,11 +51,9 @@ export default function LoginPage() {
     try { 
       const response = await api.post("/login", formValues);
 
-      // 🔐 stocke le token
       localStorage.setItem("accessToken", response.data.data.accessToken);
       localStorage.setItem("refreshToken", response.data.data.refreshToken);
 
-      // Accès correct au user
       const user = response.data.data.user;
 
       Swal.fire({
@@ -77,7 +75,8 @@ export default function LoginPage() {
       Swal.fire({
         icon: "error",
         title: "Connexion échouée",
-        text: msg,
+        text: error?.response?.data?.message || "Une erreur est survenue. Veuillez réessayer.",
+        confirmButtonText: "OK",
         confirmButtonColor: "#d33",
       });
     }

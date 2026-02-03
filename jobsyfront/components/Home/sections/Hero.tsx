@@ -19,7 +19,7 @@ export default function Hero() {
         />
         <div className="absolute inset-0 bg-black/35" />
 
-        <HeroContent />   {/* ← même contenu réutilisé */}
+        <HeroContent />   
       </div>
 
       {/* ──────── VERSION DESKTOP : Image à gauche, texte à droite ──────── */}
@@ -75,20 +75,11 @@ function HeroContent() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
         className="text-3xl md:text-2xl xs:text-4xl sm:text-5xl lg:text-5xl xl:text-6xl font-black leading-tight 
-                   text-white lg:text-[#000080] drop-shadow-xl lg:drop-shadow-none"
+                   text-[#F0E68C] md:text-[#000080] lg:text-[#000080] drop-shadow-xl lg:drop-shadow-none"
       >
-        Diplômé<br />
+        Diplômé
         <span className="text-[#F0E68C] md:text-[#000080] lg:text-[#000080] sm:text-[#000080] "> mais toujours sans emploi ?</span>
       </motion.h1>
-
-      {/* <motion.p
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.2 }}
-        className="mt-6 text-lg sm:text-xl text-white/95 lg:text-gray-800 font-medium drop-shadow-md lg:drop-shadow-none"
-      >
-        Jobsy change ça. Maintenant.
-      </motion.p> */}
 
       <motion.p
         initial={{ opacity: 0 }}
@@ -117,8 +108,7 @@ function HeroContent() {
         <Link href="/register/entreprises">
           <MotionButton
             variant="secondary"
-            className="text-base sm:text-lg px-8 py-4 font-medium border-2 border-white lg:border-[#000080] text-white lg:text-[#000080] 
-                      hover:bg-white/10 lg:hover:bg-[#000080] lg:hover:text-[#F0E68C] cursor-pointer"
+            className="text-base sm:text-lg px-8 py-4 font-bold bg-[#000080] text-[#F0E68C] hover:bg-gray-500 shadow-xl cursor-pointer"
           >
             Je suis une entreprise
           </MotionButton>

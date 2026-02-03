@@ -78,11 +78,11 @@ export default function RegisterEntreprisePage() {
 
     } catch (error: any) {
       if (error.response) {
-        setErrorMsg(error.response.data.message || "Erreur serveur");
+        setErrorMsg(error.response.data.message || "Une erreur est survenue.");
 
         Swal.fire({
           icon: "error",
-          title: "Erreur",
+          title: "Erreur lors de l'inscription",
           text: error.response.data.message || "Une erreur est survenue.",
           confirmButtonText: "OK",
           background: "#fff",
@@ -90,7 +90,6 @@ export default function RegisterEntreprisePage() {
         });
 
       } else {
-        setErrorMsg("Impossible de contacter le serveur");
 
         Swal.fire({
           icon: "warning",

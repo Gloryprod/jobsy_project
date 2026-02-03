@@ -27,9 +27,14 @@ class Candidat extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-     public function contact()
+    public function contact()
     {
         return $this->hasOne(Contact::class);
+    }
+
+    public function cv_datas()
+    {
+        return $this->hasOne(CvDatas::class);
     }
 
     public function diplomes()
@@ -60,5 +65,17 @@ class Candidat extends Model
     public function rank()
     {
         return $this->belongsTo(Rank::class, 'rank_id');
+    }
+
+    public function skills()
+    {
+        return $this->belongsToMany(Skills::class, 'candidat_skill', 'candidat_id', 'skill_id');
+    }
+
+    public function categories()
+    {
+        return $this->skills->map(function($skill) {
+            return $skill->category;
+        })->unique('id');
     }
 }

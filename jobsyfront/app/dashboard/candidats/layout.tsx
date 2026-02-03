@@ -2,6 +2,7 @@ import Header from '@/components/dashboardCandidat/layout/Header';
 import Navigation from '@/components/dashboardCandidat/layout/Navigation';
 import { UserProvider } from '@/context/UserProvider';
 import { Toaster } from 'react-hot-toast';
+
 export default async function Layout({ children }: { children: React.ReactNode }) {
   return (
     <UserProvider>
@@ -19,8 +20,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
                 }}
               />
                 {children}
-            </main>
-        
+            </main>        
         </div>
     </UserProvider>
   )

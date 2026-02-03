@@ -27,6 +27,7 @@ class AuthServices
         if ($user->role === 'JEUNE') {
             Candidat::create([
                 'user_id' => $user->id,
+                'rank_id' => 6,
                 'bio' => $data['bio'] ?? null,
                 'adresse' => $data['adresse'] ?? null,
             ]);

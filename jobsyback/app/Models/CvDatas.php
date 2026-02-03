@@ -12,7 +12,10 @@ class CvDatas extends Model
         'candidate_name', 
         'skills', 
         'education', 
-        'raw_ai_data'
+        'raw_ai_data',
+        'title',
+        'other_certifications',
+        'experiences',
     ];
 
     /**
@@ -22,6 +25,8 @@ class CvDatas extends Model
         'skills' => 'array',
         'education' => 'array',
         'raw_ai_data' => 'array',
+        'other_certifications' => 'array',
+        'experiences' => 'array',
     ];
 
     /**

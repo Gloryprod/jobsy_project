@@ -10,11 +10,12 @@ import useOnClickOutside from '@/hooks/useOnClickOutside';
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const ref = useRef<HTMLElement>(null);
+  const ref = useRef<HTMLDivElement>(null!);
   const { user } = useUser();
   const { handleLogout } = useLogout();
 
   useOnClickOutside(ref, () => setProfileDropdownOpen(false));
+  useOnClickOutside(ref, () => setMobileMenuOpen(false));
 
   return (
     <>
@@ -28,7 +29,7 @@ export default function Header() {
             </div>
 
             {/* Desktop : Notifications + Profil avec Dropdown */}
-            <div className="hidden md:flex items-center space-x-6">
+            <div className="hidden md:flex items-center space-x-6">   
               {/* Notifications */}
               <button className="relative cursor-pointer p-3 rounded-xl bg-white/5 hover:bg-white/10 transition">
                 <Bell className="w-5 h-5 text-white" />
@@ -51,7 +52,7 @@ export default function Header() {
                   </div>
                   <div className="text-left">
                     <p className="text-white font-medium">{user?.nom} {user?.prenom}</p>
-                    <p className="text-[#F0E68C] text-xs">Rang A • Expert Data</p>
+                    <p className="text-[#F0E68C] text-xs">Espace Candidat</p>
                   </div>
                   <ChevronDown className={`w-4 h-4 text-white/70 transition-transform ${profileDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
@@ -105,7 +106,7 @@ export default function Header() {
 
         {/* Menu Mobile */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-[#000080]/95 backdrop-blur-lg border-t border-white/10">
+          <div ref={ref} className="md:hidden bg-[#000080]/95 backdrop-blur-lg border-t border-white/10">
             <div className="px-6 py-6 space-y-6">
               <div className="flex items-center space-x-4 pb-4 border-b border-white/10">
                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#F0E68C] to-yellow-400 p-0.5">
@@ -115,7 +116,7 @@ export default function Header() {
                 </div>
                 <div>
                   <p className="text-white font-semibold text-lg">{user?.nom} {user?.prenom}</p>
-                  <p className="text-[#F0E68C]">Rang A • Expert Data</p>
+                  <p className="text-[#F0E68C]">Espace Candidat</p>
                 </div>
               </div>
 

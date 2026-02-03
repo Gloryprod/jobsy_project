@@ -69,11 +69,16 @@ class AnalyzeCVJob implements ShouldQueue
                     ['candidat_id' => $this->userId],
                     [
                         'candidate_name' => $structuredData['Name'] ?? null,
+                        'title'          => $structuredData['Title'] ?? null,
                         'skills'         => $structuredData['Skills'] ?? [],
                         'education'      => $structuredData['Education'] ?? [],
+                        'other_certifications'      => $structuredData['OtherCertifications'] ?? [],
+                        'experiences'      => $structuredData['Experiences'] ?? [],
                         'raw_ai_data'    => $structuredData
                     ]
                 );
+
+                processSkillsFromIA($user, $structuredData['Skills']);
             }
 
             Log::info('INFORMATION SAVED', ['user' => $this->userId, 'data' => $structuredData]);

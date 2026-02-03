@@ -12,7 +12,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         config([
-            'cors.paths' => ['api/*', 'sanctum/csrf-cookie', 'login', 'logout'],
+            'cors.paths' => ['api/*','api', 'sanctum/csrf-cookie', 'login', 'logout'],
             'cors.allowed_origins' => ['http://localhost:3000'],
             'cors.allowed_origins_patterns' => [],
             'cors.allowed_headers' => ['*'],

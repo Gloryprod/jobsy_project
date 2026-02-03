@@ -6,6 +6,9 @@ use App\Http\Controllers\Candidat\DiplomeController;
 use App\Http\Controllers\Candidat\FormationController;
 use App\Http\Controllers\Auth\RefreshTokenController;
 use App\Http\Controllers\Candidat\ProfileController;
+use App\Http\Controllers\Entreprise\EntrepriseController;
+use App\Http\Controllers\GeneralController;
+use App\Http\Controllers\Entreprise\MissionController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -57,10 +60,7 @@ Route::post('/auth/resend-verification', function (Request $request) {
     return response()->json(['message' => 'Verification link resent!']);
 });
 
-Route::middleware('auth:sanctum', 'access.token')->get('/user', function (Request $request) {
-    $user = $request->user();
-    return $user;
-});
+Route::middleware('auth:sanctum', 'access.token')->get('/user', [AuthController::class, 'userProfile']);
 
 Route::middleware(['auth:sanctum', 'access.token', 'role:JEUNE'])->group(function() {
     Route::get('/candidat/profile', [CandidatController::class, 'candidatProfile']);
@@ -87,14 +87,18 @@ Route::middleware(['auth:sanctum', 'access.token', 'role:JEUNE'])->group(functio
     Route::get('/candidat/profile-elements', [ProfileController::class, 'setProfileElements']);
 });
 
-// Route::middleware(['auth:sanctum', 'role:ADMIN'])->group(function() {
-//     Route::get('/admin/dashboard', [AdminController::class, 'dashboard']);
-// });
+Route::middleware(['auth:sanctum', 'role:ENTREPRISE', 'access.token'])->group(function() {
+    Route::get('/entreprise/contact', [EntrepriseController::class, 'index']);
+    Route::post('/entreprise/infos/{id}', [EntrepriseController::class, 'update']);
+    Route::post('/entreprise/contact/{id}', [EntrepriseController::class, 'updateContact']);
+    Route::get('/showProfileCandidat/{id}', [CandidatController::class, 'showProfile']);
+    Route::resource('/missions', MissionController::class);
+});
 
-// Route::middleware(['auth:sanctum', 'role:JEUNE'])->group(function() {
-//     Route::get('/jeune/missions', [MissionController::class, 'index']);
-//     Route::post('/jeune/missions/apply', [MissionController::class, 'apply']);
-// });
+Route::middleware(['auth:sanctum'])->group(function() {
+    Route::get('/getFilterData', [GeneralController::class, 'getFilterData']);
+    Route::get('/filter', [GeneralController::class, 'filter']);
+});
 
 // Route::middleware(['auth:sanctum', 'role:ENTREPRISE'])->group(function() {
 //     Route::post('/entreprise/annonces', [EntrepriseController::class, 'store']);
