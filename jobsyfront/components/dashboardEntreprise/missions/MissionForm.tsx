@@ -203,7 +203,7 @@ export default function MissionForm({initialData} : MissionFormProps){
 
                 <div>     
                     <label className={labelClass}>Description détaillée</label>
-                    <Editor {...form.register("description")} placeholder="Décrivez les objectifs de la mission..." name="description" className={inputClass}  onTextChange={(e: EditorTextChangeEvent) => setFormData({...formData, description: e.htmlValue})} style={{ height: '320px' }} />
+                    <Editor {...form.register("description")} placeholder="Décrivez les objectifs de la mission..." name="description" className={inputClass}  onTextChange={(e: EditorTextChangeEvent) => setFormData({...formData, description: e.htmlValue ?? ""})} style={{ height: '320px' }} />
                 </div>
 
                 <button 

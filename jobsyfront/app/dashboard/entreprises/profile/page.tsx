@@ -330,7 +330,7 @@ export default function Profile() {
                                 value={entreprise.description || ''}
                                 onChange={(e) => setEntreprise({ ...entreprise, description: e.target.value })}
                             /> */}
-                            <Editor name="description" className="w-full min-h-[120px] p-4 border rounded-xl focus:ring-2 focus:ring-[#000080]/20 outline-none text-gray-600" value={entreprise.description ?? ''} onTextChange={(e: EditorTextChangeEvent) => setEntreprise({ ...entreprise, description: e.htmlValue})} style={{ height: '320px' }} />
+                            <Editor name="description" className="w-full min-h-[120px] p-4 border rounded-xl focus:ring-2 focus:ring-[#000080]/20 outline-none text-gray-600" value={entreprise.description ?? ''} onTextChange={(e: EditorTextChangeEvent) => setEntreprise({ ...entreprise, description: e.htmlValue ?? ''})} style={{ height: '320px' }} />
                             
                             <div className="flex justify-end">
                                 <button onClick={() => {setIsEditing(false) ; if(entreprise.id) {saveInfo(entreprise.id)}}} className="bg-[#000080] text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-[#000060]">

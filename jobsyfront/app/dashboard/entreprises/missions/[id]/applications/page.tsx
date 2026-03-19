@@ -272,7 +272,7 @@ export default function ApplicationsPage({ params }: { params: Promise<{ id: str
 
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-muted-foreground">Instructions particulière</label>
-                                <Editor name="onboarding_instructions" value={invitationDetails.onboarding_instructions} className="w-full min-h-[120px] p-4 border rounded-xl focus:ring-2 focus:ring-[#000080]/20 outline-none text-gray-600"  style={{ height: '320px' }} onTextChange={(e: EditorTextChangeEvent) => setInvitationDetails({...invitationDetails, onboarding_instructions: e.htmlValue})} />
+                                <Editor name="onboarding_instructions" value={invitationDetails.onboarding_instructions || ""} className="w-full min-h-[120px] p-4 border rounded-xl focus:ring-2 focus:ring-[#000080]/20 outline-none text-gray-600"  style={{ height: '320px' }} onTextChange={(e: EditorTextChangeEvent) => setInvitationDetails({...invitationDetails, onboarding_instructions: e.htmlValue ?? ""})} />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-muted-foreground">Délai de validité de l&apos;offre</label>

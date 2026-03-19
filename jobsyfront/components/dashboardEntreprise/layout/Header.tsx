@@ -65,7 +65,7 @@ export default function Header() {
                         </button>
                     
                         {notificationDropdownOpen && (
-                            <div id="dropdownMenu" ref={ref} className="absolute block right-0 shadow-lg bg-white py-4 z-[1000] min-w-full rounded-lg w-[410px] max-h-[500px] overflow-auto mt-2">
+                            <div id="dropdownMenu" ref={ref} className="absolute block right-0 shadow-lg bg-white py-4 z-1000 min-w-full rounded-lg w-[410px] max-h-[500px] overflow-auto mt-2">
                             <div className="flex items-center justify-between px-4 mb-4">
                                 <p className="text-xs text-blue-600 font-medium cursor-pointer">Clear all</p>
                                 <p className="text-xs text-blue-600 font-medium cursor-pointer">Mark as read</p>
@@ -96,7 +96,7 @@ export default function Header() {
                             className="flex cursor-pointer items-center space-x-3 rounded-xl hover:bg-white/10 px-4 py-2 transition"
                         >
                             <div className="relative">
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#F0E68C] to-yellow-400 p-0.5">
+                            <div className="w-12 h-12 rounded-full bg-linear-to-br from-[#F0E68C] to-yellow-400 p-0.5">
                                 <div className="w-full h-full rounded-full bg-[#000080] flex items-center justify-center">
                                 <User className="w-7 h-7 text-white" />
                                 </div>
@@ -111,7 +111,7 @@ export default function Header() {
                         </button>
 
                         {profileDropdownOpen && ( 
-                            <ul id="dropdownMenu" ref={refUL} className="absolute block shadow-lg bg-white py-2 z-[1000] min-w-full w-max rounded-lg max-h-96 overflow-auto">
+                            <ul id="dropdownMenu" ref={refUL} className="absolute block shadow-lg bg-white py-2 z-1000 min-w-full w-max rounded-lg max-h-96 overflow-auto">
                                 <Link href="/dashboard/entreprises/profile">
                                     <li
                                         className="dropdown-item py-2.5 px-5 flex items-center hover:bg-slate-100 text-slate-600 font-medium text-sm cursor-pointer">
@@ -155,7 +155,7 @@ export default function Header() {
                     </button>
 
                     {mobileNotificationMenuOpen && (
-                        <div id="dropdownMenu" ref={ref} className="absolute top-12 right-0 shadow-lg bg-white py-4 z-[1000] rounded-lg  overflow-auto m-4">
+                        <div id="dropdownMenu" ref={ref} className="absolute top-12 right-0 shadow-lg bg-white py-4 z-1000 rounded-lg  overflow-auto m-4">
                             <div className="flex items-center justify-between px-4 mb-4">
                                 <p className="text-xs text-blue-600 font-medium cursor-pointer">Clear all</p>
                                 <p className="text-xs text-blue-600 font-medium cursor-pointer">Mark as read</p>

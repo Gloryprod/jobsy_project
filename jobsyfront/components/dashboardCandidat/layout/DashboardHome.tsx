@@ -84,7 +84,6 @@ export default function DashboardHome() {
         <div className="p-6 lg:p-10">
           <div className="flex flex-col lg:flex-row items-center gap-8">
             
-            {/* Avatar / Rank Hexagon */}
             <div className="relative group">
               <div className="absolute -inset-1 bg-linear-to-r from-[#F0E68C] to-[#000080] rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
               <div className="relative shrink-0 flex items-center justify-center">

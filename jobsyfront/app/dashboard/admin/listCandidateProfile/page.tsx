@@ -62,11 +62,19 @@ interface FilterData {
     ranks : Rank[]
 }
 
+interface PaginatedResponse<T> {
+    data: T[]; // C'est ici que se trouvent tes candidats
+    current_page: number;
+    last_page: number;
+    total: number;
+    // Ajoute d'autres champs de pagination si tu en as besoin
+}
+
 
 const fetcher = (url: string) => api.get(url).then(res => res.data.data);   
 export default function ListCandidateProfile() {
     const { data, error, isLoading } = useSWR<FilterData>('/getFilterData', fetcher);
-    const { data: data2, error: error2, isLoading: isLoading2 } = useSWR<Candidat[] | []>('/filter', fetcher);
+    const { data: data2, error: error2, isLoading: isLoading2 } = useSWR<PaginatedResponse<Candidat>>('/filter', fetcher);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isMenuRankOpen, setIsMenuRankOpen] = useState(false);
     const [categories, setCategories] = useState<Category[] | []>([]);
@@ -268,7 +276,7 @@ export default function ListCandidateProfile() {
                                         new Map(
                                             (candidat.skills || [])
                                                 .filter(skill => skill.category) // Sécurité au cas où category est null
-                                                .map(skill => [skill.category_id, skill.category])
+                                                .map(skill => [skill.category.id, skill.category])
                                         ).values()
                                     );
 
