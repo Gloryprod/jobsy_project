@@ -29,4 +29,9 @@ class Entreprise extends Model
     {
         return $this->hasOne(ContactEntreprises::class);
     }
+
+    public function missions()
+    {
+        return $this->hasMany(Mission::class);
+    }
 }

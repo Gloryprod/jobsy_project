@@ -23,12 +23,21 @@ class Mission extends Model
         'category',
         'type_contrat',
         'active',
-        'entreprise_id'
+        'entreprise_id',
+        'closed_at'
     ];
 
     protected $casts = [
         'skills' => 'array',
         'deadline' => 'date',
     ];
+
+    public function applications() {
+        return $this->hasMany(Application::class);
+    }
+
+    public function entreprise() {
+        return $this->belongsTo(Entreprise::class, 'entreprise_id');
+    }
 
 }

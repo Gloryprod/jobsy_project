@@ -71,8 +71,9 @@ class User extends Authenticatable implements MustVerifyEmail
         $this->notify(new CustomVerifyEmail());
     }
 
-     public function sendPasswordResetNotification($token)
+    public function sendPasswordResetNotification($token)
     {
         $this->notify(new CustomResetPasswordNotification($token));
     }
+
 }

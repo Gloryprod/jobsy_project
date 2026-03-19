@@ -7,6 +7,7 @@ use App\Http\Requests\ContactEntrepriseRequest;
 use App\Http\Requests\EntrepriseRequest;
 use App\Models\Entreprise;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 
@@ -74,6 +75,29 @@ class EntrepriseController extends Controller
             200
         );
 
+    }
+
+    public function updatePassword(Request $request) {
+        $request->validate([
+            'currentPassword' => 'required',
+            'newPassword' => 'required|min:8|confirmed',
+        ]);
+
+        $entreprise = $request->user()->entreprise;
+
+        if (!Hash::check($request->currentPassword, $entreprise->user->password)) {
+            return apiResponse(null, 'Mot de passe actuel incorrect', 'error', 400);
+        }
+
+        $entreprise->user->password = Hash::make($request->newPassword);
+        $entreprise->user->save();
+
+        return apiResponse(
+            null,
+            "Mot de passe mis à jour avec succès !",
+            'success',
+            200
+        ); 
     }
     
 }

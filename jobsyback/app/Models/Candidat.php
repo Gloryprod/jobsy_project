@@ -78,4 +78,8 @@ class Candidat extends Model
             return $skill->category;
         })->unique('id');
     }
+
+    public function applications() {
+        return $this->hasMany(Application::class);
+    }
 }

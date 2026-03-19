@@ -39,4 +39,8 @@ return [
         'key' => env('NLP_SERVICE_KEY'),
     ],
 
+    'openai' => [
+        'key' => env('OPENAI_API_KEY'),
+    ],
+
 ];

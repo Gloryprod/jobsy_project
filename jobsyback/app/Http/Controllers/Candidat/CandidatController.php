@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Jobs\AnalyzeCVJob;
 use App\Models\Candidat;
+use Illuminate\Support\Facades\Hash;
 
 
 class CandidatController extends Controller
@@ -282,5 +283,28 @@ class CandidatController extends Controller
         }
 
        return apiResponse($candidat, 'Candidat récupéré avec succès', 'success', 200);
-    }    
+    }   
+    
+    public function updatePassword(Request $request) {
+        $request->validate([
+            'currentPassword' => 'required',
+            'newPassword' => 'required|min:8|confirmed',
+        ]);
+
+        $candidat = $request->user()->candidat;
+
+        if (!Hash::check($request->currentPassword, $candidat->user->password)) {
+            return apiResponse(null, 'Mot de passe actuel incorrect', 'error', 400);
+        }
+
+        $candidat->user->password = Hash::make($request->newPassword);
+        $candidat->user->save();
+
+        return apiResponse(
+             null,
+            "Mot de passe mis à jour avec succès !",
+            'success',
+            200
+        );  
+    }
 }

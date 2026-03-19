@@ -10,7 +10,7 @@ use App\Services\AuthServices;
 use Illuminate\Auth\Events\Registered;     
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;  
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Hash;                    
 use App\Models\Entreprise; 
 
 
@@ -141,6 +141,7 @@ class AuthController extends Controller
         
         $user = $request->user();
         $user = $user->load('entreprise.contact_entreprise');
+        $user = $user->load('candidat.rank');
         return $user;
     }
 

@@ -34,6 +34,8 @@ class MissionRequest extends FormRequest
             'skills.*'    => 'string',
             'urgency'     => ['required', Rule::in(['normal', 'urgent', 'premium'])],
             'category'    => 'required|string',
+            'min_rank_required'    => 'required|string',
+            'test_severity'    => ['required', Rule::in(['light', 'standard', 'expert'])],
             'applicants'  => 'nullable|integer|min:0',
             'type_contrat' => 'required|string|max:255',
         ];
