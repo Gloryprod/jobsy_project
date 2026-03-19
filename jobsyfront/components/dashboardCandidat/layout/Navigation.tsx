@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { 
   Home, Sword, BookOpen, Backpack, Wallet, User, Bell, Settings, Menu, X,
-  Hexagon, Heart,
+  Hexagon, Heart,CheckCheck
 } from 'lucide-react';
 import { useUser } from '@/context/UserProvider';
 import Link from 'next/link';
@@ -14,6 +14,7 @@ export default function Navigation() {
   const navItems = [
     { id: 'home', name: 'Tableau de bord', icon: Home, link: '/dashboard/candidats'  },
     { id: 'missions', name: 'Missions', icon: Sword, link: '/dashboard/candidats/missions' },
+    { id: 'missions_confirmées', name: 'Offres confirmées', icon: CheckCheck, link: '/dashboard/candidats/missions' },
     { id: 'formations', name: 'Formations', icon: BookOpen, link: '/dashboard/candidats/formations' },
     { id: 'inventaire', name: 'Inventaire', icon: Backpack, link: '/dashboard/candidats/inventaire' },
     { id: 'wallet', name: 'Mes Gains', icon: Wallet, link: '/dashboard/candidats/loot' },
@@ -25,11 +26,11 @@ export default function Navigation() {
         setMobileMenuOpen(false);
       }}
       className={`flex flex-col items-center cursor-pointer gap-1 px-3 py-2 rounded-lg transition ${
-         'text-[#F0E68C]' 
+         'text-white' 
       }`}
     >
       <div className="relative">
-        <item.icon className="w-6 h-6" />
+        <item.icon className="w-4 h-4" />
         {item.badge && (
           <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
             {item.badge}
@@ -42,7 +43,7 @@ export default function Navigation() {
 
   return (
     <>
-      <aside className="hidden md:flex fixed left-0 top-16 bottom-0 w-72 bg-white/10 backdrop-blur-2xl border-r border-white/20 flex-col">
+      <aside className="hidden md:flex fixed left-0 top-16 bottom-0 w-64 bg-[#000080]/90 text-white border border-white/20 flex-col">
         <div className="flex-1 overflow-y-auto p-6">
           {/* <div className="mb-10 bg-white/10 rounded-2xl p-5 border border-white/10">
             <div className="flex items-center gap-4">
@@ -64,9 +65,9 @@ export default function Navigation() {
                 <Link href={item.link || '#'} key={item.id}>
                     <button
                         key={item.id}
-                        className="w-full cursor-pointer flex items-center gap-4 px-6 py-4 rounded-xl transition-all" 
+                        className="w-full cursor-pointer flex items-center gap-2 px-2 py-3 rounded-xl transition-all" 
                     >
-                        <item.icon className="w-6 h-6" />
+                        <item.icon className="w-4 h-4" />
                         <span>{item.name}</span>
                     </button>
                 </Link>

@@ -6,10 +6,12 @@ import { useUser } from '@/context/UserProvider';
 import { useLogout } from '@/lib/logout';
 import Link from 'next/link';
 import useOnClickOutside from '@/hooks/useOnClickOutside';
+import { NotificationBell } from '@/components/dashboardCandidat/notifications/NotificationBell';
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [openNotifications, setOpenNotifications] = useState(false);
   const ref = useRef<HTMLDivElement>(null!);
   const { user } = useUser();
   const { handleLogout } = useLogout();
@@ -32,8 +34,7 @@ export default function Header() {
             <div className="hidden md:flex items-center space-x-6">   
               {/* Notifications */}
               <button className="relative cursor-pointer p-3 rounded-xl bg-white/5 hover:bg-white/10 transition">
-                <Bell className="w-5 h-5 text-white" />
-                <span className="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
+                <NotificationBell />
               </button>
 
               {/* Bloc Profil cliquable */}
@@ -43,7 +44,7 @@ export default function Header() {
                   className="flex cursor-pointer items-center space-x-3 rounded-xl hover:bg-white/10 px-4 py-2 transition"
                 >
                   <div className="relative">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#F0E68C] to-yellow-400 p-0.5">
+                    <div className="w-12 h-12 rounded-full bg-linear-to-br from-[#F0E68C] to-yellow-400 p-0.5">
                       <div className="w-full h-full rounded-full bg-[#000080] flex items-center justify-center">
                         <User className="w-7 h-7 text-white" />
                       </div>
@@ -85,8 +86,7 @@ export default function Header() {
             {/* Mobile */}
             <div className="flex md:hidden items-center space-x-4">
               <button className="relative cursor-pointer p-2 rounded-lg bg-white/5">
-                <Bell className="w-5 h-5 text-white" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                <NotificationBell />
               </button>
 
               {/* <div className="flex items-center space-x-2 bg-white/5 rounded-lg px-3 py-2">
@@ -109,7 +109,7 @@ export default function Header() {
           <div ref={ref} className="md:hidden bg-[#000080]/95 backdrop-blur-lg border-t border-white/10">
             <div className="px-6 py-6 space-y-6">
               <div className="flex items-center space-x-4 pb-4 border-b border-white/10">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#F0E68C] to-yellow-400 p-0.5">
+                <div className="w-16 h-16 rounded-full bg-linear-to-br from-[#F0E68C] to-yellow-400 p-0.5">
                   <div className="w-full h-full rounded-full bg-[#000080] flex items-center justify-center">
                     <User className="w-9 h-9 text-white" />
                   </div>

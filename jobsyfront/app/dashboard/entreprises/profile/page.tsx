@@ -51,6 +51,9 @@ export default function Profile() {
     const [contact, setContact] = useState<Partial<Contact>>({});
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [logo, setLogo] = useState<string | null>(null);
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [newPassword_confirmation, setConfirmPassword] = useState('');
 
     const pageLink = "/dashboard/entreprises/profile";
 
@@ -135,6 +138,16 @@ export default function Profile() {
             if(error.response){
                 toast.error(error.response.data.message);
             }
+        }
+    };
+
+    const handlePasswordChange = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const res = await api.post('/entreprise/update/password', { currentPassword, newPassword, newPassword_confirmation });
+            toast.success("Mot de passe modifié !");
+        } catch (err : any) {
+            toast.error(err.response?.data?.message || "Erreur lors de la modification du mot de passe");
         }
     };
 
@@ -317,7 +330,7 @@ export default function Profile() {
                                 value={entreprise.description || ''}
                                 onChange={(e) => setEntreprise({ ...entreprise, description: e.target.value })}
                             /> */}
-                            <Editor name="description" className="w-full min-h-[120px] p-4 border rounded-xl focus:ring-2 focus:ring-[#000080]/20 outline-none text-gray-600" value={entreprise.description || ''} onTextChange={(e: EditorTextChangeEvent) => setEntreprise({ ...entreprise, description: e.htmlValue})} style={{ height: '320px' }} />
+                            <Editor name="description" className="w-full min-h-[120px] p-4 border rounded-xl focus:ring-2 focus:ring-[#000080]/20 outline-none text-gray-600" value={entreprise.description ?? ''} onTextChange={(e: EditorTextChangeEvent) => setEntreprise({ ...entreprise, description: e.htmlValue})} style={{ height: '320px' }} />
                             
                             <div className="flex justify-end">
                                 <button onClick={() => {setIsEditing(false) ; if(entreprise.id) {saveInfo(entreprise.id)}}} className="bg-[#000080] text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-[#000060]">
@@ -373,6 +386,16 @@ export default function Profile() {
                             </button>
                         </div>
                     )}
+                </div>
+
+                {/* MOT DE PASSE */}
+                <div className="bg-white max-w-md p-6 rounded-2xl shadow-sm border">
+                    <form onSubmit={handlePasswordChange} className="space-y-5">
+                    <input type="password" value={currentPassword}  placeholder="Mot de passe actuel" onChange={(e) => setCurrentPassword(e.target.value)} className='w-full p-2 text-black border-black rounded-lg focus:ring-2 focus:ring-[#000080]/20 outline-none'/>
+                    <input type="password" name="newPassword" value={newPassword} placeholder="Nouveau mot de passe" onChange={(e) => setNewPassword(e.target.value)} className='w-full p-2 text-black border-black rounded-lg focus:ring-2 focus:ring-[#000080]/20 outline-none' />
+                    <input type="password" name="newPassword_confirmation" value={newPassword_confirmation} placeholder="Confirmer le mot de passe" onChange={(e) => setConfirmPassword(e.target.value)} className='w-full p-2 text-black border-black rounded-lg focus:ring-2 focus:ring-[#000080]/20 outline-none'/>
+                    <button type="submit" className="w-full px-6 py-2 bg-[#000080] text-white rounded-xl text-[10px] font-black uppercase tracking-widest">Modifier le mot de passe</button>
+                    </form>
                 </div>
 
             </div>

@@ -5,7 +5,7 @@ import {use} from "react";
 import { ThreeDots } from 'react-loader-spinner';
 import PageInfo from "@/components/PageInfo";
 import Avatar from "@/components/Avatar";
-import { Briefcase, GraduationCap, Award, Calendar, MapPin } from 'lucide-react';
+import { Briefcase, GraduationCap, Award, Calendar, MapPin, BrainCircuit, CheckCircle2, Eye, Download } from 'lucide-react';
 
 interface Category{
     name : string
@@ -25,12 +25,19 @@ interface Education {
     Duration : string;
 }
 
+interface Certification {
+    CourseName: string;
+    Provider: string;
+    Date: string;
+}
+
 interface Candidat {
 
     domaine_competence : string;
     niveau_etude : string;
     bio : string;
     ville : string;
+    is_validate: boolean;
 
     rank : {
         label: string;
@@ -47,17 +54,23 @@ interface Candidat {
         role : string
     }
 
-    skills: {
+    skills: Array<{
+        id: number;
         name : string
         category : Category
-    }
+    }>
 
     cv_datas :{
         education: Education[];
-        other_certifications :Array<null>;
+        other_certifications : Certification[];
         experiences : Experience[]
     }
-   
+
+    diplomes : Array<{
+        id: number;
+        intitule: string;
+        fichier: string;
+    }>
 }
 
 const fetcher = (url : string) => api.get(url).then(res => res.data.data)
@@ -80,55 +93,103 @@ export default function DetailProfil({params} : {params : Promise <{id: string}>
         return <div>Failed to load</div>
     }
 
-    console.log(data)
-
     return(
         <div className="min-h-screen relative p-4 md:p-8 bg-gray-100">
             <div className="mb-6">
-                <PageInfo pageName="Profil Candidat" pageLink={pageLink} />
+                <PageInfo pageName="Candidats" pageLink={pageLink} />
             </div>
 
-            <div className="bg-white block w-full p-6 border border-default rounded-4xl shadow-xs">
-                <div className="w-full bg-[#000080]/40 h-40 rounded-3xl ">
+            <div className="mb-8">
+                <h1 className="text-2xl font-black text-slate-800 flex items-center justify-center">Gestion des Candidats</h1>
+                <p className="text-slate-500 flex items-center justify-center"><i>Détails du profil candidat</i></p>
+            </div>
 
-                    <div className="absolute mt-28 ml-8 w-32 h-32 bg-white rounded-full">
-
-                        <div className="mt-2 ml-2 w-28 h-28 bg-gray-200 rounded-full">
-                            <Avatar width = {112} height = {112} fontSize = {50} nom = {data?.user.nom} prenom = {data?.user.prenom} />
-                        </div> 
+            <div className="bg-white w-full p-4 md:p-6 border border-slate-100 rounded-2xl md:rounded-[3rem] shadow-sm relative">
+  
+            <div className="relative w-full bg-[#000080]/40 h-32 md:h-40 rounded-2xl md:rounded-3xl">
+                <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 md:left-8 md:translate-x-0 w-32 h-32 md:w-32 md:h-32 bg-white rounded-full p-1 shadow-md">
+                    <div className="w-full h-full bg-gray-200 rounded-full overflow-hidden">
+                        <Avatar 
+                            width={120} 
+                            height={120} 
+                            fontSize={48} 
+                            nom={data?.user.nom} 
+                            prenom={data?.user.prenom} 
+                        />
                     </div>
+                </div>
+            </div>
 
+            {/* Info Content */}
+            <div className="mt-14 md:mt-4 md:ml-44 flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+                <div className="text-center md:text-left space-y-1">
+                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                        <h3 className="font-black text-2xl md:text-3xl text-gray-900">
+                        {data?.user.nom} {data?.user.prenom}
+                        </h3>
+
+                        {/* Badge de Rang */}
+                        <span 
+                        className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white"
+                        style={{ backgroundColor: data?.rank.code_hexa || "#000080" }}
+                        >
+                        Rang {data?.rank.rank}
+                        </span>
+                        
+                        {/* Badge de validation (Check) */}
+                        {data?.is_validate ? (
+                            <CheckCircle2 size={24} className="text-green-600 fill-blue-50" />
+                        ) : ""}
+
+                    </div>
+                    
+                    <p className="text-sm md:text-md font-bold text-slate-500 uppercase tracking-tight">
+                        {data?.domaine_competence}
+                    </p>
+                    <p className="text-xs md:text-sm text-slate-400 font-medium">
+                        {data?.ville}
+                    </p>
                 </div>
 
+                {/* Actions - Empilées sur mobile, ligne sur desktop */}
+                <div className="flex flex-wrap justify-center md:justify-end gap-2 mt-2 md:mt-0">
+                    {/* N'affiche le bouton "Valider" QUE si le profil n'est pas encore validé */}
+                    <button className="px-5 py-2.5 rounded-xl text-sm font-bold bg-[#000080] text-white hover:bg-blue-900 transition-all cursor-pointer shadow-md">
+                        Contacter
+                    </button>
+                </div>
+            </div> 
 
-                <div className="flex justify-left items-start mt-20">
-                    <div className="ml-10 space-y-2">
-                        <div className="flex justify-between ">
-                            <h3 className="font-extrabold text-3xl text-gray-900">{data?.user.nom} {data?.user.prenom} </h3>
-                            <span className="font-bold text-sm rounded-2xl p-2 ml-124" style={{backgroundColor: data?.rank.code_hexa , color: "white" }}>Rang {data?.rank.rank}</span>
-                        </div>
-                        <p className="text-md text-gray-500">{data?.domaine_competence}</p>
-                        <p className="text-md text-gray-500">{data?.ville}</p>
-                    </div>
-                </div> 
-
-                <p className="mt-6 text-body">{data?.bio}</p>    
-
-                <div className="flex items-end justify-end mt-8">
-                    <div className="space-x-3 space-y-2">
-                        <button className="rounded-3xl text-base bg-[#F0E68C] p-2 text-black">
-                            Ajouter aux Favoris
-                        </button>
-
-                        <button className="rounded-3xl text-base bg-[#000080] p-2 text-white">
-                            Contacter
-                        </button>
-                    </div>
-                </div>                   
+            {/* Bio Section */}
+            <div className="mt-8 border-t border-slate-50 pt-6">
+                <p className="text-slate-600 text-sm md:text-base leading-relaxed text-center md:text-left">
+                {data?.bio}
+                </p>
+            </div>
             </div>
 
+            <div className="bg-white block w-full mt-4 p-6 border border-default rounded-3xl shadow-xs">
 
-            <div className="space-y-8 max-w-5xl mx-auto p-4">
+                <div className="flex items-center gap-3 mb-8">
+                    <div className="p-2 bg-blue-50 text-[#000080] rounded-lg">
+                        <BrainCircuit size={24} />
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-800">Compétences</h2>
+                </div>
+
+                <div className="flex flex-wrap gap-4">
+                    {data?.skills.map((skill) => (
+                        <div key={skill.id} className="flex items-center gap-2 bg-gray-100 text-gray-800 px-4 py-2 rounded-full text-sm">
+                            <span className="w-2 h-2 rounded-full" style={{backgroundColor: skill.category.color}}></span>
+                            {skill.name}
+                        </div>
+                    ))}
+                </div>
+
+            </div>
+
+            
+            <div className="space-y-8 w-full mx-auto p-6">
                 
                 {/* SECTION EXPÉRIENCES */}
                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
@@ -182,15 +243,21 @@ export default function DetailProfil({params} : {params : Promise <{id: string}>
                         </div>
 
                         <div className="space-y-6">
-                            {data?.cv_datas.education.map((edu, index) => (
-                                <div key={index} className="group p-4 rounded-2xl border border-transparent hover:border-green-100 hover:bg-green-50/30 transition-all">
-                                    <h3 className="font-bold text-gray-800 leading-tight mb-1">{edu.Degree}</h3>
-                                    <p className="text-sm text-green-700 font-medium mb-2">{edu.Institution}</p>
-                                    <p className="text-xs text-gray-400 flex items-center gap-1">
-                                        <Calendar size={12} /> {edu.Duration}
+                            {data?.cv_datas.education && data?.cv_datas.education.length > 0 ? (
+                                data?.cv_datas.education.map((edu, index) => (
+                                    <div key={index} className="group p-4 rounded-2xl border border-transparent hover:border-green-100 hover:bg-green-50/30 transition-all">
+                                        <h3 className="font-bold text-gray-800 leading-tight mb-1">{edu.Degree}</h3>
+                                        <p className="text-sm text-green-700 font-medium mb-2">{edu.Institution}</p>
+                                        <p className="text-xs text-gray-400 flex items-center gap-1">
+                                            <Calendar size={12} /> {edu.Duration}
                                     </p>
                                 </div>
-                            ))}
+                            ) )) : (
+                                <div className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-gray-100 rounded-2xl">
+                                    <GraduationCap size={32} className="text-gray-200 mb-2" />
+                                    <p className="text-gray-400 text-sm italic">Aucun diplôme ou formation n&apos;a été ajouté par le candidat.</p>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -203,8 +270,17 @@ export default function DetailProfil({params} : {params : Promise <{id: string}>
                             <h2 className="text-xl font-bold text-gray-800">Certifications</h2>
                         </div>
 
-                        {data?.cv_datas.other_certifications ? (
+                        {data?.cv_datas.other_certifications && data?.cv_datas.other_certifications.length > 0 ? (
                             <div className="space-y-4">
+                                {data?.cv_datas.other_certifications.map((cert, index) => (
+                                    <div key={index} className="group p-4 rounded-2xl border border-transparent hover:border-orange-100 hover:bg-orange-50/30 transition-all">
+                                        <h3 className="font-bold text-gray-800 leading-tight mb-1">{cert.CourseName}</h3>
+                                        <p className="text-sm text-orange-700 font-medium mb-2">{cert.Provider}</p>
+                                        <p className="text-xs text-gray-400 flex items-center gap-1">
+                                            <Calendar size={12} /> {cert.Date}
+                                        </p>
+                                    </div>
+                                ))}
                             </div>
                         ) : (
                             <div className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-gray-100 rounded-2xl">

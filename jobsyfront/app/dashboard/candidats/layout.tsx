@@ -6,22 +6,22 @@ import { Toaster } from 'react-hot-toast';
 export default async function Layout({ children }: { children: React.ReactNode }) {
   return (
     <UserProvider>
-        <div className="min-h-screen bg-gradient-to-b from-[#000080] to-black text-white">
-            <Header />
+      <div className="min-h-screen">
+          <Header />
 
-            <Navigation />
+          <Navigation />
 
-            <main className="md:ml-72">
-              <Toaster
-                position="top-right"
-                toastOptions={{
-                  duration: 6000,
-                  style: { borderRadius: '10px' },
-                }}
-              />
-                {children}
-            </main>        
-        </div>
+          <main className="md:ml-64 bg-slate-50 min-h-screen">
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 6000,
+                style: { borderRadius: '10px' },
+              }}
+            />
+              {children}
+          </main>        
+      </div>
     </UserProvider>
   )
 }

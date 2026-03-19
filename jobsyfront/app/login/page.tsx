@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { z } from "zod";
 import api from "@/lib/api";
 import Swal from "sweetalert2";
+import { toast } from 'react-hot-toast';
 
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -56,29 +57,33 @@ export default function LoginPage() {
 
       const user = response.data.data.user;
 
-      Swal.fire({
-        icon: "success",
-        title: "Connexion réussie",
-        text: response.data.message,
-        confirmButtonColor: "#000080",
-      });
+      // Swal.fire({
+      //   icon: "success",
+      //   title: "Connexion réussie",
+      //   text: response.data.message,
+      //   confirmButtonColor: "#000080",
+      // });
+
+      toast.success("Connexion réussie", { duration: 10000 });
 
       // Redirection selon rôle
       if (user.role === "JEUNE") window.location.href = "/dashboard/candidats";
       else if (user.role === "ENTREPRISE") window.location.href = "/dashboard/entreprises";
+      else if (user.role === "ADMIN") window.location.href = "/dashboard/admin";
       else window.location.href = "/";
 
     } catch (error: any) {
-      const msg = error?.response?.data?.message || "Une erreur est survenue. Veuillez réessayer.";
+      const msg = error?.response?.data?.message ;
       setErrorMsg(msg);
 
-      Swal.fire({
-        icon: "error",
-        title: "Connexion échouée",
-        text: error?.response?.data?.message || "Une erreur est survenue. Veuillez réessayer.",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#d33",
-      });
+      // Swal.fire({
+      //   icon: "error",
+      //   title: "Connexion échouée",
+      //   text: error?.response?.data?.message || "Une erreur est survenue. Veuillez réessayer.",
+      //   confirmButtonText: "OK",
+      //   confirmButtonColor: "#d33",
+      // });
+      toast.error(msg, { duration: 5000 });
     }
 
     setLoading(false);

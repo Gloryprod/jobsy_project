@@ -34,8 +34,9 @@ export default function Header() {
 
     const navItem = [
         { id: "home", name: "Tableau de bord", icon: Home, href: "/dashboard/entreprises" },
-        { id: "jobs", name: "Offres / Missions", icon: Briefcase, href: "/dashboard/entreprises/offres" },
-        { id: "applications", name: "Candidatures", icon: FileClock, href: "/dashboard/entreprises/candidatures" },
+        { id: "openJobs", name: "Offres Ouvertes", icon: Briefcase, href: "/dashboard/entreprises/missions/list" },
+        { id: "closeJobs", name: "Offres Clotûrées", icon: Briefcase, href: "/dashboard/entreprises/missions/closed/list" },
+
     ]
 
     const navJeunes = [
@@ -235,7 +236,7 @@ export default function Header() {
                                     ))}
                                 </nav>
 
-                                <div className="flex items justify-left mb-4 pt-4">
+                                {/* <div className="flex items justify-left mb-4 pt-4">
                                     <span className="text-black text-xs">Candidats</span>
                                 </div>
                                 <nav className="space-y-2 w-full ">
@@ -249,7 +250,7 @@ export default function Header() {
                                             <span className="ml-2">{item.name}</span>
                                         </Link>
                                     ))}
-                                </nav>                            
+                                </nav>                             */}
 
                                 <div className="flex items justify-left mb-4 pt-4">
                                     <span className="text-black text-xs">General</span>

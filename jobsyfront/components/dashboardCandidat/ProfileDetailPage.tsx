@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { User, Edit, Save, Phone, Mail, MapPin, CheckCircle, Lightbulb, FileText, GraduationCap, Trash2 } from 'lucide-react';
+import { User, Edit, Save, Phone, Mail, MapPin, CheckCircle, Lightbulb, FileText, GraduationCap, Trash2, BadgeCheck, Trophy, Shield, UserRoundCog } from 'lucide-react';
 import api from '@/lib/api';
 import { useUser } from '@/context/UserProvider';
 import PhoneInput from '@/components/forms/PhoneInput';
@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 import Swal from "sweetalert2";
 import useSWR, {mutate} from 'swr';
 import { ThreeDots } from 'react-loader-spinner';
+import { Button } from '../ui/button';
 
 /* =======================
    TYPES
@@ -86,6 +87,9 @@ export default function ProfileDetailPage() {
   const [intitule, setIntitule] = useState<string | null>(null);
   const [cvLoading, setCvLoading] = useState(false);
   const [diplomeLoading, setDiplomeLoading] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newPassword_confirmation, setConfirmPassword] = useState('');
 
 
   /* =======================
@@ -245,220 +249,223 @@ const deleteDiplome = async (id: number) => {
 };
 
 
-  if (loading || authLoading || isLoading) {
-    return (<div className="flex justify-center items-center h-screen">
-                <ThreeDots
-                height="80"
-                width="80"
-                radius="9"
-                color="#F0E68C"
-                ariaLabel="three-dots-loading"
-                wrapperStyle={{ margin: '20px' }}
-                wrapperClass="custom-loader"
-                visible={true}
-                />
-            </div>);
+const handlePasswordChange = async (e: React.FormEvent) => {
+  e.preventDefault();
+  try {
+    const res = await api.post('/candidat/update/password', { currentPassword, newPassword, newPassword_confirmation });
+    toast.success("Mot de passe modifié !");
+  } catch (err : any) {
+    toast.error(err.response?.data?.message || "Erreur lors de la modification du mot de passe");
   }
+};
 
-        if (error) {
-          return (
-            <div className="min-h-screen bg-gradient-to-b from-[#000080] to-black pt-20 pb-24">
-              <div className="max-w-6xl mx-auto px-4 text-center">
-                <p className="text-red-400 text-xl">Erreur: {error?.message || 'Une erreur est survenue lors du chargement du profil.'}</p>
-              </div>
-            </div>
-          );
-        }
+if (loading || authLoading || isLoading) {
+  return (<div className="flex justify-center items-center h-screen">
+              <ThreeDots
+              height="80"
+              width="80"
+              radius="9"
+              color="#000080"
+              ariaLabel="three-dots-loading"
+              wrapperStyle={{ margin: '20px' }}
+              wrapperClass="custom-loader"
+              visible={true}
+              />
+          </div>);
+}
+
+if (error) {
+  return (
+    <div className="min-h-scree pt-20 pb-24">
+      <div className="max-w-6xl mx-auto px-4 text-center">
+        <p className="text-red-400 text-xl">Erreur: {error?.message || 'Une erreur est survenue lors du chargement du profil.'}</p>
+      </div>
+    </div>
+  );
+}
 
   return (
-      <div className="min-h-screen bg-gradient-to-b from-[#000080] to-black pt-20 pb-24">
-      <div className="max-w-6xl mx-auto px-4 space-y-12">
+    <div className="min-h-screen bg-[#F8FAFC] pb-24">
+      <div className="max-w-5xl mx-auto px-4 space-y-10">
 
-        {/* HEADER */}
-        <header className="text-center space-y-4">
-          <div className="relative inline-block">
-            <div className="w-32 h-32 rounded-full bg-[#000080] flex items-center justify-center border-4 border-[#F0E68C]">
-              <User className="w-20 h-20 text-white" />
+        {/* ==================== HEADER : CARTE D'IDENTITÉ AVENTURIER ==================== */}
+        <header className="relative bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 overflow-hidden text-center">
+          {/* Ornement de fond style RPG */}
+          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#000080] via-[#F0E68C] to-[#000080]" />
+          
+          <div className="relative inline-block group">
+            <div className="w-36 h-36 rounded-full bg-slate-50 flex items-center justify-center border-4 border-[#F0E68C] shadow-lg overflow-hidden transition-transform group-hover:scale-105 duration-300">
+              {/* Remplacer par l'image de l'utilisateur si dispo */}
+              <User className="w-20 h-20 text-[#000080]" />
             </div>
-            <span className="absolute bottom-0 right-0 bg-green-500 rounded-full p-1">
+            <div className="absolute bottom-1 right-1 bg-green-500 border-4 border-white rounded-full p-1.5 shadow-md">
               <CheckCircle className="w-5 h-5 text-white" />
-            </span>
+            </div>
           </div>
 
-          <h1 className="text-4xl font-bold text-white">
-            {user?.prenom} {user?.nom}
-          </h1>
+          <div className="mt-6 space-y-2">
+            <h1 className="text-4xl font-black text-slate-800 uppercase tracking-tight">
+              {user?.prenom} {user?.nom}
+            </h1>
+            
+            <div className="flex items-center justify-center gap-3">
+              <span className="px-4 py-1 bg-[#000080] text-white text-xs font-black rounded-full uppercase tracking-widest shadow-sm">
+                Rang {profile?.rank?.rank ?? '1'}
+              </span>
+              <span className="text-[#8B8000] font-bold text-sm">
+                ✨ {profile?.rank?.points ?? 0} XP Cumulés
+              </span>
+            </div>
 
-          <p className="text-[#F0E68C]">
-            Rang {profile?.rank?.rank  ?? '—'} • {profile?.rank?.points ?? 0} XP
-          </p>
-
-          <p className="text-white/70 max-w-xl mx-auto">
-            {profile?.bio || 'Ajoute une bio pour te présenter'}
-          </p>
+            <p className="text-slate-500 max-w-xl mx-auto mt-4 font-medium italic">
+              '{profile?.bio || 'Cet aventurier n’a pas encore écrit sa légende...'}''
+            </p>
+          </div>
         </header>
 
-        {/* GRID */}
+        {/* ==================== GRID DE SECTIONS ==================== */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-          {/* INFOS */}
-          <Section
-            title="Infos personnelles"
-            icon={User}
-            onEdit={() => setEditing('info')}
-          >
+          {/* INFOS PERSONNELLES */}
+          <Section title="Informations Personnelles" icon={Shield} onEdit={() => setEditing('info')}>
             {editing === 'info' ? (
-              <>
+              <div className="space-y-4">
                 <Input label="Sexe" value={infoForm.sexe} onChange={(v: string) => setInfoForm({ ...infoForm, sexe: v})} />
                 <Input label="Ville" value={infoForm.ville} onChange={(v: string) => setInfoForm({ ...infoForm, ville: v})} />
                 <Input label="Date de naissance" value={infoForm.date_naissance} onChange={(v: string) => setInfoForm({ ...infoForm, date_naissance: v })} type="date" />
-                <Input label="Nationalité" value={infoForm.nationalite} onChange={(v: string) => setInfoForm({ ...infoForm, nationalite: v })} />
                 <Textarea label="Bio" value={infoForm.bio} onChange={(v: string) => setInfoForm({ ...infoForm, bio: v })} />
-
                 <SaveButton onClick={saveInfo} />
-              </>
+              </div>
             ) : (
-              <>
-              <InfoRow icon={MapPin} value={profile?.ville} />
-              <InfoRow icon={Lightbulb} value={profile?.bio} />
-              </>
+              <div className="space-y-4 mt-2">
+                <InfoRow icon={MapPin} label="Localisation" value={profile?.ville} />
+                <InfoRow icon={BadgeCheck} label="Nationalité" value={profile?.nationalite} />
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                   <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Bio</p>
+                   <p className="text-sm text-slate-600 leading-relaxed">{profile?.bio || 'Aucune bio.'}</p>
+                </div>
+              </div>
             )}
           </Section>
 
           {/* CONTACT */}
-          <Section
-            title="Contact"
-            icon={Phone}
-            onEdit={() => setEditing('contact')}
-          >
+          <Section title="Canaux de Communication" icon={Phone} onEdit={() => setEditing('contact')}>
             {editing === 'contact' ? (
-              <>
-                <PhoneInput value={contactForm.telephone || ''} onChange={(v: string) => setContactForm({ ...contactForm, telephone: v })} />
+              <div className="space-y-4">
+                <Input label="Téléphone" value={contactForm.telephone} onChange={(v: string) => setContactForm({ ...contactForm, telephone: v })} />
                 <Input label="LinkedIn" value={contactForm.linkedin} onChange={(v: string)=> setContactForm({ ...contactForm, linkedin: v })} />
-                <Input label="Email secondaire" value={contactForm.email_secondaire} onChange={(v: string) => setContactForm({ ...contactForm, email_secondaire: v })} />
-
                 <SaveButton onClick={saveContact} />
-              </>
-            ) : (
-              <>
-                <InfoRow icon={Phone} value={profile?.contact?.telephone} />
-                <InfoRow icon={Mail} value={profile?.contact?.email_secondaire} />
-              </>
-            )}
-          </Section>
-
-          {/* CV */}
-          <Section title="CV (pdf, doc ou docx)" icon={FileText}>
-            {cv ? (
-              <div className="space-y-4">
-                <a
-                  href={`${process.env.NEXT_PUBLIC_API_URL}/storage/${cv.fichier}`}
-                  target="_blank"
-                  className="block text-center py-4 bg-white/10 rounded-xl hover:bg-white/20"
-                >
-                  <FileText className="mx-auto mb-2" />
-                  Voir mon CV
-                </a>
-
-                <button
-                  onClick={deleteCv}
-                  className="w-full py-3 bg-red-500/20 text-red-300 rounded-xl hover:bg-red-500/30"
-                >
-                  Supprimer le CV
-                </button>
               </div>
             ) : (
-              <div className="space-y-4">
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={e => setCvFile(e.target.files?.[0] || null)}
-                  className="w-full text-white border border-white/20 bg-white/10 rounded-xl py-3 px-4"
-                />
-
-                <button
-                  disabled={!cvFile || cvLoading}
-                  onClick={uploadCv}
-                  className="w-full py-3 bg-[#F0E68C] text-[#000080] rounded-xl disabled:opacity-50"
-                >
-                  {cvLoading ? 'Upload en cours...' : 'Uploader mon CV'}
-                </button>
+              <div className="space-y-4 mt-2">
+                <InfoRow icon={Phone} label="Cristal de contact" value={profile?.contact?.telephone} />
+                <InfoRow icon={Mail} label="Messagerie" value={profile?.contact?.email_secondaire} />
+                <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 flex items-center gap-3">
+                   <div className="p-2 bg-white rounded-lg shadow-sm">
+                      <Shield className="w-5 h-5 text-[#000080]" />
+                   </div>
+                   <p className="text-xs font-bold text-[#000080]">Profil vérifié par la guilde</p>
+                </div>
               </div>
             )}
           </Section>
 
-          
+          {/* CV / MANUSCRIT */}
+          <Section title="Curriculum Vitae (CV)" icon={FileText}>
+            <div className="mt-2">
+              {cv ? (
+                <div className="space-y-4">
+                  <a href={`${process.env.NEXT_PUBLIC_API_URL}/storage/${cv.fichier}`} target="_blank"
+                    className="flex items-center justify-between p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl hover:border-[#000080]/30 transition-all group">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-white rounded-lg"><FileText className="text-[#000080]" /></div>
+                      <span className="font-bold text-slate-700">Consulter mon CV</span>
+                    </div>
+                    <Edit className="w-4 h-4 text-slate-400 group-hover:text-[#000080]" />
+                  </a>
+                  <button onClick={deleteCv} className="text-xs font-bold text-red-400 hover:text-red-600 flex items-center gap-1 px-2">
+                    <Trash2 size={14} /> Réinitialiser le document
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center hover:bg-slate-50 transition-colors">
+                    <input type="file" accept=".pdf,.doc,.docx" onChange={e => setCvFile(e.target.files?.[0] || null)} className="hidden" id="cv-upload" />
+                    <label htmlFor="cv-upload" className="cursor-pointer">
+                      <FileText className="mx-auto mb-2 text-slate-300" size={32} />
+                      <p className="text-sm font-medium text-slate-500">Cliquez pour ajouter votre parchemin (PDF, DOC)</p>
+                    </label>
+                  </div>
+                  <button disabled={!cvFile || cvLoading} onClick={uploadCv} className="w-full py-4 bg-[#000080] text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-blue-900/20 disabled:opacity-30">
+                    {cvLoading ? 'Magie en cours...' : 'Uploader le CV'}
+                  </button>
+                </div>
+              )}
+            </div>
+          </Section>
+
           {/* DIPLÔMES */}
           <Section title="Diplômes" icon={GraduationCap}>
-
-            {diplomes?.map(d => (
-              <div key={d.id} className="bg-white/10 p-4 rounded-xl flex mb-4 justify-between">
-                <div>
-                  <p className="font-semibold">{d.intitule}</p>
-                  <a href={`${process.env.NEXT_PUBLIC_API_URL}/storage/${d.fichier}`} target="_blank" className="text-[#F0E68C] text-sm flex gap-1">
-                    <FileText className="w-4 h-4" /> Voir fichier
-                  </a>
+            <div className="space-y-4 mt-2">
+              {diplomes?.map(d => (
+                <div key={d.id} className="bg-white border border-slate-100 p-4 rounded-2xl flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-[#F0E68C]/20 rounded-xl flex items-center justify-center text-[#8B8000]">
+                      <Trophy size={20} />
+                    </div>
+                    <div>
+                      <p className="font-black text-slate-800 text-sm uppercase leading-none mb-1">{d.intitule}</p>
+                      <a href={`${process.env.NEXT_PUBLIC_API_URL}/storage/${d.fichier}`} target="_blank" className="text-[10px] font-bold text-[#000080] flex items-center gap-1">
+                        VOIR <FileText size={10} />
+                      </a>
+                    </div>
+                  </div>
+                  <button onClick={() => deleteDiplome(d.id)} className="p-2 hover:bg-red-50 rounded-lg text-red-400 transition-colors">
+                    <Trash2 size={18} />
+                  </button>
                 </div>
-                <button onClick={() => deleteDiplome(d.id)}>
-                  <Trash2 className="text-red-400" />
-                </button>
+              ))}
+
+              <div className="pt-4 border-t border-slate-100 mt-4">
+                <Input placeholder="Intitulé du diplôme (ex: Master IT)" value={intitule} onChange={(i: string) => setIntitule(i)} />
+                <div className="flex gap-2 mt-3">
+                  <input type="file" onChange={e => setDiplomeFile(e.target.files?.[0] || null)} className="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-[#F0E68C]/20 file:text-[#8B8000] cursor-pointer" />
+                  <button disabled={!diplomeFile} onClick={uploadDiplome} className="px-6 py-2 bg-[#000080] text-white rounded-xl text-[10px] font-black uppercase tracking-widest">
+                    Ajouter
+                  </button>
+                </div>
               </div>
-            ))}
-
-            <InfoRow icon={Lightbulb} value="Ajoute tes diplômes pour valoriser ton profil." />
-
-            <div className="mt-4">
-              <div className='mb-4'>
-                <Input placeholder="Intitule du diplome"  value={intitule} onChange={(i: string) => setIntitule(i)} />
-              </div>
-              <div className='' >
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={e => setDiplomeFile(e.target.files?.[0] || null)}
-                  className="w-full mb-4 text-white border border-white/20 bg-white/10 rounded-xl py-3 px-4"
-                />
-
-                <button
-                  disabled={!diplomeFile || diplomeLoading}
-                  onClick={uploadDiplome}
-                  className="w-full py-3 bg-[#F0E68C] text-[#000080] rounded-xl disabled:opacity-50"
-                >
-                  {diplomeLoading ? 'Upload en cours...' : 'Uploader'}
-                </button>
-              </div>
-
             </div>
-            
           </Section>
 
+          {/* MOT DE PASSE */}
 
-          {/* CONCOURS */}
-          {/* <Section title="Concours" icon={Trophy}>
-            <p className="text-white/60">À implémenter</p>
-          </Section> */}
-
-          {/* COMMUNAUTÉS */}
-          {/* <Section title="Communautés" icon={Users}>
-            <p className="text-white/60">À implémenter</p>
-          </Section> */}
-
+          <Section title="Mot de passe" icon={UserRoundCog}>
+              <form onSubmit={handlePasswordChange} className="space-y-5">
+                <Input type="password" value={currentPassword}  placeholder="Mot de passe actuel" onChange={(i: string) => setCurrentPassword(i)}/>
+                <Input type="password" name="newPassword" value={newPassword} placeholder="Nouveau mot de passe" onChange={(i: string) => setNewPassword(i)} />
+                <Input type="password" name="newPassword_confirmation" value={newPassword_confirmation} placeholder="Confirmer le mot de passe" onChange={(i: string) => setConfirmPassword(i)} />
+                <button type="submit" className="w-full px-6 py-2 bg-[#000080] text-white rounded-xl text-[10px] font-black uppercase tracking-widest">Modifier le mot de passe</button>
+              </form>
+          </Section>
         </div>
       </div>
     </div>
   );
 }
 
+// ==================== COMPOSANTS UI RE-STYLISÉS ====================
+
 function Section({ title, icon: Icon, children, onEdit }: any) {
   return (
-    <div className="bg-white/10 rounded-3xl p-6 border border-white/20">
-      <div className="flex justify-between mb-4">
-        <h2 className="flex gap-3 text-xl font-bold">
-          <Icon className="text-[#F0E68C]" /> {title}
+    <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="flex items-center gap-3 text-sm font-black uppercase tracking-[0.2em] text-slate-800">
+          <div className="p-2 bg-slate-50 rounded-lg text-[#000080]"><Icon size={18} /></div> {title}
         </h2>
         {onEdit && (
-          <button onClick={onEdit}>
-            <Edit className="text-white/70" />
+          <button onClick={onEdit} className="p-2 hover:bg-slate-50 rounded-full transition-colors text-slate-400 hover:text-[#000080]">
+            <Edit size={20} />
           </button>
         )}
       </div>
@@ -467,16 +474,17 @@ function Section({ title, icon: Icon, children, onEdit }: any) {
   );
 }
 
-function Input({ label, value, onChange, placeholder, type }: any) {
+function Input({ label, value, onChange, placeholder, type, name }: any) {
   return (
-    <div>
-      <label className="text-white/80">{label}</label>
+    <div className="space-y-1.5">
+      {label && <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{label}</label>}
       <input
-        className="w-full p-3 bg-white/10 rounded-xl text-white"
+        className="w-full p-4 bg-slate-50 rounded-2xl border border-slate-100 text-slate-700 font-bold focus:outline-none focus:border-[#000080]/30 transition-all placeholder:text-slate-300"
         value={value || ''}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
         type={type}
+        name={name}
       />
     </div>
   );
@@ -484,11 +492,11 @@ function Input({ label, value, onChange, placeholder, type }: any) {
 
 function Textarea({ label, value, onChange }: any) {
   return (
-    <div>
-      <label className="text-white/80">{label}</label>
+    <div className="space-y-1.5">
+      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{label}</label>
       <textarea
-        className="w-full p-3 bg-white/10 rounded-xl text-white"
-        rows={4}
+        className="w-full p-4 bg-slate-50 rounded-2xl border border-slate-100 text-slate-700 font-bold focus:outline-none focus:border-[#000080]/30 transition-all"
+        rows={3}
         value={value || ''}
         onChange={e => onChange(e.target.value)}
       />
@@ -500,17 +508,23 @@ function SaveButton({ onClick }: any) {
   return (
     <button
       onClick={onClick}
-      className="mt-4 w-full bg-[#F0E68C] text-[#000080] py-3 rounded-xl flex justify-center gap-2"
+      className="w-full bg-[#F0E68C] text-[#8B8000] py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex justify-center items-center gap-2 shadow-lg shadow-yellow-200 hover:bg-[#ece27c] transition-all"
     >
-      <Save className="w-5 h-5" /> Sauvegarder
+      <Save size={18} /> Sauvegarder les modifications
     </button>
   );
 }
 
-function InfoRow({ icon: Icon, value }: any) {
+function InfoRow({ icon: Icon, label, value }: any) {
   return (
-    <p className="flex gap-2 text-white/80">
-      <Icon className="w-5 h-5" /> {value || '—'}
-    </p>
+    <div className="flex items-center gap-4 group">
+      <div className="p-2.5 bg-slate-50 rounded-xl group-hover:bg-[#000080]/10 transition-colors">
+        <Icon className="w-5 h-5 text-[#000080]" />
+      </div>
+      <div>
+        <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter leading-none mb-1">{label}</p>
+        <p className="text-sm font-bold text-slate-700 leading-none">{value || '—'}</p>
+      </div>
+    </div>
   );
 }

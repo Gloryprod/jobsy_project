@@ -54,7 +54,7 @@ export default function ListMission(){
 
             <div className="bg-white block w-full border rounded-2xl shadow-xs ">
                 <div className="container mx-auto p-6">
-                    <DataTable columns={columns} data={data || []} />
+                    <DataTable columns={columns} data={data || []} bulkDeleteUrl="/missions/bulk-delete" onSuccess={() => queryClient.invalidateQueries({ queryKey: ['missions'] })} />
                 </div>
             </div>
         </div>

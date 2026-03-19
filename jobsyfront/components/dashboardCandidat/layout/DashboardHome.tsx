@@ -1,250 +1,229 @@
 'use client';
 
-import React from 'react';
-import { Hexagon, Heart, Backpack, Sword, Star, Rocket} from 'lucide-react';
+import React, { useState } from 'react';
+import { Hexagon, Heart, Backpack, Sword, Star, Rocket, ShieldCheck, Trophy } from 'lucide-react';
 import { useUser } from '@/context/UserProvider';
 import useSWR from 'swr';
 import api from '@/lib/api';
 import { ThreeDots } from 'react-loader-spinner';
-import { useState } from 'react';
 import { Box, Tabs, Tab } from '@mui/material';
+import { Timestamp } from "next/dist/server/lib/cache-handlers/types";
+import { getExpirationText } from '@/components/GetExpirationText';
+import Link from 'next/link';
 
 const fetcher = (url: string) => api.get(url).then(res => res.data);
+const fetcher1 = (url: string) => api.get(url).then(res => res.data.data);
+
+type Mission = {
+  id: number;
+  title: string;
+  company: string;
+  location: string;
+  reward: number;
+  duration: string; 
+  deadline: string;
+  description: string;
+  skills: string[]; 
+  urgency: 'normal' | 'urgent' | 'premium';
+  category: string;
+  applicants: number;
+  type_contrat: 'CDI' | 'CDD' | 'Mission Ponctuelle';
+  active: boolean;
+  test_severity: 'light' | 'standard' | 'expert';
+  min_rank_required: string;
+}
+
+interface Application{
+    id: number;
+    candidat_id: number;
+    mission: Mission;
+    status: 'draft' | 'pending' | 'accepted'| 'rejected';
+    global_score: number;
+    badge: string;
+    ai_summary: string;
+    created_at: Timestamp;
+    completed_at: Timestamp;
+    updated_at: Timestamp;
+}
 
 export default function DashboardHome() {
-  const { user, loading  } = useUser();
+  const { user, loading } = useUser();
   const { data, error, isLoading } = useSWR('/candidat/profile-elements', fetcher);
-
   const [tabValue, setTabValue] = useState(0);
+  const candidatId = user?.candidat?.id;
+
+  const { data : applications, error: applicationsError, isLoading: applicationsLoading } = useSWR<Application[]>(`/missions/${candidatId}/myapplications`, fetcher1);
+
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
-  if (loading || isLoading) {
-    return (<div className="flex justify-center items-center h-screen">
-                <ThreeDots
-                height="80"
-                width="80"
-                radius="9"
-                color="#F0E68C"
-                ariaLabel="three-dots-loading"
-                wrapperStyle={{ margin: '20px' }}
-                wrapperClass="custom-loader"
-                visible={true}
-                />
-            </div>);
-  }
-
-  if (error) {
+  if (loading || isLoading || applicationsLoading) {
     return (
-      <div className="min-h-screen bg-white pt-20 pb-24">
-        <div className="max-w-6xl mx-auto px-4 text-center">
-          <p className="text-red-400 text-xl">Erreur: {error?.message || 'Une erreur est survenue lors du chargement du profil.'}</p>
-        </div>
+      <div className="flex justify-center items-center h-[60vh]">
+        <ThreeDots height="80" width="80" color="#000080" visible={true} />
       </div>
     );
   }
- 
-  return (
-    <div className="min-h-screen pb-24 md:pb-8">
-      <div className="w-full px-4 sm:px-6 lg:px-8 space-y-10">
 
-        {/* ==================== PERSONNAGE ACTIF ==================== */}
-        <section className="bg-white/15 backdrop-blur-2xl rounded-3xl overflow-hidden">
-          <div className="p-8 lg:p-12">
-            <div className="flex flex-col lg:flex-row items-center lg:items-start gap-10 lg:gap-16">
-
-              {/* Infos principales */}
-              <div className="flex flex-col md:flex-row items-center gap-8 w-full">
-                <div className="relative shrink-0">
-                  <Hexagon className="w-28 h-28 lg:w-32 lg:h-32 stroke-white/40" style={{ fill: data.data.rank.code_hexa }}/>
-                  <span className="absolute inset-0 flex items-center justify-center text-white font-black text-4xl lg:text-5xl">
-                    {data.data.rank.rank}
-                  </span>
-                </div>
-
-                <div className="flex-1 w-full space-y-4 text-left md:text-left sm:text-center lg:text-left">
-                  <div>
-                    <p className="text-[#F0E68C] uppercase tracking-wider text-sm font-bold">Bienvenue, {user?.prenom} !</p>
-                    <p className="text-white text-2xl lg:text-3xl font-semibold">{data.data.domaine_competence}</p>
-                  </div>
-
-                  {/* Section des Jauges (Points & Énergie) */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                    
-                    {/* Barre XP / Points */}
-                    <div className="space-y-1">
-                      <div className="flex justify-between items-center px-1">
-                        <div className="flex items-center gap-2 text-yellow-400">
-                          <Star size={16} fill="currentColor" />
-                          <span className="text-xs font-bold uppercase">Points (XP)</span>
-                        </div>
-                        <span className="text-xs text-white/70 font-mono">{ data.data.rank.points }</span>
-                      </div>
-                      <div className="h-3 w-full bg-black/40 rounded-full border border-white/10 overflow-hidden">
-                        <div 
-                          className="h-full bg-gradient-to-r from-yellow-600 to-yellow-300 transition-all duration-1000"
-                          style={{ width: '75%' }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Barre Énergie */}
-                    <div className="space-y-1">
-                      <div className="flex justify-between items-center px-1">
-                        <div className="flex items-center gap-2 text-blue-400">
-                          <Heart size={16} fill="currentColor" />
-                          <span className="text-xs font-bold uppercase">Énergie</span>
-                        </div>
-                        <span className="text-xs text-white/70 font-mono">40%</span>
-                      </div>
-                      <div className="h-3 w-full bg-black/40 rounded-full border border-white/10 overflow-hidden">
-                        <div 
-                          className="h-full bg-gradient-to-r from-blue-600 to-blue-400 transition-all duration-1000 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
-                          style={{ width: '40%' }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-             </div>
-          </div>
-        </section>
-
-
-        {/* ==================== STATISTIQUES DE CARRIÈRE ==================== */}
-          <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            {/* Card: Missions Accomplies */}
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl flex items-center gap-5 transition-transform hover:scale-105 cursor-default">
-              <div className="p-3 bg-green-500/20 rounded-xl">
-                <Sword className="text-green-400 w-8 h-8" />
-              </div>
-              <div>
-                <p className="text-white/60 text-sm uppercase font-bold tracking-tight">Missions Accomplies</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-white">{data?.data?.missions_done || 12}</span>
-                  <span className="text-green-400 text-xs font-bold">+2 cette semaine</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Card: Missions en Cours */}
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl flex items-center gap-5 transition-transform hover:scale-105 cursor-default">
-              <div className="p-3 bg-blue-500/20 rounded-xl">
-                <Rocket className="text-blue-400 w-8 h-8" />
-              </div>
-              <div>
-                <p className="text-white/60 text-sm uppercase font-bold tracking-tight">En cours</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-white">{data?.data?.missions_active || 3}</span>
-                  <span className="text-blue-400 text-xs font-bold font-mono italic">Progression active</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Card: Formations */}
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl flex items-center gap-5 transition-transform hover:scale-105 cursor-default">
-              <div className="p-3 bg-purple-500/20 rounded-xl">
-                <Backpack className="text-purple-400 w-8 h-8" />
-              </div>
-              <div>
-                <p className="text-white/60 text-sm uppercase font-bold tracking-tight">Formations suivies</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-white">{data?.data?.trainings_completed || 7}</span>
-                  <span className="text-purple-400 text-xs font-bold">Compétences débloquées</span>
-                </div>
-              </div>
-            </div>
-
-          </section>
-
-
-          <section className="mt-10">
-            {/* Barre d'onglets stylisée */}
-            <Box sx={{ borderBottom: 1, borderColor: 'white/10', mb: 3 }}>
-              <Tabs 
-                value={tabValue} 
-                onChange={handleTabChange}
-                textColor="inherit"
-                TabIndicatorProps={{ style: { backgroundColor: '#F0E68C', height: '3px' } }}
-                sx={{
-                  '& .MuiTab-root': { 
-                    color: 'rgba(255,255,255,0.5)', 
-                    fontWeight: 'bold',
-                    textTransform: 'none',
-                    fontSize: '1rem'
-                  },
-                  '& .Mui-selected': { color: '#F0E68C !important' }
-                }}
-              >
-                <Tab label="Missions en cours" />
-                <Tab label="Formations suivies" />
-                <Tab label="Recommandations" />
-              </Tabs>
-            </Box>
-
-            {/* Contenu des onglets */}
-            <div className="min-h-[300px]">
-              {tabValue === 0 && (
-                <div className="grid grid-cols-1 gap-4 animate-in fade-in duration-500">
-                  {/* Exemple de ligne de mission */}
-                  {[1, 2].map((i) => (
-                    <div key={i} className="bg-white/5 border border-white/10 p-5 rounded-xl flex justify-between items-center hover:bg-white/10 transition-colors">
-                      <div className="flex gap-4 items-center">
-                        <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
-                          <Rocket size={24} />
-                        </div>
-                        <div>
-                          <h4 className="text-white font-bold text-lg">Développeur Frontend Next.js</h4>
-                          <p className="text-white/50 text-sm">Entreprise TechX • Lancé il y a 2 jours</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span className="px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-400 text-xs font-bold border border-yellow-500/20 uppercase">
-                          En attente
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {tabValue === 1 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-bottom-4 duration-500">
-                  {/* Exemple de carte formation */}
-                  <div className="bg-white/5 border border-white/10 p-5 rounded-xl flex gap-4">
-                    <div className="w-16 h-16 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400 shrink-0">
-                          <Backpack size={32} />
-                    </div>
-                    <div className="flex-1">
-                        <h4 className="text-white font-bold">Maîtriser TypeScript 2026</h4>
-                        <div className="w-full bg-white/10 h-2 rounded-full mt-3">
-                          <div className="bg-purple-500 h-full rounded-full" style={{ width: '85%' }}></div>
-                        </div>
-                        <p className="text-xs text-white/40 mt-2 italic">85% complété - +400 XP à la clé</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {tabValue === 2 && (
-                <div className="text-center py-10 bg-white/5 rounded-2xl border border-dashed border-white/20">
-                  <Star className="mx-auto text-[#F0E68C] mb-4" size={40} />
-                  <h3 className="text-white font-bold">Nouvelles missions disponibles !</h3>
-                  <p className="text-white/50 max-w-sm mx-auto mt-2">Notre IA a détecté 3 nouvelles missions qui correspondent à votre rang {data.data.rank.rank}.</p>
-                  <button className="mt-6 px-6 py-2 bg-[#F0E68C] text-black font-bold rounded-lg hover:bg-yellow-200 transition-colors">
-                    Découvrir les quêtes
-                  </button>
-                </div>
-              )}
-            </div>
-        </section>
-
+  if (error || applicationsError) {
+    return (
+      <div className="bg-white rounded-2xl p-10 text-center shadow-sm border border-red-100">
+        <p className="text-red-500 font-bold">Erreur de chargement des données de quête.</p>
       </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-700">
+      
+      <section className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden relative">
+        <div className="h-2 w-full bg-linear-to-r from-[#000080] to-[#4B0082]" />
+        
+        <div className="p-6 lg:p-10">
+          <div className="flex flex-col lg:flex-row items-center gap-8">
+            
+            {/* Avatar / Rank Hexagon */}
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-linear-to-r from-[#F0E68C] to-[#000080] rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+              <div className="relative shrink-0 flex items-center justify-center">
+                <Hexagon className="w-24 h-24 lg:w-32 lg:h-32 drop-shadow-md" fill={data.data.rank.code_hexa || '#000080'} stroke="white" strokeWidth={1} />
+                <span className="absolute inset-0 flex items-center justify-center text-white font-black text-3xl lg:text-4xl drop-shadow-sm">
+                  {data.data.rank.rank}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex-1 w-full space-y-6">
+              <div className="text-center lg:text-left">
+                <h1 className="text-3xl font-black text-[#000080] mb-1">
+                  {user?.prenom} <span className="text-slate-400 font-medium">| {data.data.domaine_competence}</span>
+                </h1>
+                <p className="text-slate-500 font-medium flex items-center justify-center lg:justify-start gap-2 italic">
+                  <ShieldCheck size={18} className="text-[#F0E68C]" /> Aventurier de niveau {data.data.rank.rank}
+                </p>
+              </div>
+
+              {/* Jauges Style RPG */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* XP Bar */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-[11px] font-black uppercase tracking-widest text-slate-500">
+                    <span className="flex items-center gap-1"><Star size={14} className="fill-[#F0E68C] text-[#F0E68C]" /> Expérience</span>
+                    <span>{data.data.rank.points} XP</span>
+                  </div>
+                  <div className="h-4 w-full bg-slate-100 rounded-full border border-slate-200 p-0.5">
+                    <div 
+                      className="h-full bg-linear-to-r from-[#F0E68C] to-yellow-500 rounded-full transition-all duration-1000 shadow-inner"
+                      style={{ width: '75%' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Energy Bar */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-[11px] font-black uppercase tracking-widest text-slate-500">
+                    <span className="flex items-center gap-1"><Heart size={14} className="fill-red-500 text-red-500" /> Vitalité</span>
+                    <span>80%</span>
+                  </div>
+                  <div className="h-4 w-full bg-slate-100 rounded-full border border-slate-200 p-0.5">
+                    <div 
+                      className="h-full bg-linear-to-r from-red-500 to-orange-400 rounded-full transition-all duration-1000 shadow-inner"
+                      style={{ width: '80%' }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ==================== CARTES DE STATISTIQUES ==================== */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {[
+          { label: 'Missions Finies', val: data?.data?.missions_done || 12, icon: Sword, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
+          { label: 'Quêtes en cours', val: data?.data?.missions_active || 3, icon: Rocket, color: 'text-[#000080]', bg: 'bg-blue-50', border: 'border-blue-100' },
+          { label: 'Sortilèges Appris', val: data?.data?.trainings_completed || 7, icon: Trophy, color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100' }
+        ].map((stat, idx) => (
+          <div key={idx} className={`bg-white ${stat.border} border-2 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all group`}>
+            <div className="flex items-center gap-4">
+              <div className={`p-3 ${stat.bg} ${stat.color} rounded-xl group-hover:scale-110 transition-transform`}>
+                <stat.icon size={28} />
+              </div>
+              <div>
+                <p className="text-slate-400 text-xs font-bold uppercase tracking-tighter">{stat.label}</p>
+                <p className="text-2xl font-black text-slate-800">{stat.val}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </section>
+
+      {/* ==================== ONGLETS DE CONTENU ==================== */}
+      <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+        <Box sx={{ borderBottom: 2, borderColor: 'divider', mb: 4 }}>
+          <Tabs 
+            value={tabValue} 
+            onChange={handleTabChange}
+            sx={{
+              '& .MuiTab-root': { 
+                color: '#94a3b8', 
+                fontWeight: '800',
+                textTransform: 'uppercase',
+                fontSize: '0.75rem',
+                letterSpacing: '0.1em'
+              },
+              '& .Mui-selected': { color: '#000080 !important' },
+              '& .MuiTabs-indicator': { backgroundColor: '#000080', height: 3 }
+            }}
+          >
+            <Tab label="Journal de Quêtes" />
+            <Tab label="Grimoire (Formations)" />
+            <Tab label="Tableau de Recrutement" />
+          </Tabs>
+        </Box>
+
+        <div className="min-h-[250px]">
+          {tabValue === 0 && (
+            <div className="space-y-4">
+              {applications?.map((application) => (
+                <div key={application.id} className="flex items-center justify-between p-4 rounded-2xl border border-slate-100 hover:border-[#000080]/30 hover:bg-slate-50 transition-all cursor-pointer">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-[#000080]">
+                      <Rocket size={20} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-800">{application.mission.title}</h4>
+                      <p className="text-xs text-slate-400">{application.mission.company} • {getExpirationText(application.mission.deadline)}</p>
+                    </div>
+                  </div>
+                    {application.status === 'pending' && <span className="bg-[#F0E68C]/20 text-[#8B8000] px-3 py-1 rounded-full text-[10px] font-black uppercase border border-[#F0E68C]/50">En Attente</span>}
+                    {application.status === 'accepted' && <span className="bg-[#10B981]/20 text-[#059669] px-3 py-1 rounded-full text-[10px] font-black uppercase border border-[#10B981]/50">Acceptée</span>}
+                    {application.status === 'rejected' && <span className="bg-[#EF4444]/20 text-[#DC2626] px-3 py-1 rounded-full text-[10px] font-black uppercase border border-[#EF4444]/50">Rejetée</span>}
+                    {application.status === 'draft' && <Link href={`/dashboard/candidats/missions/${application.mission.id}/application`}><button className="cursor-pointer ml-4 px-3 py-1 bg-[#000080] text-white rounded-full text-xs font-bold hover:bg-[#000080]/80 transition">Finaliser</button></Link>}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {tabValue === 2 && (
+            <div className="text-center py-12 px-4 border-2 border-dashed border-slate-200 rounded-3xl">
+              <div className="w-16 h-16 bg-[#F0E68C]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Star className="text-[#8B8000]" size={32} />
+              </div>
+              <h3 className="text-xl font-black text-[#000080]">Nouvelles Destinées !</h3>
+              <p className="text-slate-500 text-sm max-w-xs mx-auto mt-2">
+                Le conseil a trouvé 3 opportunités dignes de votre rang.
+              </p>
+              <button className="mt-6 px-8 py-3 bg-[#000080] text-white font-bold rounded-xl shadow-lg hover:shadow-[#000080]/30 transition-all active:scale-95">
+                Consulter les quêtes
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
     </div>
   );
 }
-

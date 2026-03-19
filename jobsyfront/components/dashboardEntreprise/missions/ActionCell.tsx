@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
-import { MoreHorizontal, Eye, Edit, Trash } from "lucide-react" 
+import { MoreHorizontal, Eye, Edit, Trash, XCircle } from "lucide-react" 
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -19,22 +19,106 @@ import {
 import { useRouter } from "next/navigation"
 import { toast } from 'react-hot-toast';
 import api from '@/lib/api';
+import Swal from 'sweetalert2';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
 
 
-// On crée un composant interne pour gérer l'état du Modal
 export const ActionCell = ({ mission }: { mission: Mission }) => {
   const [showDetails, setShowDetails] = useState(false)
   const router = useRouter()
+  const queryClient = useQueryClient()
+
+  const deactivateMutation = useMutation({
+      mutationFn: (id: number) => api.get(`/missions/deactivate/${id}`),
+      onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['missions'] });
+          if (mission.active) {
+            toast.success("Mission activée avec succès.");
+          }else{
+            toast.success("Mission désactivée avec succès.");
+          }
+      },
+      onError: (error: any) => {
+          const message = error.response?.data?.message || "Une erreur est survenue";
+          toast.error(message);
+      }
+  });
+
+  const closeMutation = useMutation({
+      mutationFn: (id: number) => api.get(`/missions/close/${id}`),
+      onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['missions'] });
+            toast.success("Mission cloturée avec succès.");
+      },
+      onError: (error: any) => {
+          const message = error.response?.data?.message || "Une erreur est survenue";
+          toast.error(message);
+      }
+  });
 
   const handleDelete = async (mission_id:number) =>{
-        try {            
-            await api.delete(`/missions/${mission_id}`)
-            toast.success("Suppression effectuée avec succès.");   
-        } catch (error: any) {
-            const messages = error.response?.data?.message;
-            toast.error(messages);
+
+    const result = await Swal.fire({
+      title: `Voulez-vous supprimer cette offre ?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Oui, supprimer",
+      cancelButtonText: "Annuler",
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+    });
+    
+    if (result.isConfirmed) {
+      try {            
+          await api.delete(`/missions/${mission_id}`)
+          toast.success("Suppression effectuée avec succès.");   
+      } catch (error: any) {
+          const messages = error.response?.data?.message;
+          toast.error(messages);
+      }
+    }
+  }
+
+  const handleDeactivate = async (mission_id:number) =>{
+
+    const title = mission.active ? "Voulez-vous désactiver cette offre ? Elle ne sera plus visible par les candidats." : "Voulez-vous réactiver cette offre ? Elle sera à nouveau visible par les candidats.";
+
+    const result = await Swal.fire({
+      title: title,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Oui",
+      cancelButtonText: "Annuler",
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+    });
+    
+    if (result.isConfirmed) {
+      deactivateMutation.mutate(mission_id);
+    }
+  }
+
+  const handleCloseMission = async (mission_id:number) => {
+      try {
+        const title = "Voulez-vous vraiment clôturer les candidatures à cette offre ? Les candidatures en attente seront rejetées et cette mission ne sera plus visible par les candidats.";
+
+        const result = await Swal.fire({
+          title: title,
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Oui",
+          cancelButtonText: "Annuler",
+          confirmButtonColor: "#d33",
+          cancelButtonColor: "#3085d6",
+        });
+        
+        if (result.isConfirmed) {
+          closeMutation.mutate(mission_id);  
         }
-   }
+      } catch (error) {
+        toast.error("Erreur lors de la clôture");
+      }
+  };
 
   return (
     <>
@@ -53,9 +137,10 @@ export const ActionCell = ({ mission }: { mission: Mission }) => {
             <Edit className="h-4 w-4" />
             Modifier
           </DropdownMenuItem>
-          <DropdownMenuItem className="cursor-pointer"><Eye className="h-4 w-4" />Candidatures</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => router.push(`/dashboard/entreprises/missions/${mission.id}/applications`)} className="cursor-pointer"><Eye className="h-4 w-4" />Candidatures</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem className="cursor-pointer">Désactiver</DropdownMenuItem>
+          <DropdownMenuItem className="cursor-pointer" onClick={() => handleDeactivate(mission.id)}>{mission.active ? "Désactiver" : "Activer"}</DropdownMenuItem>
+          <DropdownMenuItem className="text-red-300 cursor-pointer" onClick={() => handleCloseMission(mission.id)}>Clôturer le recrutement</DropdownMenuItem>
           <DropdownMenuItem className="text-red-500 cursor-pointer" onClick={() => handleDelete(mission.id)}><Trash className="h-4 w-4" /> Supprimer</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -74,14 +159,14 @@ export const ActionCell = ({ mission }: { mission: Mission }) => {
           </DialogHeader>
 
           <div className="grid gap-4 py-4 no-scrollbar -mx-4 max-h-[50vh] overflow-y-auto px-4">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-muted-foreground">Localisation</p>
                 <p>{mission.location}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-medium text-muted-foreground">Rémunération</p>
-                <p className="font-bold text-green-600">{mission.reward} $</p>
+                <p className="font-bold text-green-600">{mission.reward} FCFA</p>
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-medium text-muted-foreground">Date limite</p>
@@ -98,6 +183,14 @@ export const ActionCell = ({ mission }: { mission: Mission }) => {
               <div className="space-y-1">
                 <p className="text-sm font-medium text-muted-foreground">Nombre de poste</p>
                 <p className="">{mission.applicants}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Difficulté du test</p>
+                <p className="">{mission.test_severity === 'light' ? 'Facile' : mission.test_severity === 'standard' ? 'Moyen' : 'Difficile'}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Niveau minimum requis</p>
+                <p className="">{mission.min_rank_required === 'E' ? '< BAC' : mission.min_rank_required === 'D' ? 'BAC' : mission.min_rank_required === 'C' ? 'BTS / DTU' : mission.min_rank_required === 'B' ? 'Licence' : mission.min_rank_required === 'A' ? 'Master / Maîtrise' : 'Doctorat'}</p>
               </div>
             </div>
             

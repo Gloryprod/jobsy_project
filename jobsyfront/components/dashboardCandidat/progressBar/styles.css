@@ -1,0 +1,39 @@
+.progress-container {
+  position: relative;
+  width: 100%;
+  padding: 20px 0;
+}
+
+.progress-background-bar {
+  height: 4px;
+  width: 100%;
+  background-color: #ddd;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 0;
+}
+
+.progress-fill-bar {
+  height: 100%;
+  background-color: #f0bb31;
+}
+
+.steps-container {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  z-index: 1;
+}
+
+.step-circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  background-color: #ddd; /* Valeur par défaut */
+}
