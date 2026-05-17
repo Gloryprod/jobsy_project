@@ -33,6 +33,19 @@ export type Entreprise = {
 export const columns: ColumnDef<Entreprise>[] = [
 
     {
+        id: "index",
+        header: () => <div className="text-center w-10">#</div>,
+        cell: ({ row }) => {
+            // row.index commence à 0, donc on ajoute 1
+            return (
+                <div className="text-center font-medium text-slate-400">
+                    {row.index + 1}
+                </div>  
+            );
+        },
+    },
+
+    {
         accessorKey: "logo",
         header: () => <div className="text-left">Logo</div>,
         cell: ({ row }) => {

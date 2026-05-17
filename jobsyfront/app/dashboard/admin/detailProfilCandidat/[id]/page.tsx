@@ -110,69 +110,76 @@ export default function DetailProfil({params} : {params : Promise <{id: string}>
             <div className="relative w-full bg-[#000080]/40 h-32 md:h-40 rounded-2xl md:rounded-3xl">
                 {/* Avatar Container - Centré sur mobile, à gauche sur desktop */}
                 <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 md:left-8 md:translate-x-0 w-32 h-32 md:w-32 md:h-32 bg-white rounded-full p-1 shadow-md">
-                <div className="w-full h-full bg-gray-200 rounded-full overflow-hidden">
-                    <Avatar 
-                        width={120} 
-                        height={120} 
-                        fontSize={48} 
-                        nom={data?.user.nom} 
-                        prenom={data?.user.prenom} 
-                    />
-                </div>
+                    <div className="w-full h-full bg-gray-200 rounded-full overflow-hidden">
+                        <Avatar 
+                            width={120} 
+                            height={120} 
+                            fontSize={48} 
+                            nom={data?.user.nom} 
+                            prenom={data?.user.prenom} 
+                        />
+                    </div>
                 </div>
             </div>
 
             {/* Info Content */}
-            <div className="mt-14 md:mt-4 md:ml-44 flex flex-col md:flex-row md:justify-between md:items-start gap-4">
-                <div className="text-center md:text-left space-y-1">
-                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
-                    <h3 className="font-black text-2xl md:text-3xl text-gray-900">
-                    {data?.user.nom} {data?.user.prenom}
-                    </h3>
+            <div className="mt-16 md:mt-6 md:ml-48 flex flex-col md:flex-row md:justify-between md:items-end gap-6 px-4 py-6 md:px-0">
+  
+            {/* SECTION INFOS : Texte centré sur mobile, à gauche sur desktop */}
+                <div className="text-center md:text-left flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-2">
+                        <h3 className="font-black text-2xl md:text-4xl text-slate-900 tracking-tight truncate">
+                            {data?.user.prenom} {data?.user.nom}
+                        </h3>
 
-                     {/* Badge de Rang */}
-                    <span 
-                    className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white"
-                    style={{ backgroundColor: data?.rank.code_hexa || "#000080" }}
-                    >
-                    Rang {data?.rank.rank}
-                    </span>
+                        <div className="flex items-center gap-2">
+                            {/* Badge de Rang - Style modernisé */}
+                            <span 
+                            className="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest text-white shadow-sm"
+                            style={{ backgroundColor: data?.rank.code_hexa || "#000080" }}
+                            >
+                            Rang {data?.rank.rank}
+                            </span>
+                            
+                            {/* Badge de validation (Check) */}
+                            {data?.is_validate && data?.rank.rank !== "E" && (
+                                <div className="bg-blue-50 p-1 rounded-full">
+                                    <CheckCircle2 size={20} className="text-blue-600 fill-blue-50" />
+                                </div>
+                            )}
+                        </div>
+                    </div>
                     
-                    {/* Badge de validation (Check) */}
-                    {data?.is_validate ? (
-                        <CheckCircle2 size={24} className="text-green-600 fill-blue-50" />
-                    ) : ""}
-
+                    {/* Détails métier et ville */}
+                    <div className="space-y-1">
+                    <p className="text-sm md:text-lg font-bold text-slate-600 uppercase tracking-wide">
+                        {data?.domaine_competence || "Domaine non défini"}
+                    </p>
+                    <p className="text-xs md:text-sm text-slate-400 font-medium italic">
+                        {data?.ville || "Ville non précisée"}
+                    </p>
+                    </div>
                 </div>
-                
-                <p className="text-sm md:text-md font-bold text-slate-500 uppercase tracking-tight">
-                    {data?.domaine_competence}
-                </p>
-                <p className="text-xs md:text-sm text-slate-400 font-medium">
-                    {data?.ville}
-                </p>
-                </div>
-
-                {/* Actions - Empilées sur mobile, ligne sur desktop */}
-                <div className="flex flex-wrap justify-center md:justify-end gap-2 mt-2 md:mt-0">
-                {/* N'affiche le bouton "Valider" QUE si le profil n'est pas encore validé */}
-                {!data?.is_validate && (
-                    <button className="px-5 py-2.5 rounded-xl text-sm font-bold bg-[#F0E68C] text-black hover:bg-[#ece27c] transition-all cursor-pointer shadow-sm">
-                    Valider Profil
-                    </button>
-                )}
-
-                <button className="px-5 py-2.5 rounded-xl text-sm font-bold bg-[#000080] text-white hover:bg-blue-900 transition-all cursor-pointer shadow-md">
-                    Contacter
-                </button>
-                </div>
-            </div> 
+            </div>
 
             {/* Bio Section */}
             <div className="mt-8 border-t border-slate-50 pt-6">
                 <p className="text-slate-600 text-sm md:text-base leading-relaxed text-center md:text-left">
                 {data?.bio}
                 </p>
+            </div>
+
+            {/* SECTION ACTIONS : Boutons côte à côte même sur mobile */}
+            <div className="flex items-center justify-right md:justify-end gap-3 md:w-auto">
+                {!data?.is_validate && data?.rank.rank !== "E" && (
+                <button className="flex-1 md:flex-none px-6 py-3 rounded-2xl text-xs md:text-sm font-black uppercase tracking-widest bg-[#F0E68C] text-[#000080] hover:bg-[#ece27c] transition-all cursor-pointer shadow-sm active:scale-95 border border-[#d4ca6a]">
+                    Valider
+                </button>
+                )}
+
+                <button className="flex-1 md:flex-none px-6 py-3 rounded-2xl text-xs md:text-sm font-black uppercase tracking-widest bg-[#000080] text-white hover:bg-blue-950 transition-all cursor-pointer shadow-lg shadow-blue-900/20 active:scale-95">
+                Contacter
+                </button>
             </div>
             </div>
 
@@ -197,63 +204,63 @@ export default function DetailProfil({params} : {params : Promise <{id: string}>
             </div>
 
             <div className="bg-white block w-full mt-4 p-6 border border-slate-100 rounded-3xl shadow-sm">
-            <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-50 text-[#000080] rounded-lg">
-                        <BrainCircuit size={24} />
+                <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-50 text-[#000080] rounded-lg">
+                            <BrainCircuit size={24} />
+                        </div>
+                        <h2 className="text-xl font-bold text-gray-800">Parcours Académique</h2>
                     </div>
-                    <h2 className="text-xl font-bold text-gray-800">Parcours Académique</h2>
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                        {data?.diplomes?.length || 0} Diplôme(s)
+                    </span>
                 </div>
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                    {data?.diplomes?.length || 0} Diplôme(s)
-                </span>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {data?.diplomes && data.diplomes.length > 0 ? (
+                        data.diplomes.map((diplome) => (
+                            <div key={diplome.id} className="group flex flex-col p-4 border border-slate-100 rounded-2xl bg-slate-50/50 hover:bg-white hover:border-blue-200 hover:shadow-md transition-all">
+                                <div className="flex justify-between items-start mb-3">
+                                    <div className="p-2 bg-white rounded-xl shadow-xs">
+                                        <GraduationCap size={20} className="text-[#000080]" />
+                                    </div>
+                                    {/* Boutons d'action rapides */}
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button 
+                                            onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL}/storage/${diplome.fichier}`, '_blank')}
+                                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                            title="Voir le document"
+                                        >
+                                            <Eye size={18} />
+                                        </button>
+                                        <a 
+                                            href={`${process.env.NEXT_PUBLIC_API_URL}/storage/${diplome.fichier}`}
+                                            target="_blank"
+                                            download 
+                                            className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                        >
+                                            <Download size={18} />
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <h3 className="font-bold text-gray-900 leading-tight">
+                                        {diplome.intitule}
+                                    </h3>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="col-span-full py-10 flex flex-col items-center justify-center border-2 border-dashed border-slate-100 rounded-2xl">
+                            <GraduationCap size={40} className="text-slate-200 mb-2" />
+                            <p className="text-gray-400 text-sm italic">Aucun diplôme n&apos;a été ajouté par le candidat.</p>
+                        </div>
+                    )}
+                </div>
             </div>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {data?.diplomes && data.diplomes.length > 0 ? (
-            data.diplomes.map((diplome) => (
-                <div key={diplome.id} className="group flex flex-col p-4 border border-slate-100 rounded-2xl bg-slate-50/50 hover:bg-white hover:border-blue-200 hover:shadow-md transition-all">
-                    <div className="flex justify-between items-start mb-3">
-                        <div className="p-2 bg-white rounded-xl shadow-xs">
-                            <GraduationCap size={20} className="text-[#000080]" />
-                        </div>
-                        {/* Boutons d'action rapides */}
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button 
-                                onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL}/storage/${diplome.fichier}`, '_blank')}
-                                className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                title="Voir le document"
-                            >
-                                <Eye size={18} />
-                            </button>
-                            <a 
-                                href={`${process.env.NEXT_PUBLIC_API_URL}/storage/${diplome.fichier}`}
-                                target="_blank"
-                                download 
-                                className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                            >
-                                <Download size={18} />
-                            </a>
-                        </div>
-                    </div>
-
-                    <div className="space-y-1">
-                        <h3 className="font-bold text-gray-900 leading-tight">
-                            {diplome.intitule}
-                        </h3>
-                    </div>
-                </div>
-            ))
-        ) : (
-            <div className="col-span-full py-10 flex flex-col items-center justify-center border-2 border-dashed border-slate-100 rounded-2xl">
-                <GraduationCap size={40} className="text-slate-200 mb-2" />
-                <p className="text-gray-400 text-sm italic">Aucun diplôme n&apos;a été ajouté par le candidat.</p>
-            </div>
-        )}
-    </div>
-</div>
-
-            <div className="space-y-8 w-full mx-auto p-6">
+            {data?.rank.rank !== "E" && data?.rank.rank !== "D" ? <div className="space-y-8 w-full mx-auto p-6"> 
                 
                 {/* SECTION EXPÉRIENCES */}
                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
@@ -354,7 +361,7 @@ export default function DetailProfil({params} : {params : Promise <{id: string}>
                         )}
                     </div>
                 </div>
-            </div>
+            </div> : ""}
         </div>
 
     )

@@ -82,4 +82,8 @@ class Candidat extends Model
     public function applications() {
         return $this->hasMany(Application::class);
     }
+
+    public function wallet() {
+        return $this->hasOne(Wallet::class, 'candidat_id');
+    }
 }

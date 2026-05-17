@@ -19,6 +19,7 @@ class ProfileController extends Controller
             if ($rankInfo) {
                 $candidat->update([
                     'rank_id' => $rankInfo->id,
+                    'score' => $rankInfo->points
                 ]);
 
                 return apiResponse(
@@ -64,6 +65,7 @@ class ProfileController extends Controller
             if ($rankInfo) {
                 $candidat->update([
                     'rank_id' => $rankInfo->id,
+                    'score' => $rankInfo->points,
                     'niveau_etude' => $dernierDiplome['Degree'],
                     'domaine_competence' => $cv_data->raw_ai_data['Title'] ?? null,
                 ]);

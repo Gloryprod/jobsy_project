@@ -41,12 +41,12 @@ export default function ListEntreprise(){
     );
 
     return (
-        <div className="min-h-screen relative  md:p-8 bg-gray-100">
+        <div className="min-h-screen relative p-2 md:p-2 bg-gray-100">
             <div className="mb-6">
                 <PageInfo pageName="Entreprises" pageLink={pageLink} />
             </div>
 
-            <div className="mb-8 ">
+            <div className="mb-6">
                 <h1 className="text-2xl font-black text-slate-800 flex items-center justify-center">Gestion des Entreprises</h1>
                 <p className="text-slate-500 flex items-center justify-center"><i>Vue d&apos;ensemble des entreprises inscrites</i></p>
             </div>
@@ -57,8 +57,8 @@ export default function ListEntreprise(){
                 </Link>
             </div> */}
 
-            <div className="bg-white block w-full border rounded-2xl shadow-xs ">
-                <div className="container mx-auto p-6">
+            <div className=" mt-6 overflow-hidden">
+                <div className="w-full">
                     <DataTable columns={columns} data={data || []}  onSuccess={() => queryClient.invalidateQueries({ queryKey: ['entreprises'] })} />
                 </div>
             </div>

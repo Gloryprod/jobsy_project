@@ -73,7 +73,7 @@ export default function LoginPage() {
       else window.location.href = "/";
 
     } catch (error: any) {
-      const msg = error?.response?.data?.message ;
+      const msg = error?.response?.data?.message || "Une erreur est survenue lors de la connexion. Veuillez réessayer" ;
       setErrorMsg(msg);
 
       // Swal.fire({
@@ -118,7 +118,7 @@ export default function LoginPage() {
               <div className="flex items-center justify-center gap-2 mt-2">
                 <ArrowLeft className="w-5 h-5 text-white" />
                 <span className="text-white font-normal">
-                  Retour à l'accueil
+                  Accueil
                 </span>
               </div>
             </Link>
@@ -203,7 +203,7 @@ export default function LoginPage() {
             <p className="text-white/80 text-sm">
               Pas encore de compte ?{' '}
               <Link href="/register" className="text-white font-bold hover:underline">
-                Inscription gratuite
+                Inscrivez-vous ici
               </Link>
             </p>
           </div>

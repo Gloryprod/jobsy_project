@@ -1,184 +1,279 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Wallet, ArrowDownToLine, ArrowUpFromLine, Clock, CheckCircle, XCircle, Calendar, TrendingUp, Star } from 'lucide-react';
+import { 
+  Wallet, ArrowDownToLine, ArrowUpFromLine, Clock, 
+  CheckCircle, XCircle, Calendar, TrendingUp, 
+  Hexagon, X
+} from 'lucide-react';
+import useSWR from 'swr';
+import api from '@/lib/api';
+import { useUser } from '@/context/UserProvider';
+import { ThreeDots } from 'react-loader-spinner';
+import PhoneInput from '@/components/forms/PhoneInput';
+import { toast } from 'react-hot-toast';
+
+// Configuration du fetcher
+const fetcher = (url: string) => api.get(url).then(res => res.data);
 
 interface Transaction {
-  id: string;
-  type: 'gain' | 'retrait' | 'bonus';
-  missionTitle?: string;
+  id: number;
+  type: 'transfer' | 'withdrawal' | 'deposit' | 'fee' ;
+  description: string;
   amount: number;
-  date: string;
-  status: 'completé' | 'en attente' | 'refusé';
-  method?: string; // pour retraits
+  created_at: string;
+  status: 'completed' | 'pending' | 'failed';
+  payment_method?: string;
+}
+
+interface WalletData {
+  balance_available: number;
+  balance_pending: number;
+  total_earned: number;
+  transactions: Transaction[];
 }
 
 export default function WalletPage() {
+  const { user } = useUser();
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [loadingRequest, setLoadingRequest] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [selectedMethod, setSelectedMethod] = useState('');
 
-  // Données mock – à remplacer par API réelle
-  const balanceAvailable = 12500; // F CFA disponible pour retrait
-  const balancePending = 4500;     // En attente de validation entreprise
-  const totalEarned = 45800;      // Loot total gagné depuis inscription
+  // Récupération des données réelles du portefeuille
+  const { data, error, mutate, isLoading } = useSWR<WalletData>(`/candidat/wallet/`,fetcher);
 
-  const transactions: Transaction[] = [
-    { id: '1', type: 'gain', missionTitle: 'Analyse données boutique', amount: 5000, date: '23 Déc 2025', status: 'completé' },
-    { id: '2', type: 'retrait', amount: -8000, date: '20 Déc 2025', status: 'completé', method: 'MTN Mobile Money' },
-    { id: '3', type: 'gain', missionTitle: 'Création visuels Instagram', amount: 8000, date: '19 Déc 2025', status: 'completé' },
-    { id: '4', type: 'gain', missionTitle: 'Livraison colis centre-ville', amount: 3000, date: '18 Déc 2025', status: 'en attente' },
-    { id: '5', type: 'bonus', missionTitle: 'Bonus streak 7 jours', amount: 2000, date: '17 Déc 2025', status: 'completé' },
-  ];
+  const handleWithdraw = async () => {
+  // 1. Validation de base ; || Number(withdrawAmount) < 1000
+  if (!withdrawAmount || Number(withdrawAmount) > (data?.balance_available || 0)) {
+    toast.error("Le montant demandé dépasse votre solde disponible");
+    return;
+  }
+  if (!selectedMethod) {
+    toast.error("Veuillez choisir un réseau Mobile Money");
+    return;
+  }
+  if (!phoneNumber) {
+    toast.error("Veuillez saisir votre numéro de téléphone");
+    return;
+  }
+
+  setLoadingRequest(true);
+
+  try {
+    const response = await api.post('/candidat/withdraw', {
+      amount: withdrawAmount,
+      payment_method: selectedMethod,
+      phone_number: phoneNumber,
+      candidat_id: user?.candidat?.id // Assure-toi que l'ID est disponible
+    });
+
+    // 2. Succès
+    toast.success(response.data.message);
+    setWithdrawAmount('');
+    setPhoneNumber('');
+    setSelectedMethod('');
+    setShowWithdrawModal(false);
+    
+    // 3. Rafraîchir les données de la wallet (SWR)
+    mutate(); 
+    
+  } catch (error: any) {
+    const errorMsg = error.response?.data?.message || "Une erreur est survenue lors du retrait";
+    toast.error(errorMsg);
+  } finally {
+    setLoadingRequest(false);
+  }
+};
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'completé': return <CheckCircle className="w-5 h-5 text-green-400" />;
-      case 'en attente': return <Clock className="w-5 h-5 text-yellow-400" />;
-      case 'refusé': return <XCircle className="w-5 h-5 text-red-400" />;
+      case 'completed': return <CheckCircle className="w-4 h-4 text-emerald-500" />;
+      case 'pending': return <Clock className="w-4 h-4 text-yellow-500" />;
+      case 'failed': return <XCircle className="w-4 h-4 text-red-500" />;
     }
   };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'gain': return 'text-[#F0E68C]';
-      case 'bonus': return 'text-green-400';
-      case 'retrait': return 'text-white/70';
-      default: return 'text-white';
-    }
-  };
+  if (isLoading) {
+      return (
+        <div className="flex justify-center items-center h-[60vh]">
+          <ThreeDots height="80" width="80" color="#000080" visible={true} />
+        </div>
+      );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#000080] to-black pt-20 pb-24 md:pb-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+    <div className="min-h-screen bg-[#F8FAFC] pt-6 pb-24 text-slate-900 animate-in fade-in duration-700">
+      <div className="max-w-7xl mx-auto px-4 space-y-10">
 
-        {/* Header */}
-        <header className="text-center space-y-6">
-          <h1 className="text-4xl lg:text-5xl font-bold text-white flex items-center justify-center gap-4">
-            <Wallet className="w-12 h-12 text-[#F0E68C]" />
-            Mon Loot & Gains
-          </h1>
-          <p className="text-white/70 text-lg max-w-3xl mx-auto">
-            Consulte tes gains issus des quêtes complétées. Retire ton argent facilement vers Mobile Money ou banque.
-          </p>
+        {/* ==================== HEADER DYNAMIQUE ==================== */}
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-[#000080] to-[#4B0082]" />
+          
+          <div className="flex items-center gap-6">
+            <div className="relative shrink-0">
+                <Hexagon className="w-20 h-20" fill="#000080" stroke="white" strokeWidth={1} />
+                <Wallet className="absolute inset-0 m-auto text-[#F0E68C] w-9 h-9" />
+            </div>
+            <div>
+                <h1 className="text-3xl font-black text-[#000080] uppercase tracking-tight">
+                    Mon Coffre-fort
+                </h1>
+                <p className="text-slate-500 font-medium italic mt-1">
+                    Gère tes gains. Retrait sécurisé vers Mobile Money.
+                </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setShowWithdrawModal(true)}
+            className="cursor-pointer shrink-0 px-8 py-4 bg-[#000080] text-white font-black rounded-2xl shadow-xl hover:shadow-[#000080]/30 transition-all hover:-translate-y-1 active:scale-95 uppercase tracking-wider text-sm"
+          >
+            Retirer le solde disponible
+          </button>
         </header>
 
-        {/* Soldes principaux */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-white/15 backdrop-blur-xl rounded-3xl p-8 border border-white/20 text-center">
-            <ArrowDownToLine className="w-12 h-12 text-[#F0E68C] mx-auto mb-4" />
-            <p className="text-white/70 text-lg">Solde disponible</p>
-            <p className="text-5xl font-black text-[#F0E68C] mt-3">{balanceAvailable.toLocaleString()} F</p>
-            <button
-              onClick={() => setShowWithdrawModal(true)}
-              className="mt-6 px-8 py-4 bg-[#F0E68C] hover:bg-[#F0E68C]/80 text-[#000080] font-bold rounded-2xl shadow-xl hover:shadow-[#F0E68C]/50 transition hover:scale-105"
-            >
-              RETIRER MAINTENANT
-            </button>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20 text-center">
-            <Clock className="w-12 h-12 text-yellow-400 mx-auto mb-4" />
-            <p className="text-white/70 text-lg">En attente de validation</p>
-            <p className="text-5xl font-black text-yellow-400 mt-3">{balancePending.toLocaleString()} F</p>
-            <p className="text-white/60 text-sm mt-4">Payé sous 48h après validation entreprise</p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20 text-center">
-            <TrendingUp className="w-12 h-12 text-green-400 mx-auto mb-4" />
-            <p className="text-white/70 text-lg">Loot total gagné</p>
-            <p className="text-5xl font-black text-green-400 mt-3">{totalEarned.toLocaleString()} F</p>
-            <p className="text-white/60 text-sm mt-4">Depuis ton inscription</p>
-          </div>
+        {/* ==================== SOLDES RÉELS ==================== */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            { label: 'Disponible', val: data?.balance_available || 0, icon: ArrowDownToLine, color: 'text-[#000080]', bg: 'bg-blue-50', border: 'border-blue-100' },
+            { label: 'En attente', val: data?.balance_pending || 0, icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-100' },
+            { label: 'Total Amassé', val: data?.total_earned || 0, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' }
+          ].map((stat, idx) => (
+            <div key={idx} className={`bg-white ${stat.border} border p-6 rounded-3xl shadow-sm hover:shadow-md transition-all text-center group`}>
+              <div className={`p-3 ${stat.bg} ${stat.color} rounded-full inline-flex mb-4 group-hover:rotate-12 transition-transform`}>
+                <stat.icon size={24} />
+              </div>
+              <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest leading-none mb-2">{stat.label}</p>
+              <p className={`text-4xl font-black ${stat.color}`}>{(stat.val).toLocaleString()} F</p>
+            </div>
+          ))}
         </div>
 
-        {/* Historique des transactions */}
-        <section className="bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 overflow-hidden">
-          <div className="p-8 border-b border-white/10">
-            <h2 className="text-3xl font-bold text-white flex items-center gap-3">
-              <Calendar className="w-8 h-8 text-[#F0E68C]" />
-              Historique des transactions
-            </h2>
+        {/* ==================== JOURNAL DES TRANSACTIONS RÉELLES ==================== */}
+        <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 overflow-hidden">
+          <div className="flex items-center gap-3 mb-8 px-2">
+            <Calendar className="text-[#F0E68C]" size={24} />
+            <h2 className="text-xl font-black text-[#000080] uppercase tracking-tight">Journal des transactions liées à mon compte</h2>
           </div>
 
-          <div className="divide-y divide-white/10">
-            {transactions.map(tx => (
-              <div key={tx.id} className="p-6 hover:bg-white/5 transition flex items-center justify-between">
-                <div className="flex items-center gap-6">
-                  {tx.type === 'gain' && <ArrowDownToLine className="w-8 h-8 text-[#F0E68C]" />}
-                  {tx.type === 'retrait' && <ArrowUpFromLine className="w-8 h-8 text-white/50" />}
-                  {tx.type === 'bonus' && <Star className="w-8 h-8 text-green-400" />}
-
-                  <div>
-                    <p className="text-white font-semibold text-lg">
-                      {tx.missionTitle || (tx.type === 'bonus' ? 'Bonus spécial' : 'Retrait')}
-                    </p>
-                    <div className="flex items-center gap-4 text-white/60 text-sm mt-1">
-                      <span>{tx.date}</span>
-                      {tx.method && <span>• {tx.method}</span>}
-                      <span className="flex items-center gap-1">
-                        {getStatusIcon(tx.status)}
-                        {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
-                      </span>
+          <div className="space-y-3">
+            {data?.transactions && data.transactions.length > 0 ? (
+              data.transactions.map((tx) => (
+                <div key={tx.id} className="p-4 hover:bg-slate-50 transition-all flex items-center justify-between rounded-2xl border border-slate-50">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center border ${tx.type === 'transfer' ? 'bg-[#F0E68C]/10 text-[#8B8000]' : 'bg-slate-50 text-slate-400'}`}>
+                        {tx.type === 'transfer' ? <ArrowDownToLine size={20} /> : <ArrowUpFromLine size={20} />}
+                    </div>
+                    <div>
+                      <p className="text-slate-800 font-bold text-sm md:text-base leading-tight">{tx.description}</p>
+                      <div className="flex items-center gap-3 text-[10px] text-slate-400 font-bold uppercase mt-1">
+                        <span>{new Date(tx.created_at).toLocaleDateString()}</span>
+                        <span className="flex items-center gap-1">
+                          {getStatusIcon(tx.status)} {tx.status === 'completed' ? 'Succès' : 'En cours'}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                  <span className={`text-xl font-black ${tx.type === 'withdrawal' ? 'text-slate-400' : 'text-[#000080]'}`}>
+                    {tx.type === 'transfer' ? '+' : '-'}{Math.abs(tx.amount).toLocaleString()} F
+                  </span>
                 </div>
-
-                <span className={`text-2xl font-black ${getTypeColor(tx.type)}`}>
-                  {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString()} F
-                </span>
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-slate-400 font-medium italic">Aucune transaction réalisée pour le moment.</p>
               </div>
-            ))}
+            )}
           </div>
         </section>
 
-        {/* Modal Retrait */}
+        {/* ==================== MODAL DE RETRAIT DYNAMIQUE ==================== */}
         {showWithdrawModal && (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setShowWithdrawModal(false)}>
-            <div className="bg-white/20 backdrop-blur-2xl rounded-3xl max-w-lg w-full border border-white/30 p-8" onClick={e => e.stopPropagation()}>
-              <h2 className="text-3xl font-bold text-white mb-6">Demander un retrait</h2>
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+            <div className="bg-white rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto no-scrollbar border border-slate-200 p-8 shadow-2xl relative" onClick={e => e.stopPropagation()}>
+              <div className="absolute top-0 left-0 w-full h-2 bg-linear-to-r from-[#000080] to-[#4B0082]" />
+              
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-2xl font-black text-[#000080] uppercase tracking-tighter text-center w-full">Retrait  </h2>
+                <button onClick={() => setShowWithdrawModal(false)} className="absolute right-6 top-6 text-slate-400 hover:text-slate-600 transition p-2 bg-slate-100 rounded-full">
+                  <X size={18} />
+                </button>
+              </div>
 
               <div className="space-y-6">
-                <div>
-                  <p className="text-white/70 mb-2">Solde disponible</p>
-                  <p className="text-4xl font-black text-[#F0E68C]">{balanceAvailable.toLocaleString()} F CFA</p>
+                <div className="bg-blue-50 p-6 rounded-3xl border border-blue-100 text-center">
+                  <p className="text-slate-500 text-[10px] font-black uppercase mb-1">Montant disponible</p>
+                  <p className="text-3xl font-black text-[#000080]">{data?.balance_available.toLocaleString() || 0} F CFA</p>
                 </div>
 
-                <div>
-                  <label className="text-white/80 text-lg mb-3 block">Montant à retirer</label>
+                <div className="space-y-2">
+                  <label className="text-slate-400 text-[10px] font-black uppercase tracking-widest ml-2">Montant du transfert</label>
                   <input
                     type="number"
                     value={withdrawAmount}
                     onChange={(e) => setWithdrawAmount(e.target.value)}
-                    placeholder="Ex: 10000"
-                    max={balanceAvailable}
-                    className="w-full px-6 py-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 text-white placeholder-white/50 focus:outline-none focus:border-[#F0E68C]/50 text-xl"
+                    placeholder="0"
+                    className="w-full px-6 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-[#000080] text-3xl font-black text-center outline-none focus:border-[#000080] transition-all"
                   />
-                  <p className="text-white/60 text-sm mt-2">Minimum : 1 000 F • Maximum : {balanceAvailable.toLocaleString()} F</p>
                 </div>
 
-                <div>
-                  <p className="text-white/80 text-lg mb-3">Méthode de retrait</p>
-                  <div className="grid grid-cols-2 gap-4">
-                    <button className="p-6 bg-white/10 rounded-2xl border border-white/20 hover:border-[#F0E68C]/50 transition text-white">
-                      MTN Mobile Money
+                <div className="space-y-3">
+                  <p className="text-slate-500 text-[11px] font-black uppercase tracking-widest ml-2 block">Réseau Mobile Money</p>
+                  <div className="grid grid-cols-3 gap-4">
+                    <button 
+                      onClick={() => setSelectedMethod('MTN')}
+                      className={`cursor-pointer p-5 rounded-2xl border-2 transition-all font-black ${
+                        selectedMethod === 'MTN' 
+                        ? 'border-yellow-400 bg-yellow-50 text-yellow-600 scale-95 shadow-inner' 
+                        : 'border-yellow-100 bg-white text-yellow-600 hover:border-yellow-400'
+                      }`}
+                    >
+                      MTN
                     </button>
-                    <button className="p-6 bg-white/10 rounded-2xl border border-white/20 hover:border-[#F0E68C]/50 transition text-white">
-                      Moov Money
+
+                    <button 
+                      onClick={() => setSelectedMethod('MOOV')}
+                      className={`cursor-pointer p-5 rounded-2xl border-2 transition-all font-black ${
+                        selectedMethod === 'MOOV' 
+                        ? 'border-[#000080] bg-blue-50 text-[#000080] scale-95 shadow-inner' 
+                        : 'border-blue-100 bg-white text-[#000080] hover:border-[#000080]'
+                      }`}
+                    >
+                      MOOV
+                    </button>
+
+                    <button 
+                      onClick={() => setSelectedMethod('CELTIIS')}
+                      className={`cursor-pointer p-5 rounded-2xl border-2 transition-all font-black ${
+                        selectedMethod === 'CELTIIS' 
+                        ? 'border-green-400 bg-green-50 text-green-600 scale-95 shadow-inner' 
+                        : 'border-green-100 bg-white text-green-600 hover:border-green-400'
+                      }`}
+                    >
+                      CELTIIS
                     </button>
                   </div>
                 </div>
 
-                <div className="flex gap-4 pt-4">
-                  <button
-                    onClick={() => setShowWithdrawModal(false)}
-                    className="flex-1 px-8 py-4 bg-white/10 text-white rounded-2xl hover:bg-white/20 transition"
-                  >
-                    Annuler
-                  </button>
-                  <button className="flex-1 px-8 py-4 bg-[#F0E68C] hover:bg-[#F0E68C]/80 text-[#000080] font-bold text-xl rounded-2xl shadow-xl hover:shadow-[#F0E68C]/50 transition hover:scale-105">
-                    CONFIRMER RETRAIT
-                  </button>
+                <div>
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Numéro Mobile Money (Bénin)</label>
+                  <div className="relative">
+                   <PhoneInput
+                      value={phoneNumber}
+                      onChange={setPhoneNumber}
+                    />
+                  </div>
                 </div>
+
+                <button
+                  onClick={handleWithdraw}
+                  disabled={loadingRequest || !withdrawAmount}
+                  className="cursor-pointer w-full py-4 bg-[#000080] text-white font-black rounded-2xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest disabled:opacity-50"
+                >
+                  {loadingRequest ? "Envoi au conseil..." : "Confirmer le transfert"}
+                </button>
               </div>
             </div>
           </div>

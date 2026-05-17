@@ -2,11 +2,11 @@
 
 import { useState } from "react"
 import { Mission } from "@/app/dashboard/entreprises/missions/list/columns" 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
-import { MoreHorizontal, Eye, Edit, Trash, XCircle } from "lucide-react" 
+import { MoreHorizontal, Eye, Edit, Trash } from "lucide-react" 
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,

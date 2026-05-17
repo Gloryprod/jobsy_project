@@ -24,6 +24,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'access.token' => \App\Http\Middleware\EnsureAccessTokenIsValid::class,
         ]);
         $middleware->statefulApi();
+        $middleware->validateCsrfTokens(except: [
+            'api/webhooks/kkiapay', 
+            'api/webhooks/kkiapay/payouts'
+        ]);
 
     })
     ->withExceptions(function (Exceptions $exceptions): void {

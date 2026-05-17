@@ -31,7 +31,7 @@ class ApplicationAIService
         $prompt = "
         Tu es un expert en recrutement. Ta mission est de générer 3 questions d'entretien pour l'étape 'Motivation & Sérieux'.
         Pour les profils de Rang E ou D et missions ponctuelles, l'objectif principal est de vérifier la motivation, la capacité et la disponibilité du candidat.
-        En général poses des questions simples et pas trop longues ce n'est pas un entretien technique.
+        En général poses des questions simples et pas trop longues et contraignantes ce n'est pas un entretien technique.
         
         CONTEXTE MISSION :
         - Titre : {$mission->title}
@@ -44,7 +44,7 @@ class ApplicationAIService
 
         CONSIGNES :
         1. Les questions doivent aider à déterminer si le candidat a bien compris les enjeux de ce poste ou mission spécifique.
-        2. Si le candidat est de Rang E, pose des questions concrètes sur la fiabilité et la disponibilité.
+        2. Si le candidat est de Rang E ou D, pose des questions simples, ne les corse pas.
         3. Si la mission est ponctuelle, demande comment il gère l'efficacité immédiate.
         4. Ajoute un 'context_hint' pour chaque question pour expliquer au candidat ce que l'on cherche à évaluer.
 
@@ -94,7 +94,7 @@ class ApplicationAIService
         - TITRE : {$mission->title}
         - DESCRIPTION : {$mission->description}
         - COMPÉTENCES CLÉS : " . implode(', ', $mission->skills) . "
-        - NIVEAU REQUIS : {$candidat->rank->label}
+        - NIVEAU DU CANDIDAT : {$candidat->rank->label}
 
         ### MISSION DE GÉNÉRATION
         Génère 3 questions techniques FLASH qui testent EXCLUSIVEMENT les points mentionnés dans la description et les compétences clés.
@@ -167,8 +167,8 @@ class ApplicationAIService
 
         FORMAT JSON :
         {
-            'score': 85,
-            'badge': 'EXPERT',
+            'score': integer (0-100),
+            'badge': 'CONFIRMED' | 'JUNIOR' | 'REJECTED' | 'EXPERT',
             'summary': 'Résumé de 2 lignes pour le recruteur',
             'details': { 'points_forts': [], 'points_faibles': [] }
         }";
@@ -200,8 +200,9 @@ class ApplicationAIService
 
         $prompt = "
         ### RÔLE
-        Tu es un recruteur spécialisé dans les profils opérationnels et débutants (Rangs D et E). 
-        Ton objectif est d'évaluer la motivation et le sérieux d'un candidat pour une mission qui ne requiert pas de test technique complexe.
+        Tu es un recruteur spécialisé dans les profils opérationnels, débutants ou sans expériences. 
+        Ton objectif est d'évaluer la motivation et le sérieux d'un candidat pour une mission qui ne requiert pas de test technique complexe. 
+        Les candidats sont souvent jeunes, avec peu d'expérience, et peuvent avoir des difficultés à s'exprimer clairement. Sois indulgent mais vigilant sur la crédibilité de leurs réponses.
 
         ### CONTEXTE DE LA MISSION
         - MISSION : {$mission->title}
@@ -225,17 +226,16 @@ class ApplicationAIService
         - **Badge 'CONFIRMED'** : Si les réponses sont claires, motivées et professionnelles.
         - **Badge 'JUNIOR'** : Si les réponses sont courtes mais sérieuses.
         - **Badge 'REJECTED'** : Si les réponses sont incohérentes, vides, ou irrespectueuses.
+        - **Badge 'EXPERT'** : Si les réponses sont exceptionnelles et démontrent une expertise supérieure.
         *Note : Le badge 'EXPERT' n'est pas utilisé pour les rangs D/E.*
 
         ### FORMAT DE SORTIE JSON (STRICT)
         {
-        'score': integer,
-        'badge': 'CONFIRMED' | 'JUNIOR' | 'REJECTED',
+        'score': integer (0-100),
+        'badge': 'CONFIRMED' | 'JUNIOR' | 'REJECTED' | 'EXPERT',
         'summary': 'Résumé très court du profil pour le recruteur (2 lignes max)',
-        'details': {
-            'points_forts': ['Ex: Ponctualité affirmée', 'Ex: Bonne compréhension de la mission'],
-            'points_faibles': ['Ex: Réponses très brèves']
-        }
+        'details': { 'points_forts': [], 'points_faibles': [] }
+
         }";
 
         try {

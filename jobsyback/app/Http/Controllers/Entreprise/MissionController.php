@@ -136,7 +136,7 @@ class MissionController extends Controller
     public function getApplications(Mission $mission)
     {
         $applications = $mission->applications()
-        ->with(['candidat.user', 'assessment'])
+        ->with(['candidat.user', 'candidat.rank', 'assessment'])
         ->orderByRaw("FIELD(badge, 'EXPERT', 'CONFIRMED', 'JUNIOR', 'REJECTED') ASC")
         ->orderBy('global_score', 'desc')
         ->get();
@@ -149,7 +149,7 @@ class MissionController extends Controller
         );
     }
 
-    public function selectApplicants(MissionOffersRequest $request, $applicationId) {
+    public function selectApplicants(MissionOffersRequest $request, Int $applicationId) {
         $application = Application::findOrFail($applicationId);
         $application->update(['status' => 'accepted']);
 
@@ -169,6 +169,23 @@ class MissionController extends Controller
         return apiResponse(
             null,
             "Candidat sélectionné avec succès !",
+            'success',
+            200
+        );
+    }
+
+    public function getConfirmedApplicants(Request $request, Int $id){
+
+        $offers = MissionOffers::whereHas('application', function($q) use ($id) {
+            $q->where('mission_id', $id);
+        })
+        ->with(['application.candidat.user', 'application.mission'])
+        ->orderBy('created_at', 'desc')
+        ->get();
+
+        return apiResponse(
+            $offers,
+            "Offres récupérées avec succès",
             'success',
             200
         );

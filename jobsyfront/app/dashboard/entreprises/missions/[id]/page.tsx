@@ -9,7 +9,7 @@ import api from "@/lib/api"
 import {use} from "react";
 import { ThreeDots } from 'react-loader-spinner';
 
-export default function CreateJob({ params }: { params: Promise<{ id: string }>}){
+export default function EditJob({ params }: { params: Promise<{ id: string }>}){
     const {id} = use(params);
     const pageLink = `/dashboard/entreprises/missions/${id}`;
     const [mission, setMission] = useState(null)

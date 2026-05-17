@@ -36,7 +36,7 @@ const MotivationStep = ({ questions, onSubmit, initialAnswers, candidatRank } : 
           <div key={question.id} className="group space-y-4">
             {/* Numérotation et Question */}
             <div className="flex items-start gap-4">
-              <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-[#000080] text-white rounded-full font-bold text-sm">
+              <span className="shrink-0 w-8 h-8 flex items-center justify-center bg-[#000080] text-white rounded-full font-bold text-sm">
                 {index + 1}
               </span>
               <label className="text-xl font-bold text-slate-700 leading-snug">
@@ -48,7 +48,7 @@ const MotivationStep = ({ questions, onSubmit, initialAnswers, candidatRank } : 
             <div className="relative">
               <textarea
                 rows={3}
-                className="w-full p-6 bg-white border-2 border-slate-100 rounded-[2rem] focus:border-[#000080] focus:ring-0 transition-all outline-none text-slate-600 placeholder:text-slate-300 shadow-sm"
+                className="w-full p-6 bg-white border-2 border-slate-100 rounded-4xl focus:border-[#000080] focus:ring-0 transition-all outline-none text-slate-600 placeholder:text-slate-300 shadow-sm"
                 placeholder="Votre réponse ici..."
                 value={answers[question.id] || ""}
                 onChange={(e) => handleInputChange(question.id, e.target.value)}

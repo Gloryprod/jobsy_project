@@ -1,7 +1,7 @@
 "use client"
  
 import { ColumnDef } from "@tanstack/react-table";
-import { ActionCell } from "@/components/dashboardEntreprise/missions/ActionCell";
+import { ActionCell } from "@/components/dashboardEntreprise/missions/closed/ActionCell";
 import { Badge } from "@/components/ui/badge"
 
 interface MissionOffer {
@@ -105,26 +105,6 @@ export const columns: ColumnDef<Mission>[] = [
     //     accessorKey: "category",
     //     header: () => <div className="text-left">Catégorie</div>,
     // },
-    {
-        id: "applications_count",
-        header: () => <div className="text-left">Candidatures</div>,
-        cell: ({ row }) => {
-            const count = row.original.applications?.length || 0;
-            const statut = row.getValue("active");
-
-            return (
-                <div className="text-left">
-                {statut ? (
-                    <Badge variant="outline" className="bg-slate-50 border-slate-200 text-slate-600 px-3 font-bold">
-                    {count}
-                    </Badge>
-                ) : (
-                    <span className="text-slate-400 pl-4">-</span>
-                )}
-                </div>
-            );
-        },
-    },
     {
         id: "offers_accapted_count",
         header: () => <div className="text-left">Confirmations Offres</div>,

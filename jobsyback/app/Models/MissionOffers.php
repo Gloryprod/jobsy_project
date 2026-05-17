@@ -19,7 +19,15 @@ class MissionOffers extends Model
         'expires_at',
         'accepted_at',
         'declined_at',
-        'decline_reason'
+        'status',
+        'contract_path',
+        'notified_presence_at',
+        'started_at',
+        'finished_at',
+        'validated_at',
+        'paid_at',
+        'transaction_id',
+        'payment_status',
     ];
 
     protected function casts(): array

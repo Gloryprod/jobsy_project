@@ -24,8 +24,8 @@ export default function Hero() {
 
       {/* ──────── VERSION DESKTOP : Image à gauche, texte à droite ──────── */}
       <div className="hidden lg:block py-24 xl:py-32">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-16 xl:gap-20 items-center">
+        <div className=" mx-auto px-6">
+          <div className="grid lg:grid-cols-2 gap-8 xl:gap-20 items-center">
             {/* Image à gauche */}
             <motion.div
               initial={{ opacity: 0, x: -80 }}
@@ -56,7 +56,7 @@ export default function Hero() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.9 }}
-              className="text-left"
+              className="flex"
             >
               <HeroContent />
             </motion.div>
@@ -69,25 +69,24 @@ export default function Hero() {
 
 function HeroContent() {
   return (
-    <div className="relative z-10 max-w-4xl mx-auto lg:mx-0">
+    <div className="relative z-10 lg:mx-0">
       <motion.h1
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        className="text-3xl md:text-2xl xs:text-4xl sm:text-5xl lg:text-5xl xl:text-6xl font-black leading-tight 
+        className="flex items-center justify-center text-3xl md:text-2xl xs:text-4xl sm:text-5xl lg:text-5xl xl:text-6xl font-black 
                    text-[#F0E68C] md:text-[#000080] lg:text-[#000080] drop-shadow-xl lg:drop-shadow-none"
       >
-        Diplômé
-        <span className="text-[#F0E68C] md:text-[#000080] lg:text-[#000080] sm:text-[#000080] "> mais toujours sans emploi ?</span>
+      <span className='text-center'>Transformez votre talent en opportunités réelles.</span>
       </motion.h1>
 
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
-        className="mt-4 text-base sm:text-lg text-white/90 lg:text-gray-700 max-w-xl leading-relaxed"
+        className="flex items-center justify-center text-base mt-4 sm:text-lg text-white/90 lg:text-gray-700 "
       >
-        Missions payées • Formations certifiantes gratuites • Profil vu par toutes les entreprises locales
+        <span className='text-center'> Avec <span className='font-bold'>Jobsy</span>, formez-vous, travaillez, et encaissez vos gains directement !</span>
       </motion.p>
 
       <motion.div
@@ -115,15 +114,6 @@ function HeroContent() {
         </Link>
         
       </motion.div>
-
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.1 }}
-        className="mt-10 text-sm sm:text-base text-white/80 lg:text-gray-600"
-      >
-        Déjà <span className="text-[#F0E68C] font-bold">2 400+ jeunes</span> ont gagné leur premier salaire sur Jobsy
-      </motion.p>
     </div>
   );
 }

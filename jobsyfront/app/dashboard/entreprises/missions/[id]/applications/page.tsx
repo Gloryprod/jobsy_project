@@ -5,7 +5,7 @@ import api from "@/lib/api";
 import { use } from "react";
 import { ThreeDots } from "react-loader-spinner";
 import PageInfo from "@/components/PageInfo";
-import { ArrowRight, Star, MapPin, GraduationCap, CheckCircle } from "lucide-react";
+import { Star, CheckCircle, ChevronRight, ChevronLeft, Search } from "lucide-react";
 import Avatar from "@/components/Avatar";
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -27,6 +27,12 @@ interface Candidat{
         prenom : string;
         email : string;
         role : string
+    }
+    rank: {
+        id: number;
+        label: string;
+        rank: string;
+        code_hexa: string;
     }
 }
 
@@ -68,19 +74,19 @@ interface Application {
     updated_at: string;
     candidat: Candidat;
     assessment: Assessment;
-
+    mission: Mission
 }
 
 const fetcher = (url: string) => api.get(url).then(res => res.data.data); 
 
-const getBadgeStyle = (badge: string) => {
-    switch (badge?.toUpperCase()) {
-        case 'EXPERT': return 'bg-purple-100 text-purple-700 border-purple-200';
-        case 'CONFIRMED': return 'bg-blue-100 text-blue-700 border-blue-200';
-        case 'JUNIOR': return 'bg-amber-100 text-amber-700 border-amber-200';
-        default: return 'bg-gray-100 text-gray-500 border-gray-200';
-    }
-};
+// const getBadgeStyle = (badge: string) => {
+//     switch (badge?.toUpperCase()) {
+//         case 'EXPERT': return 'bg-purple-100 text-purple-700 border-purple-200';
+//         case 'CONFIRMED': return 'bg-blue-100 text-blue-700 border-blue-200';
+//         case 'JUNIOR': return 'bg-amber-100 text-amber-700 border-amber-200';
+//         default: return 'bg-gray-100 text-gray-500 border-gray-200';
+//     }
+// };
 
 export default function ApplicationsPage({ params }: { params: Promise<{ id: string }> }) {
     const {id} = use(params);
@@ -98,6 +104,25 @@ export default function ApplicationsPage({ params }: { params: Promise<{ id: str
         expiry_date: ''
     });
 
+    // États pour la recherche et la pagination
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
+
+    // 1. Logique de Recherche
+    const filteredData = applications?.filter(item =>
+        item.candidat.user.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.candidat.user.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.candidat.rank.rank.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.candidat.rank.label.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // 2. Logique de Pagination
+    const totalPages = Math.ceil((filteredData?.length ?? 0) / itemsPerPage);
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = filteredData?.slice(indexOfFirstItem, indexOfLastItem);
+
     const handleCheckboxChange = (event : React.ChangeEvent<HTMLInputElement>) => {
         const { value, checked } = event.target;
         const appId = parseInt(value, 10);
@@ -107,7 +132,7 @@ export default function ApplicationsPage({ params }: { params: Promise<{ id: str
             if (applications) {
                 for (const app of applications) {
                     if (app.id === appId) {
-                        setSelectedApp([app]);
+                        setSelectedApp([...selectedApp, app]);
                         break;
                     }            
                 }
@@ -164,8 +189,20 @@ export default function ApplicationsPage({ params }: { params: Promise<{ id: str
                 </button>
             </div>
 
+            {/* Barre de Recherche */}
+            <div className="mb-6 mt-6 relative w-full max-w-sm flex items-end justify-end">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 " size={16} />
+                <input
+                    type="text"
+                    placeholder="Rechercher un nom, un rang, un diplôme..."
+                    value={searchTerm}
+                    onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                    className="w-full pl-10 pr-4 py-4 bg-white border-slate-100 rounded-2xl shadow-sm focus:ring-2 focus:ring-[#000080]/10 focus:border-[#000080] transition-all"
+                />
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-1 xl:grid-cols-3 gap-6">
-                {applications && applications.length > 0 ? applications.map((app) => {
+                {currentItems && currentItems.length > 0 ? currentItems.map((app) => {
                     return (
                         <div key={app.id} className="group bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
                             <div>
@@ -187,10 +224,10 @@ export default function ApplicationsPage({ params }: { params: Promise<{ id: str
                                 
                                 <div className="pr-12">
                                     <h2 className="text-lg font-black text-slate-800 leading-tight">
-                                        {app.candidat.user.prenom} {app.candidat.user.nom}
+                                        {app.candidat.user.prenom} {app.candidat.user.nom} - <span style={{color: app.candidat.rank?.code_hexa }}>Rang {app.candidat.rank.rank}</span> 
                                     </h2>
                                     <p className="text-indigo-600 font-bold text-xs uppercase tracking-wide mt-1">
-                                        {app.candidat.domaine_competence}
+                                        {app.candidat.rank.rank == "E" ? "Apprenti Junior - Aucun Diplôme" : app.candidat.rank.rank == "D" ? "Agent Certifié - BAC" : app.candidat.domaine_competence}
                                     </p>
                                 </div>
                             </div>
@@ -231,7 +268,41 @@ export default function ApplicationsPage({ params }: { params: Promise<{ id: str
                     </div>
                 )}
             </div>
-                {/* <p>Currently selected: {JSON.stringify(selectedIds)}</p> */}
+
+                {filteredData!.length === 0 && (
+                    <div className="p-20 text-center">
+                    <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Search size={24} className="text-slate-300" />
+                    </div>
+                    <p className="text-slate-400 font-medium italic">Aucun résultat pour cette recherche.</p>
+                    </div>
+                )}
+
+                {/* Pagination UI */}
+                {totalPages >= 1 && (
+                    <div className="p-6 border-t border-slate-100 flex items-center justify-between">
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                        Page {currentPage} sur {totalPages}
+                    </p>
+                    <div className="flex gap-2">
+                        <button 
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-[#000080] hover:text-white transition-all cursor-pointer"
+                        >
+                        <ChevronLeft size={20} />
+                        </button>
+                        <button 
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-[#000080] hover:text-white transition-all cursor-pointer"
+                        >
+                        <ChevronRight size={20} />
+                        </button>
+                    </div>
+                    </div>
+                )}
+                <p>Currently selected: {JSON.stringify(selectedIds)}</p>
 
             {/* Dialog pour accepter la candidature */}
             {openDialog && (
@@ -245,7 +316,7 @@ export default function ApplicationsPage({ params }: { params: Promise<{ id: str
                             <DialogTitle className="text-xl font-black">Félicitations !</DialogTitle>
                             </div>
                             <DialogDescription>
-                            Vous sélectionnez le(s) candidats suivants <strong>{selectedApp.map(app => app.candidat.user.prenom).join(', ')} {selectedApp.map(app => app.candidat.user.nom).join(', ')} </strong> pour la mission.
+                            Vous sélectionnez le(s) candidat(s) suivant(s) <strong>{selectedApp.map(app => `${app.candidat.user.prenom} ${app.candidat.user.nom}`).join(', ')} </strong> pour la mission.
                             Précisez les modalités de démarrage ci-dessous.
                             </DialogDescription>
                         </DialogHeader>

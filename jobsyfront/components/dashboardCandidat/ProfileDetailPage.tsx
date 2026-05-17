@@ -45,6 +45,7 @@ interface Rank {
 
 interface CandidatData {
   id: number;
+  score: number;
   nom: string;
   prenom: string;
   is_validate: boolean;
@@ -291,7 +292,7 @@ if (error) {
         {/* ==================== HEADER : CARTE D'IDENTITÉ AVENTURIER ==================== */}
         <header className="relative bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 overflow-hidden text-center">
           {/* Ornement de fond style RPG */}
-          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#000080] via-[#F0E68C] to-[#000080]" />
+          <div className="absolute top-0 left-0 w-full h-2 bg-linear-to-r from-[#000080] via-[#F0E68C] to-[#000080]" />
           
           <div className="relative inline-block group">
             <div className="w-36 h-36 rounded-full bg-slate-50 flex items-center justify-center border-4 border-[#F0E68C] shadow-lg overflow-hidden transition-transform group-hover:scale-105 duration-300">
@@ -313,12 +314,12 @@ if (error) {
                 Rang {profile?.rank?.rank ?? '1'}
               </span>
               <span className="text-[#8B8000] font-bold text-sm">
-                ✨ {profile?.rank?.points ?? 0} XP Cumulés
+                ✨ {profile?.score ?? 0} XP Cumulés
               </span>
             </div>
 
             <p className="text-slate-500 max-w-xl mx-auto mt-4 font-medium italic">
-              '{profile?.bio || 'Cet aventurier n’a pas encore écrit sa légende...'}''
+              &apos;{profile?.bio || 'Ta bio nest pas encore renséignée... Fais le dans la section Informations personnelles !'}&apos;
             </p>
           </div>
         </header>

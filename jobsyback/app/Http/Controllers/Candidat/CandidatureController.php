@@ -10,11 +10,13 @@ use App\Models\Candidat;
 use App\Models\Mission;
 use App\Services\ApplicationAIService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+
 
 class CandidatureController extends Controller
 {
 
-    public function apply_job(ApplicationRequest $request, $candidat_id, $mission_id, ApplicationAIService $aiService){
+    public function apply_job(ApplicationRequest $request, Int $candidat_id, Int $mission_id, ApplicationAIService $aiService){
         $mission = Mission::find($mission_id);
         $candidat = Candidat::find($candidat_id);
 
@@ -53,19 +55,23 @@ class CandidatureController extends Controller
 
     }
 
-    public function submit_step_one(Request $request, $applicationId, ApplicationAIService $aiService ){
+    public function submit_step_one(Request $request, Int $applicationId, ApplicationAIService $aiService ){
 
         $request->validate([
             'responses' => 'required|array',
         ]);
 
+        Log::info($applicationId);
+
         $application = Application::find($applicationId);
-        $assessment = ApplicationAssessments::find($application->assessment->id);
+        $assessment = $application->assessment;
+        Log::info("Assessment " . $assessment);
         $candidat = $application->candidat;
 
         $step1Data = $assessment->step_1_data;
         $step1Data['responses'] = $request->responses;
-        
+
+
         $assessment->update([
             'step_1_data' => $step1Data
         ]);
@@ -96,6 +102,24 @@ class CandidatureController extends Controller
         }
 
         try {
+
+            if($application->mission->type_contrat === 'Mission Ponctuelle') {
+                $analysis = json_decode($aiService->analyzeSimpleApplication($application));
+
+                $application->update([
+                    'global_score' => $analysis->score,
+                    'badge' => $analysis->badge,
+                    'ai_summary' => $analysis->summary,
+                    'status' => 'pending',
+                    'completed_at' => now(),
+                ]);
+
+                $assessment->update([
+                    'ai_feedback_details' => $analysis->details
+                ]);
+            }
+
+
             $questionsStep2 = $aiService->generateTechnicalQuestions($application);
             
             $assessment->update([
@@ -122,7 +146,7 @@ class CandidatureController extends Controller
         
     }
 
-    public function finalize_assessment(Request $request, $applicationId, ApplicationAIService $aiService) {
+    public function finalize_assessment(Request $request, Int $applicationId, ApplicationAIService $aiService) {
         $application = Application::find($applicationId);
         $assessment = $application->assessment;
 
@@ -157,7 +181,7 @@ class CandidatureController extends Controller
 
     public function getApplications(Candidat $candidat) {
         $applications = $candidat->applications()
-        ->with(['mission', 'assessment'])
+        ->with(['mission', 'assessment', 'mission_offers'])
         ->orderBy('created_at', 'desc')
         ->get();
 

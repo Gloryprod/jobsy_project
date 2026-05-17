@@ -104,8 +104,7 @@ export default function RegisterJeunePage() {
         });
       }
     }
-
-
+    
     setLoading(false);
   };
 

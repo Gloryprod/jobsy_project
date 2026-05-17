@@ -33,7 +33,7 @@ export default function ContactPage() {
               </div>
               <h3 className="text-2xl font-black text-[#000080] mb-3">WhatsApp</h3>
               <p className="text-4xl font-black text-green-600 mb-4">+229 97 00 00 00</p>
-              <MotionButton variant="primary" className="bg-green-500 hover:bg-green-600 text-white">
+              <MotionButton variant="primary" className="bg-green-500 hover:bg-green-600 text-white p-2 rounded">
                 <a href="https://wa.me/22997000000" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
                   <MessageCircle className="w-5 h-5" /> Discuter maintenant
                 </a>
@@ -50,7 +50,7 @@ export default function ContactPage() {
               </div>
               <h3 className="text-2xl font-black text-[#000080] mb-3">Téléphone</h3>
               <p className="text-4xl font-black text-[#000080] mb-4">+229 67 00 00 00</p>
-              <MotionButton variant="primary" className="bg-[#000080] hover:bg-[#000066] text-[#F0E68C]">
+              <MotionButton variant="primary" className="bg-[#000080] hover:bg-[#000066] text-[#F0E68C] p-2 rounded">
                 <a href="tel:+22967000000" className="flex items-center gap-2">
                   <Phone className="w-5 h-5" /> Appeler maintenant
                 </a>
@@ -67,7 +67,7 @@ export default function ContactPage() {
               </div>
               <h3 className="text-2xl font-black text-[#000080] mb-3">Email</h3>
               <p className="text-2xl font-bold text-[#000080] mb-4">contact@jobsy.bj</p>
-              <MotionButton variant="primary" className="bg-[#F0E68C] hover:bg-[#e0d67a] text-[#000080]">
+              <MotionButton variant="primary" className="bg-[#F0E68C] hover:bg-[#e0d67a] text-[#000080] p-2 rounded">
                 <a href="mailto:contact@jobsy.bj" className="flex items-center gap-2">
                   <Send className="w-5 h-5" /> Envoyer un email
                 </a>

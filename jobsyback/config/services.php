@@ -43,4 +43,10 @@ return [
         'key' => env('OPENAI_API_KEY'),
     ],
 
+    'kkiapay' => [
+        'secret_key' => env('KKIAPAY_SECRET_KEY'),
+        'public_key' => env('KKIAPAY_PUBLIC_KEY'),
+        'api_url' => env('KKIAPAY_API_URL'),
+    ],
+
 ];

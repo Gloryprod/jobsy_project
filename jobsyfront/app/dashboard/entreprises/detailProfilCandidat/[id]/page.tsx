@@ -189,7 +189,7 @@ export default function DetailProfil({params} : {params : Promise <{id: string}>
             </div>
 
             
-            <div className="space-y-8 w-full mx-auto p-6">
+            {data?.rank.rank !== "E" && data?.rank.rank !== "D" ? <div className="space-y-8 w-full mx-auto p-6"> 
                 
                 {/* SECTION EXPÉRIENCES */}
                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
@@ -290,7 +290,7 @@ export default function DetailProfil({params} : {params : Promise <{id: string}>
                         )}
                     </div>
                 </div>
-            </div>
+            </div> : ""}
         </div>
 
     )

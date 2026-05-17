@@ -41,9 +41,7 @@ export const ActionCell = ({ entreprise }: { entreprise: Entreprise }) => {
           <DropdownMenuItem onClick={() => setShowDetails(true)} className="cursor-pointer">
             <Eye className="h-4 w-4" /> Détails
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => router.push(`/dashboard/admin/entreprises/${entreprise.id}/missions`)} className="cursor-pointer"><Eye className="h-4 w-4" />Missions</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          
+          <DropdownMenuItem onClick={() => router.push(`/dashboard/admin/entreprises/${entreprise.id}/missions`)} className="cursor-pointer"><Eye className="h-4 w-4" />Missions</DropdownMenuItem>          
         </DropdownMenuContent>
       </DropdownMenu>
 

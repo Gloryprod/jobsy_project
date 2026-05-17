@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { MotionButton } from '@/components/ui/MotionButton';
 import { Menu, X, Search } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetTitle } from '@/components/ui/sheet';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -13,7 +13,7 @@ export default function Header() {
   const router = useRouter();
 
   const desktopNavLinks = [
-    { label: "Micro-missions", href: "/missions" },
+    { label: "Missions", href: "/missions" },
     { label: "Formations", href: "/formations" },
     { label: "Entreprises", href: "/entreprises" },
     { label: "Contact", href: "/contact" },
@@ -29,7 +29,6 @@ export default function Header() {
           Jobsy
         </Link>
 
-        {/* === Navigation Desktop === */}
         <nav className="hidden lg:flex items-center gap-8">
           {desktopNavLinks.map((link) => (
             <Link
@@ -40,21 +39,21 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
-
-          <div className="flex items-center gap-4 ml-8 pl-8 border-l border-gray-200">
-            <MotionButton variant="secondary" onClick={() => router.push('/login')}>
-              Connexion
-            </MotionButton>
-            <MotionButton variant="primary" onClick={() => router.push('/register')}>
-              Inscription gratuite
-            </MotionButton>
-          </div>
         </nav>
+
+        <div className="flex items-center gap-4 ml-8 pl-8 border-gray-200">
+          <MotionButton variant="secondary" onClick={() => router.push('/login')}>
+            Connexion
+          </MotionButton>
+          {/* <MotionButton variant="primary" onClick={() => router.push('/register')}>
+            Inscription
+          </MotionButton> */}
+        </div>
 
         {/* === Menu Mobile (Sheet) === */}
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild className="lg:hidden">
-            <button className="p-2 rounded-lg hover:bg-gray-100 transition">
+            <button className="cursor-pointer p-2 rounded-lg hover:bg-gray-100 transition">
               <Menu className="w-7 h-7 text-[#000080]" />
             </button>
           </SheetTrigger>
@@ -63,14 +62,13 @@ export default function Header() {
             <div className="flex flex-col h-full">
 
               {/* En-tête du drawer */}
+              <SheetTitle className="sr-only">Menu de navigation</SheetTitle>
+
               <div className="flex items-center justify-between pt-6 pb-8 px-6 border-b">
                 <div className="flex items-center gap-2">
                   <Search className="w-8 h-8 text-[#F0E68C]" />
                   <span className="text-2xl font-black text-[#000080]">Jobsy</span>
-                </div>
-                <SheetClose className="p-2 rounded-lg hover:bg-gray-100">
-                  <X className="w-6 h-6" />
-                </SheetClose>
+                </div>                
               </div>
 
               {/* Liens mobiles */}
@@ -88,21 +86,20 @@ export default function Header() {
                 ))}
 
                 <div className="pt-8 space-y-4">
-                  <Link href="/register">
+                  {/* <Link href="/register">
                     <MotionButton 
                       variant="primary" 
                       className="w-full text-lg py-6 cursor-pointer" 
                       onClick={() => setOpen(false)}
                     >
-                      Inscription gratuite
+                      Inscription
                     </MotionButton>
-                  </Link>
+                  </Link> */}
 
                   <Link href="/login">
                     <MotionButton 
                       variant="secondary" 
                       className="w-full text-lg py-6 cursor-pointer" 
-                      onClick={() => setOpen(false)}
                     >
                       Connexion
                     </MotionButton>

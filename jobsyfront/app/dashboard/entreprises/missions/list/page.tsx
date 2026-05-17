@@ -41,19 +41,19 @@ export default function ListMission(){
     );
 
     return (
-        <div className="min-h-screen relative  md:p-8 bg-gray-100">
+        <div className="min-h-screen relative p-4 md:p-8 bg-gray-100">
             <div className="mb-6">
                 <PageInfo pageName="Historique des offres" pageLink={pageLink} />
             </div>
 
-            <div className="flex justify-end items-end mb-4">
+            <div className="flex justify-end items-end mr-2">
                 <Link href="/dashboard/entreprises/missions/create">
                     <button className="bg-[#000080] items-center  text-white text-md font-medium px-4 py-2 rounded-lg cursor-pointer">Ajouter une offre</button>
                 </Link>
             </div>
 
-            <div className="bg-white block w-full border rounded-2xl shadow-xs ">
-                <div className="container mx-auto p-6">
+            <div className="mt-6 overflow-hidden">
+                <div className="container ">
                     <DataTable columns={columns} data={data || []} bulkDeleteUrl="/missions/bulk-delete" onSuccess={() => queryClient.invalidateQueries({ queryKey: ['missions'] })} />
                 </div>
             </div>

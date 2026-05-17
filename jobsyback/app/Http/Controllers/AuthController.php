@@ -119,7 +119,7 @@ class AuthController extends Controller
                 $user->forceFill([
                     'password' => Hash::make($password),
                 ])->save();
-
+        
                 // optionnel : invalide les anciennes sessions
                 $user->tokens()->delete();
             }
@@ -141,7 +141,7 @@ class AuthController extends Controller
         
         $user = $request->user();
         $user = $user->load('entreprise.contact_entreprise');
-        $user = $user->load('candidat.rank');
+        $user = $user->load('candidat.rank', 'candidat.wallet');
         return $user;
     }
 

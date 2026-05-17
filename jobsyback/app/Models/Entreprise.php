@@ -34,4 +34,8 @@ class Entreprise extends Model
     {
         return $this->hasMany(Mission::class);
     }
+
+    public function wallet() {
+        return $this->hasOne(Wallet::class, 'entreprise_id');
+    }
 }

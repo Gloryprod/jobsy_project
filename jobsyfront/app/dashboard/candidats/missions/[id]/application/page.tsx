@@ -87,7 +87,7 @@ export default function ApplicationPage({ params }: { params: Promise<{ id: stri
         try {
             const response = await api.post(`/applications/${applicationId}/submit-step-one`, {
                 responses: answers,
-            });
+            });            
             
             setStep(2);
             setInitialAnswers(answers);

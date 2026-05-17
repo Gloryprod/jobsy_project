@@ -5,7 +5,7 @@ import useSWR from "swr";
 import api from "@/lib/api";
 import { ThreeDots } from 'react-loader-spinner';
 import { useState, useEffect } from "react";
-import { Filter, X, ChevronRight, RotateCcw } from 'lucide-react';
+import { Filter, X, ChevronRight, RotateCcw, ChevronLeft, Search } from 'lucide-react';
 import { toast } from "react-hot-toast";
 import Link from "next/link";
 
@@ -82,6 +82,25 @@ export default function ListCandidateProfile() {
     const [candidats, setCandidats] = useState<Candidat[] | []>([]);
     const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
     const pageLink = "/dashboard/entreprises/listCandidateProfile";
+    const [loading, setLoading] = useState(false);
+
+    // États pour la recherche et la pagination
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
+    // 1. Logique de Recherche
+    const filteredData = candidats?.filter(item =>
+        item.user.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.user.prenom.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // 2. Logique de Pagination
+    const totalPages = Math.ceil((filteredData?.length ?? 0) / itemsPerPage);
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = filteredData?.slice(indexOfFirstItem, indexOfLastItem);
+
 
     useEffect(() => {
         if (!data || !data2) return;
@@ -96,15 +115,18 @@ export default function ListCandidateProfile() {
     }, [data, data2]);
 
     const handleFilter = async (category_id: number, rank_id: number) => {
-        const newSelection = selectedCategories.includes(category_id)
-            ? selectedCategories.filter(id => id !== category_id)
-            : [...selectedCategories, category_id];
+        // const newSelection = selectedCategories.includes(category_id)
+        //     ? selectedCategories.filter(id => id !== category_id)
+        //     : [...selectedCategories, category_id];
         
-        setSelectedCategories(newSelection);
-        setCandidats([]);
+        // setSelectedCategories(newSelection);
+        // setCandidats([]);
+
+        console.log(category_id, rank_id);
+        setLoading(true);
         try {
             const response = await api.get('/filter', {
-                params: { category_ids: newSelection, rank_id: rank_id }
+                params: { category_id: category_id, rank_id: rank_id }
             });
             
             setCandidats(response.data.data.data);
@@ -117,6 +139,8 @@ export default function ListCandidateProfile() {
                 // Handle cases where other types of values might be thrown
                 console.error("An unknown error occurred:", error);
             }
+        } finally {            
+            setLoading(false);
         }
     };
 
@@ -140,13 +164,13 @@ export default function ListCandidateProfile() {
 
             <div className="mb-8">
                 <h1 className="text-2xl font-black text-slate-800 flex items-center justify-center">Gestion des Candidats</h1>
-                <p className="text-slate-500 flex items-center justify-center"><i>Vue d&apos;ensemble des profils candidats disponibles</i></p>
+                <p className="text-slate-500 flex items-center justify-center"><i>Vue d&apos;ensemble des talents inscrits</i></p>
             </div>
 
             <div className="flex flex-col md:flex-row gap-3 mb-6">
                 <button 
                     onClick={() => setIsMenuOpen(true)}
-                    className="flex-1 flex items-center justify-center gap-2 bg-white p-4 rounded-2xl shadow-sm border border-gray-100 font-bold text-gray-700 hover:bg-gray-50 active:scale-95 transition"
+                    className="cursor-pointer flex items-center justify-center gap-2 bg-white p-4 rounded-2xl shadow-sm border border-gray-100 font-bold text-gray-700 hover:bg-gray-50 active:scale-95 transition"
                 >
                     <Filter size={18} className="text-indigo-600" />
                     <span className="text-sm">Domaines</span>
@@ -154,7 +178,7 @@ export default function ListCandidateProfile() {
 
                 <button 
                     onClick={() => setIsMenuRankOpen(true)}
-                    className="flex-1 flex items-center justify-center gap-2 bg-white p-4 rounded-2xl shadow-sm border border-gray-100 font-bold text-gray-700 hover:bg-gray-50 active:scale-95 transition"
+                    className="cursor-pointer flex items-center justify-center gap-2 bg-white p-4 rounded-2xl shadow-sm border border-gray-100 font-bold text-gray-700 hover:bg-gray-50 active:scale-95 transition"
                 >
                     <Filter size={18} className="text-blue-600" />
                     <span className="text-sm">Diplômes</span>
@@ -162,17 +186,11 @@ export default function ListCandidateProfile() {
 
                 <button 
                     onClick={() => resetFilters()}
-                    className="flex-none md:w-auto flex items-center justify-center gap-2 bg-red-50 p-4 rounded-2xl font-bold text-red-600 hover:bg-red-100 active:scale-95 transition"
+                    className="cursor-pointer flex-none md:w-auto flex items-center justify-center gap-2 bg-red-50 p-4 rounded-2xl font-bold text-red-600 hover:bg-red-100 active:scale-95 transition"
                 >
                     <RotateCcw size={18} />
                     <span className="text-sm md:hidden lg:inline">Réinitialiser</span>
                 </button>
-            </div>
-
-            <div>
-                <div>
-
-                </div>
             </div>
 
             <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-6 gap-8">
@@ -203,7 +221,7 @@ export default function ListCandidateProfile() {
                                 <button 
                                     onClick={() => {setIsMenuOpen(false); handleFilter(category.id, 0)}}
                                     key={category.id} 
-                                    className={`w-full flex items-center justify-between p-3 rounded-xl transition-colors ${selectedCategories.includes(category.id) ? 'bg-indigo-100' : 'hover:bg-gray-50'}`}>
+                                    className={`cursor-pointer w-full flex items-center justify-between p-3 rounded-xl transition-colors`}>
                                     <div className="flex items-center gap-3">
                                         <div className="w-3 h-3 rounded-full shadow-sm" style={{backgroundColor: category.color}}></div>
                                         <span className="text-sm font-semibold text-gray-600 group-hover:text-indigo-700">
@@ -241,7 +259,7 @@ export default function ListCandidateProfile() {
                                 <button 
                                     onClick={() => {setIsMenuRankOpen(false); handleFilter(0, rank.id)}}
                                     key={rank.id} 
-                                    className="w-full group flex items-center justify-between p-3 rounded-xl hover:bg-indigo-50 transition-colors text-left"
+                                    className="cursor-pointer w-full group flex items-center justify-between p-3 rounded-xl hover:bg-indigo-50 transition-colors text-left"
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className="w-3 h-3 rounded-full shadow-sm" style={{backgroundColor: rank.code_hexa}}></div>
@@ -256,71 +274,123 @@ export default function ListCandidateProfile() {
                     </div>
                 </div>
 
-                <div className="col-span-1 lg:col-span-4 space-y-4">
-                    {candidats.length > 0 ? (
-                        candidats.map((candidat) => (
-                            <div key={candidat.id} className="flex flex-col p-4 bg-white border rounded-2xl shadow-sm hover:shadow-md transition">
-                                <div className="flex justify-between items-start">
-                                    <div className="flex items-center">
-                                        <div className="w-12 h-12 bg-gray-200 rounded-full"><Avatar width = {48} height = {48} fontSize = {24} nom = {candidat.user?.nom} prenom = {candidat.user?.prenom} />
-                                        </div> <div className="ml-3">
-                                            <h3 className="font-bold text-gray-900">{candidat.user?.nom} {candidat.user?.prenom}</h3>
-                                            <p className="text-sm text-gray-500">{candidat.domaine_competence}</p>
-                                        </div>
-                                    </div>
-                                    <span className="px-2 py-1 text-xs font-semibold rounded" style={{ backgroundColor: `${candidat.rank?.code_hexa}20`, color: candidat.rank?.code_hexa }} > Rang {candidat.rank ? candidat.rank.rank : "E"}</span> 
-                                </div>
-                                
-                                {(() => {
-                                    const uniqueCategories = Array.from(
-                                        new Map(
-                                            (candidat.skills || [])
-                                                .filter(skill => skill.category) // Sécurité au cas où category est null
-                                                .map(skill => [skill.category.id, skill.category])
-                                        ).values()
-                                    );
-
-                                    return (
-                                        <div className="mt-3 flex flex-wrap gap-2">
-                                            {uniqueCategories.length > 0 ? (
-                                                uniqueCategories.map((cat) => (
-                                                    <span 
-                                                        key={cat.id} 
-                                                        className="px-2 py-1 text-xs font-bold rounded-full"
-                                                        style={{ 
-                                                            backgroundColor: `${cat.color || '#E1F5FE'}20`, 
-                                                            color:  `${cat.color}`
-                                                        }}
-                                                    >
-                                                        {cat.name}
-                                                    </span>
-                                                ))
-                                            ) : (
-                                                <span className="text-xs text-gray-400 bg-gray-50 italic">Aucun domaine</span>
-                                            )}
-                                        </div>
-                                    );
-                                })()}
-                                <Link href={`/dashboard/admin/detailProfilCandidat/${candidat.id}`}>
-                                    <div className="mt-4 flex justify-end space-x-2">
-                                        <button className="text-sm text-indigo-600 font-medium cursor-pointer">Voir profil</button>
-                                    </div>
-                                </Link>
-                            </div>
-                        ))) : (
-
-                            <div className="flex flex-col p-4 bg-white border rounded-2xl shadow-sm hover:shadow-md transition">
-                                <div className="flex justify-between items-start">
-                                    <div className="flex items-center">
-                                        <div className="ml-3">
-                                            <h3 className="font-bold text-gray-900 text-center">Aucun candidat trouvé</h3>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )                        
-                    }
+                {/* Barre de Recherche */}
+                <div className="mb-2 mt-2 relative w-full max-w-sm flex items-end justify-end">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 " size={16} />
+                    <input
+                        type="text"
+                        placeholder="Rechercher un nom ou prénom..."
+                        value={searchTerm}
+                        onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                        className="w-full pl-10 pr-4 py-4 bg-white border-slate-100 rounded-2xl shadow-sm focus:ring-2 focus:ring-[#000080]/10 focus:border-[#000080] transition-all"
+                    />
                 </div>
+
+                {loading ? 
+                (<div className="flex justify-center items-center h-screen">
+                    <ThreeDots height="80" width="80" color="#000080" visible={true} />
+                </div>) : (
+                    <div className="col-span-1 lg:col-span-4 space-y-4">
+                        {currentItems.length > 0 ? (
+                            currentItems.map((candidat) => (
+                                <div key={candidat.id} className="flex flex-col p-4 bg-white border rounded-2xl shadow-sm hover:shadow-md transition">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex items-center">
+                                            <div className="w-12 h-12 bg-gray-200 rounded-full"><Avatar width = {48} height = {48} fontSize = {24} nom = {candidat.user?.nom} prenom = {candidat.user?.prenom} />
+                                            </div> <div className="ml-3">
+                                                <h3 className="font-bold text-gray-900">{candidat.user?.nom} {candidat.user?.prenom}</h3>
+                                                <p className="text-sm text-gray-500">{candidat.domaine_competence }</p>
+                                            </div>
+                                        </div>
+                                        <span className="px-2 py-1 text-xs font-semibold rounded" style={{ backgroundColor: `${candidat.rank?.code_hexa}20`, color: candidat.rank?.code_hexa }} > Rang {candidat.rank.rank}</span> 
+                                    </div>
+                                    
+                                    {(() => {
+                                        const uniqueCategories = Array.from(
+                                            new Map(
+                                                (candidat.skills || [])
+                                                    .filter(skill => skill.category) // Sécurité au cas où category est null
+                                                    .map(skill => [skill.category.id, skill.category])
+                                            ).values()
+                                        );
+
+                                        return (
+                                            <div className="mt-3 flex flex-wrap gap-2">
+                                                {uniqueCategories.length > 0 ? (
+                                                    uniqueCategories.map((cat) => (
+                                                        <span 
+                                                            key={cat.id} 
+                                                            className="px-2 py-1 text-xs font-bold rounded-full"
+                                                            style={{ 
+                                                                backgroundColor: `${cat.color || '#E1F5FE'}20`, 
+                                                                color:  `${cat.color}`
+                                                            }}
+                                                        >
+                                                            {cat.name}
+                                                        </span>
+                                                    ))
+                                                ) : (
+                                                    <span className="text-xs text-gray-400 bg-gray-50 italic">Aucun domaine</span>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
+                                    <Link href={`/dashboard/admin/detailProfilCandidat/${candidat.id}`}>
+                                        <div className="mt-4 flex justify-end space-x-2">
+                                            <button className="text-sm text-indigo-600 font-medium cursor-pointer">Voir profil</button>
+                                        </div>
+                                    </Link>
+                                </div>
+                            ))) : (
+
+                                // <div className="flex flex-col p-4 bg-white border rounded-2xl shadow-sm hover:shadow-md transition">
+                                //     <div className="flex justify-between items-start">
+                                //         <div className="flex items-center">
+                                //             <div className="ml-3">
+                                //                 <h3 className="font-bold text-gray-900 text-center">Aucun candidat trouvé</h3>
+                                //             </div>
+                                //         </div>
+                                //     </div>
+                                // </div>
+                                ""
+                            )                        
+                        }
+                    </div>
+                )}
+
+                {filteredData!.length === 0 && (
+                    <div className="p-20 text-center">
+                    <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Search size={24} className="text-slate-300" />
+                    </div>
+                    <p className="text-slate-400 font-medium italic">Aucun résultat pour cette recherche.</p>
+                    </div>
+                )}
+
+                {/* Pagination UI */}
+                {totalPages >= 1 && (
+                    <div className="p-6 border-t border-slate-100 flex items-center justify-between">
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                        Page {currentPage} sur {totalPages}
+                    </p>
+                    <div className="flex gap-2">
+                        <button 
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-[#000080] hover:text-white transition-all cursor-pointer"
+                        >
+                        <ChevronLeft size={20} />
+                        </button>
+                        <button 
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-[#000080] hover:text-white transition-all cursor-pointer"
+                        >
+                        <ChevronRight size={20} />
+                        </button>
+                    </div>
+                    </div>
+                )}
             </div>
         </div>
     );

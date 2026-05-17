@@ -9,20 +9,21 @@ use App\Models\MissionOffers;
 
 class MissionsController extends Controller
 {
-    public function index(Request $request){
-        // return "DEBUG";
-        $missions = Mission::where('active', true)
-        ->whereNull('closed_at')
-        ->orderBy('created_at', 'desc')
-        ->get();
+        public function index(Request $request){
+            // return "DEBUG";
+            $missions = Mission::where('active', true)
+            ->whereNull('closed_at')
+            ->orderBy('created_at', 'desc')
+            ->with('entreprise')
+            ->get();
 
-        return apiResponse(
-            $missions,
-            'Missions récupérées avec succès',
-            'success',
-            200
-        );
-    }
+            return apiResponse(
+                $missions,
+                'Missions récupérées avec succès',
+                'success',
+                200
+            );
+        }
 
     public function show($id)
     {
@@ -60,12 +61,25 @@ class MissionsController extends Controller
         }
 
         if ($request->status === 'accepted') {
-            $offer->update(['accepted_at' => now()]);
+            $offer->update([
+                'accepted_at' => now(),
+                'status' => "accepted"
+            ]);
         } else {
             $offer->update(['declined_at' => now()]);
         }
 
         return apiResponse(null, 'Réponse enregistrée', 'success', 200);
+    }
+
+    public function myconfirmedmissions(Request $request){
+
+        $missionOffers = MissionOffers::whereHas('application', 
+            fn($q) => $q->where('candidat_id', $request->user()->candidat->id)
+        )->whereNotNull('accepted_at')
+        ->with('application.mission')->get();
+
+        return apiResponse($missionOffers, '    ', 'success', 200);
     }
 
 }

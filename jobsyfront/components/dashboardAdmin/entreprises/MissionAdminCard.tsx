@@ -80,6 +80,8 @@ const MissionAdminCard = ({ mission }: { mission: Mission }) => {
 
   const applications = mission.applications
 
+  
+
   return (
     <div className="group relative bg-white border border-slate-100 rounded-2xl p-5 hover:shadow-2xl hover:border-blue-100 transition-all duration-300 mb-4">
       
@@ -142,7 +144,7 @@ const MissionAdminCard = ({ mission }: { mission: Mission }) => {
         {/* SECTION 4: Actions */}
         <div className="flex items-center gap-2">
         {mission.applications.some(app => app.mission_offers) ? 
-          <button onClick={() => setShowDetails(true)} className="h-12 w-12 flex items-center justify-center rounded-2xl bg-slate-50 text-slate-400 hover:bg-[#000080] hover:text-white transition-all group/btn">
+          <button onClick={() => setShowDetails(true)} className="cursor-pointer h-12 w-12 flex items-center justify-center rounded-2xl bg-slate-50 text-slate-400 hover:bg-[#000080] hover:text-white transition-all group/btn">
             <ArrowRight size={20} className="group-hover/btn:translate-x-1 transition-transform" />
           </button> : null}
         </div>

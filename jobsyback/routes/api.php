@@ -1,19 +1,28 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminWalletController;
 use App\Http\Controllers\Admin\ApplicantController;
 use App\Http\Controllers\Admin\CompanyController;
+use App\Http\Controllers\Admin\CourseController;
+use App\Http\Controllers\Admin\ModuleController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Candidat\CandidatController;
 use App\Http\Controllers\Candidat\DiplomeController;
 use App\Http\Controllers\Candidat\FormationController;
 use App\Http\Controllers\Auth\RefreshTokenController;
 use App\Http\Controllers\Candidat\CandidatureController;
+use App\Http\Controllers\Candidat\CourseCatalogueController;
 use App\Http\Controllers\Candidat\ProfileController;
 use App\Http\Controllers\Entreprise\EntrepriseController;
 use App\Http\Controllers\GeneralController;
 use App\Http\Controllers\Candidat\MissionsController as CandidatMissionController;
+use App\Http\Controllers\Candidat\WalletController;
 use App\Http\Controllers\Entreprise\MissionController as EntrepriseMissionController;
+use App\Http\Controllers\Entreprise\PaymentController;
+use App\Http\Controllers\MissionTrackingController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PublicMissionController;
+use App\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -23,7 +32,10 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/refresh', [RefreshTokenController::class, 'refresh']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
-Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum', 'access.token');
+Route::post('logout', [AuthController::class, 'logout'])->middleware(['auth:sanctum', 'access.token']);
+Route::post('/webhooks/kkiapay', [WebhookController::class, 'handleKkiaPay']);
+Route::post('/webhooks/kkiapay/payouts', [WebhookController::class, 'handleKkiaPayPayouts']);
+Route::get('/public_missions', [PublicMissionController::class, 'index']);
 
 Route::post('/email/verification-notification', function (Request $request) {
     $request->user()->sendEmailVerificationNotification();
@@ -65,11 +77,12 @@ Route::post('/auth/resend-verification', function (Request $request) {
     return response()->json(['message' => 'Verification link resent!']);
 });
 
-Route::middleware('auth:sanctum', 'access.token')->get('/user', [AuthController::class, 'userProfile']);
+Route::middleware(['auth:sanctum', 'access.token'])->get('/user', [AuthController::class, 'userProfile']);
 
 Route::middleware(['auth:sanctum' , 'access.token'])->group(function() {
     Route::get('/getFilterData', [GeneralController::class, 'getFilterData']);
     Route::get('/filter', [GeneralController::class, 'filter']);
+    Route::post('/mission-offers/{id}/update-status', [MissionTrackingController::class, 'updateStatus']);
 });
 
 Route::middleware(['auth:sanctum', 'role:JEUNE', 'access.token'])->group(function() {
@@ -112,6 +125,15 @@ Route::middleware(['auth:sanctum', 'role:JEUNE', 'access.token'])->group(functio
     Route::patch('/candidat/notifications/mark-as-read', [NotificationController::class, 'markAsRead']);
 
     Route::get('/candidat/notifications/unread', [NotificationController::class, 'unread']);
+    Route::get('/candidat/my-confirmed-missions', [CandidatMissionController::class, 'myconfirmedmissions']);
+    Route::get('/candidat/wallet', [WalletController::class, 'getWalletData']);
+    Route::post('/candidat/withdraw', [WalletController::class, 'withdrawalRequest']);
+
+    Route::resource('/open/courses', CourseCatalogueController::class);
+    Route::get('/get_modules/{course}', [CourseCatalogueController::class, 'getModules']);  
+
+
+    
 
 });
 
@@ -127,6 +149,8 @@ Route::middleware(['auth:sanctum', 'role:ENTREPRISE', 'access.token'])->group(fu
     Route::post('/entreprise/update/password', [EntrepriseController::class, 'updatePassword']);
     Route::post('/entreprise/applications/{applicationId}/select', [EntrepriseMissionController::class, 'selectApplicants']);
     Route::get('/missions/closed', [EntrepriseMissionController::class, 'getclosedJobs']);
+    Route::get('/entreprise/confirmed-applicants/{id}', [EntrepriseMissionController::class, 'getConfirmedApplicants']);
+    Route::post('/entreprise/payments/initiate-kkiapay', [PaymentController::class, 'initiateKkiaPay']);
     Route::resource('/missions', EntrepriseMissionController::class);
 
 });
@@ -134,5 +158,14 @@ Route::middleware(['auth:sanctum', 'role:ENTREPRISE', 'access.token'])->group(fu
 Route::middleware(['auth:sanctum', 'role:ADMIN', 'access.token'])->group(function() {
     Route::get('/infoProfileCandidat/{id}', [ApplicantController::class, 'showProfile']);
     Route::get('/entreprises', [CompanyController::class, 'index']);
-    Route::get('/entreprises/{id}/missions', [CompanyController::class, 'getMissionsEntreprise']);
+    Route::get('/entreprises/{id}/missions', [CompanyController::class, 'getMissionsEntreprise']);  
+    Route::get('/candidats/withdrawals', [AdminWalletController::class, 'getApplicantsPendingWithdrawals']);  
+    Route::post('/candidats/updateWithdrawalStatus/{id}', [AdminWalletController::class, 'updateWithdrawalStatus']);  
+    Route::resource('/courses', CourseController::class);
+    Route::get('/getModules/{course}', [CourseController::class, 'getModules']);  
+    Route::post('/storeModule', [CourseController::class, 'storeModule']);  
+    Route::post('/editModule/{module}', [CourseController::class, 'editModule']);  
+    Route::resource('/modules', ModuleController::class);
+
+
 });

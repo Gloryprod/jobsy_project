@@ -3,6 +3,7 @@ import Header from '@/components/Home/layout/Header';
 import Footer from '@/components/Home/layout/Footer';
 import { MotionButton } from '@/components/ui/MotionButton';
 import { CheckCircle, Clock, Users, Building2, Shield, TrendingUp, MessageSquare, PhoneCall } from 'lucide-react';
+import Link from 'next/link';
 
 export default function EntreprisesPage() {
   return (
@@ -16,23 +17,28 @@ export default function EntreprisesPage() {
             Trouvez la bonne personne<br />
             <span className="text-[#F0E68C]">en moins de 24h</span>
           </h1>
-          <p className="text-xl md:text-2xl max-w-4xl mx-auto mb-12 opacity-90">
+          {/* <p className="text-xl md:text-2xl max-w-4xl mx-auto mb-12 opacity-90">
             Pas de CV vide, pas d’attente. Des jeunes diplômés motivés, formés, vérifiés et disponibles immédiatement à Cotonou, Porto-Novo, Parakou…
-          </p>
+          </p> */}
 
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
+            <Link href="/login">
             <MotionButton
-              variant="primary"
-              className="text-xl px-12 py-6 bg-[#F0E68C] text-[#000080] hover:bg-white font-bold shadow-2xl"
-            >
-              Poster ma première mission (gratuit)
-            </MotionButton>
-            <MotionButton
-              variant="secondary"
-              className="text-xl px-12 py-6 border-2 border-white hover:bg-white hover:text-[#000080]"
-            >
-              Voir les profils disponibles
-            </MotionButton>
+                variant="primary"
+                className="cursor-pointer text-xl px-8 py-4 bg-[#F0E68C] text-[#000080] hover:bg-white font-bold shadow-2xl"
+              >
+                Poster ma première mission
+              </MotionButton>
+            </Link>
+
+             <Link href="/login">
+              <MotionButton
+                variant="secondary"
+                className="cursor-pointer text-xl px-8 py-4 border-2 border-white hover:bg-white hover:text-[#000080]"
+              >
+                Voir les profils disponibles
+              </MotionButton>
+            </Link>
           </div>
         </div>
       </section>
@@ -131,13 +137,15 @@ export default function EntreprisesPage() {
               <p className="text-2xl mt-4">Recrutement CDI depuis la plateforme</p>
             </div>
           </div>
-
-          <MotionButton
-            variant="primary"
-            className="mt-12 text-xl px-16 py-8 bg-[#F0E68C] text-[#000080] hover:bg-white font-bold"
-          >
-            Créer mon compte entreprise → gratuit
-          </MotionButton>
+          
+          <Link href="/register/entreprise">
+            <MotionButton
+              variant="primary"
+              className="cursor-pointer mt-12 text-xl px-8 py-4 bg-[#F0E68C] text-[#000080] hover:bg-white font-bold"
+            >
+              Créer mon compte entreprise
+            </MotionButton>
+          </Link>
         </div>
       </section>
 

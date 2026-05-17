@@ -1,8 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { 
-  Home, Sword, BookOpen, Backpack, Wallet, User, Bell, Settings, Menu, X,
-  Hexagon, Heart,CheckCheck
+  Home, Sword, BookOpen, Backpack, Wallet, CheckCheck
 } from 'lucide-react';
 import { useUser } from '@/context/UserProvider';
 import Link from 'next/link';
@@ -14,7 +13,7 @@ export default function Navigation() {
   const navItems = [
     { id: 'home', name: 'Tableau de bord', icon: Home, link: '/dashboard/candidats'  },
     { id: 'missions', name: 'Missions', icon: Sword, link: '/dashboard/candidats/missions' },
-    { id: 'missions_confirmées', name: 'Offres confirmées', icon: CheckCheck, link: '/dashboard/candidats/missions' },
+    { id: 'missions_confirmées', name: 'Offres confirmées', icon: CheckCheck, link: '/dashboard/candidats/missions/en_cours' },
     { id: 'formations', name: 'Formations', icon: BookOpen, link: '/dashboard/candidats/formations' },
     { id: 'inventaire', name: 'Inventaire', icon: Backpack, link: '/dashboard/candidats/inventaire' },
     { id: 'wallet', name: 'Mes Gains', icon: Wallet, link: '/dashboard/candidats/loot' },
@@ -79,7 +78,7 @@ export default function Navigation() {
         <div className="p-6 border-t border-white/10">
           <div className="bg-white/10 rounded-2xl p-5 text-center border border-white/10">
             <p className="text-white/70 text-sm">Solde disponible</p>
-            <p className="text-[#F0E68C] text-3xl font-bold mt-2">12 500 F</p>
+            <p className="text-[#F0E68C] text-2xl font-bold mt-2">{user?.candidat?.wallet?.balance|| 0} FCFA</p>
           </div>
         </div>
       </aside>

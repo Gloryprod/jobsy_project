@@ -3,6 +3,7 @@
 
 import { motion } from 'framer-motion';
 import { ArrowRight, Smartphone, SearchCheck, Wallet, Trophy } from 'lucide-react';
+import Link from 'next/link';
 
 const steps = [
   {
@@ -111,9 +112,11 @@ export default function HowItWorks() {
           <p className="text-2xl md:text-3xl font-bold text-[#F0E68C] mb-6">
             Prêt à gagner ton premier salaire dès demain ?
           </p>
-          <button className="bg-[#F0E68C] text-[#000080] font-bold text-lg px-10 py-5 rounded-full shadow-2xl hover:bg-white transition transform hover:scale-105">
-            Commencer maintenant – C’est gratuit
-          </button>
+          <Link href="/register">
+            <button className="cursor-pointer bg-[#F0E68C] text-[#000080] font-bold text-lg px-10 py-5 rounded-full shadow-2xl hover:bg-white transition transform hover:scale-105">
+              Je me lance !
+            </button>
+          </Link>
         </motion.div>
       </div>
     </section>

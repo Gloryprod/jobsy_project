@@ -8,7 +8,21 @@ import api from "@/lib/api";
 import { ThreeDots } from 'react-loader-spinner';
 import Link from "next/link";
 import { useUser } from '@/context/UserProvider';
+import { getExpirationText } from '@/components/GetExpirationText';
 
+
+export type Entreprise = {
+    id: number;
+    nom_officiel?: string;
+    nom_entreprise: string;
+    date_creation?: Date | null;
+    secteur_activite?: string;
+    localisation?: string;
+    taille?: string;
+    site_web?: string;
+    description?: string;
+    logo?: string;
+}
 
 export type Mission = {
   id: number;
@@ -25,6 +39,7 @@ export type Mission = {
   applicants: number;
   type_contrat: 'CDI' | 'CDD' | 'Mission Ponctuelle';
   active: boolean;
+  entreprise: Entreprise;
 }
 
 const fetcher = (url: string) => api.get(url).then(res => res.data.data);
@@ -102,7 +117,7 @@ export default function MissionsPage() {
               placeholder="Rechercher une compétence, un métier..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-16 pr-6 py-6 bg-white rounded-[2rem] border-2 border-slate-100 shadow-xl shadow-slate-200/40 focus:outline-none focus:border-[#000080]/20 transition-all text-slate-700 font-bold placeholder:text-slate-300"
+              className="w-full pl-16 pr-6 py-6 bg-white rounded-2xl border-2 border-slate-100 shadow-xl shadow-slate-200/40 focus:outline-none focus:border-[#000080]/20 transition-all text-slate-700 font-bold placeholder:text-slate-300"
             />
           </div>
 
@@ -112,13 +127,13 @@ export default function MissionsPage() {
               <button
                 key={type}
                 onClick={() => setSelectedContract(type)}
-                className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+                className={`cursor-pointer px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
                   selectedContract === type 
                   ? 'bg-[#000080] text-white shadow-lg shadow-blue-900/20' 
                   : 'bg-white text-slate-400 border border-slate-200 hover:border-[#000080]'
                 }`}
               >
-                {type === 'all' ? 'Toutes les quêtes' : type}
+                {type === 'all' ? 'Toutes les missions' : type}
               </button>
             ))}
           </div>}
@@ -164,7 +179,7 @@ export default function MissionsPage() {
 
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-slate-400 text-xs font-bold">
-                    <Building2 size={16} className="text-[#000080]" /> {mission.company}
+                    <Building2 size={16} className="text-[#000080]" /> {mission.entreprise.nom_entreprise}
                   </div>
                   <div className="flex items-center gap-2 text-slate-400 text-xs font-bold">
                     <MapPin size={16} className="text-[#000080]" /> {mission.location}
@@ -188,7 +203,7 @@ export default function MissionsPage() {
                 </div>
                 <div className="text-right">
                   <div className="flex items-center gap-1 text-orange-500 text-[10px] font-black uppercase mb-1">
-                    <Clock size={12} /> {mission.duration}
+                    <Clock size={12} /> {getExpirationText(mission.deadline)}
                   </div>
                   <Link href="#">
                     <button onClick = {(e) => {e.stopPropagation(); setAppliedMission(mission)}}  className="bg-[#000080] items-center text-[10px] text-[#F0E68C] text-md font-bold px-2 py-2 rounded-lg cursor-pointer">Postuler</button>
@@ -248,7 +263,7 @@ export default function MissionsPage() {
                 </div>
                 <div className="text-right">
                   <div className="flex items-center gap-1 text-orange-500 text-[10px] font-black uppercase mb-1">
-                    <Clock size={12} /> {mission.duration}
+                    <Clock size={12} /> {getExpirationText(mission.deadline)}
                   </div>
                   <Link href="#">
                     <button onClick = {(e) => {e.stopPropagation(); setAppliedMission(mission)}}  className="bg-[#000080] items-center text-[10px] text-[#F0E68C] text-md font-bold px-2 py-2 rounded-lg cursor-pointer">Postuler</button>
@@ -276,7 +291,7 @@ export default function MissionsPage() {
 
             <div className="p-10 space-y-8">
               <div className="space-y-2 pr-12">
-                <span className="text-[#000080] font-black text-xs uppercase tracking-[0.3em]">{selectedMission.company}</span>
+                <span className="text-[#000080] font-black text-xs uppercase tracking-[0.3em]">{selectedMission.entreprise.nom_entreprise}</span>
                 <h2 className="text-3xl lg:text-4xl font-black text-slate-800 leading-none">{selectedMission.title}</h2>
               </div>
 
@@ -311,7 +326,7 @@ export default function MissionsPage() {
                 <p className="text-slate-600 leading-relaxed font-medium" dangerouslySetInnerHTML={{ __html: selectedMission.description }}/>
               </div>
 
-              <div className="p-8 bg-[#000080] rounded-[2rem] text-white flex items-center justify-between shadow-xl shadow-blue-900/30">
+              <div className="p-8 bg-[#000080] rounded-4xl text-white flex items-center justify-between shadow-xl shadow-blue-900/30">
                 <div className="flex items-center gap-5">
                   <div className="p-4 bg-white/10 rounded-2xl">
                     <Wallet size={32} className="text-[#F0E68C]" />

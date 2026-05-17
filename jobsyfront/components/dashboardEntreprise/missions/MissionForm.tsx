@@ -1,6 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react';
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import { Editor, EditorTextChangeEvent } from 'primereact/editor';
@@ -59,20 +59,18 @@ export default function MissionForm({initialData} : MissionFormProps){
     const isEditing = !!initialData
     const [loading, setLoading] = useState(false);
 
-    const [formData, setFormData] = useState<Partial<Mission>>({
-        urgency: 'normal',
-        skills: ''
-    });
     const [categories, setCategories] = useState<Category[] | []>([]);
     const [ranks, setRanks ] = useState<Rank[] | []>([]);
 
-    const form = useForm({
-        defaultValues: initialData
+    const {register, handleSubmit, reset, control} = useForm({
+        values: initialData 
     })
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
+    useEffect(() => {
+        if (initialData) {
+        reset(initialData);
+        }
+    }, [initialData, reset]);
 
     useEffect(() => {
         if (!data) return;
@@ -85,12 +83,12 @@ export default function MissionForm({initialData} : MissionFormProps){
         fetchData();
     }, [data]);
 
-    const onSubmit = async () => {
+    const onSubmit = async (data: Mission) => {
         setLoading(true);
         const dataToSend = {
-            ...formData,
-            skills: formData.skills?.split(',').map(s => s.trim()).filter(s => s !== ""),
-            reward: formData.reward
+            ...data,
+            skills: isEditing ? (Array.isArray(data?.skills) ? data.skills : (data?.skills || "").split(',').map(s => s.trim()).filter(s => s !== "")) : (data?.skills || "").split(',').map(s => s.trim()).filter(s => s !== ""),
+            reward: data.reward
         };
         console.log("Données prêtes :", dataToSend);
 
@@ -125,33 +123,33 @@ export default function MissionForm({initialData} : MissionFormProps){
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label className={labelClass}>Titre de la mission</label>
-                    <input {...form.register("title")} type="text" name="title" onChange={handleChange} className={inputClass} placeholder="Développeur Fullstack..." />
+                    <input {...register("title")} type="text" name="title" className={inputClass} placeholder="Développeur Fullstack..." />
                 </div>
                 <div>
                     <label className={labelClass}>Entreprise</label>
-                    <input {...form.register("company")} type="text" name="company" onChange={handleChange} className={inputClass} placeholder="Nom de la boîte" />
+                    <input {...register("company")} type="text" name="company" className={inputClass} placeholder="Nom de la boîte" />
                 </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label className={labelClass}>Lieu</label>
-                    <input {...form.register("location")} type="text" name="location" onChange={handleChange} className={inputClass} placeholder="Paris / Remote" />
+                    <input {...register("location")} type="text" name="location" className={inputClass} placeholder="Paris / Remote" />
                 </div>
                 <div>
                     <label className={labelClass}>Rémunération</label>
-                    <input {...form.register("reward")} type="number" name="reward" onChange={handleChange} className={inputClass} placeholder="500" />
+                    <input {...register("reward")} type="number" name="reward" className={inputClass} placeholder="500" />
                 </div>
                 <div>
                     <label className={labelClass}>Date limite</label>
-                    <input {...form.register("deadline")} type="date" name="deadline" onChange={handleChange} className={inputClass} />
+                    <input {...register("deadline")} type="date" name="deadline" className={inputClass} />
                 </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label className={labelClass}>Difficulté de l&apos;évaluation à passer</label>
-                        <select {...form.register("test_severity")} name="test_severity" onChange={handleChange} className={inputClass}>
+                        <select {...register("test_severity")} name="test_severity" className={inputClass}>
                             <option defaultValue="" >Sélectionner un niveau de difficulté</option>
                             <option value="light">Facile</option>
                             <option value="standard">Moyen</option>
@@ -160,7 +158,7 @@ export default function MissionForm({initialData} : MissionFormProps){
                     </div>
                     <div>
                         <label className={labelClass}>Type de contrat</label>
-                        <select {...form.register("type_contrat")} name="type_contrat" onChange={handleChange} className={inputClass}>
+                        <select {...register("type_contrat")} name="type_contrat" className={inputClass}>
                             <option defaultValue="">Sélectionner le type de contrat</option>
                             <option value="CDD">CDD</option>
                             <option value="CDI">CDI</option>
@@ -169,18 +167,18 @@ export default function MissionForm({initialData} : MissionFormProps){
                     </div>
                     <div>
                         <label className={labelClass}>Nombre de poste</label>
-                        <input {...form.register("applicants")} type="number" name="applicants" onChange={handleChange} className={inputClass} placeholder="0" />
+                        <input {...register("applicants")} type="number" name="applicants" className={inputClass} placeholder="0" />
                     </div>
                 </div>
 
                 <div>
                     <label className={labelClass}>Compétences (séparées par des virgules)</label>
-                    <input {...form.register("skills")} type="text" name="skills" onChange={handleChange} className={inputClass} placeholder="React, Tailwind, Laravel..."  />
+                    <input {...register("skills")} type="text" name="skills" className={inputClass} placeholder="React, Tailwind, Laravel..."  />
                 </div>
 
                 <div>
                     <label className={labelClass}>Niveau minimum du candidat requis</label>
-                    <select {...form.register("min_rank_required")} name="min_rank_required" onChange={handleChange} className={inputClass}>
+                    <select {...register("min_rank_required")} name="min_rank_required" className={inputClass}>
                         <option defaultValue="">Sélectionner un niveau</option>
                         {ranks.map(function (value, index) {
                             return <option key={index} value={value.rank}>{value.label}</option>
@@ -191,7 +189,7 @@ export default function MissionForm({initialData} : MissionFormProps){
 
                 <div>
                     <label className={labelClass}>Domaine d&apos;activité</label>
-                    <select {...form.register("category")} name="category" onChange={handleChange} className={inputClass}>
+                    <select {...register("category")} name="category" className={inputClass}>
                         <option defaultValue="">Sélectionner un domaine d&apos;activité</option>
                         {categories.map(function (value, index) {
                             return <option key={index} value={value.name}>{value.name}</option>
@@ -203,12 +201,23 @@ export default function MissionForm({initialData} : MissionFormProps){
 
                 <div>     
                     <label className={labelClass}>Description détaillée</label>
-                    <Editor {...form.register("description")} placeholder="Décrivez les objectifs de la mission..." name="description" className={inputClass}  onTextChange={(e: EditorTextChangeEvent) => setFormData({...formData, description: e.htmlValue ?? ""})} style={{ height: '320px' }} />
+                    <Controller
+                        name="description"
+                        control={control}
+                        render={({ field }) => (
+                            <Editor 
+                                value={field.value} 
+                                onTextChange={(e) => field.onChange(e.htmlValue)} 
+                                style={{ height: '320px' }} 
+                            />
+                        )}
+                    />
+                    {/* <Editor {...register("description")} placeholder="Décrivez les objectifs de la mission..." name="description" className={inputClass}  onTextChange={(e: EditorTextChangeEvent) => setFormData({...formData, description: e.htmlValue ?? ""})} style={{ height: '320px' }} /> */}
                 </div>
 
                 <button 
                 type="button" 
-                onClick={form.handleSubmit(onSubmit)}
+                onClick={handleSubmit(onSubmit)}
                 className="w-full py-3 px-5 text-white bg-[#000080] hover:bg-[#000080]/70 font-bold rounded-lg shadow-lg hover:shadow-blue-500/30 transition-all duration-200 transform hover:-translate-y-0.5"
                 >
                 {isEditing ? "Mettre à jour" : "Créer la mission"}
