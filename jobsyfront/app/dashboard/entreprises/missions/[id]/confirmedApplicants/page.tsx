@@ -116,7 +116,9 @@ export default function EnterpriseTrackingPage({ params }: { params: Promise<{ i
         const handlePayment = async (amount: number, offerId: number) => {
             try {
                 const response = await api.post('/entreprise/payments/initiate-kkiapay', { amount, candidat_id: candidat.id });
-                const { public_key, transaction_id, entreprise_id } = response.data;
+                const { public_key, transaction_id, entreprise_id } = response.data.data;
+
+                console.log("Réponse de l'API pour le paiement :", response.data); // Log pour vérifier la réponse de l'API
 
                 // 2. Ouvrir le widget KkiaPay
                 openKkiapayWidget({

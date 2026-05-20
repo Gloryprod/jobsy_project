@@ -129,7 +129,7 @@
                   <div className="space-y-2">
                     <div className="flex justify-between text-[11px] font-black uppercase tracking-widest text-slate-500">
                       <span className="flex items-center gap-1"><Star size={14} className="fill-[#F0E68C] text-[#F0E68C]" /> Expérience</span>
-                      <span>{data.data.score} XP</span>
+                      <span>{data.data.score + data.data.rank.points} XP</span>
                     </div>
                     <div className="h-4 w-full bg-slate-100 rounded-full border border-slate-200 p-0.5">
                       <div 
@@ -203,7 +203,7 @@
             </Tabs>
           </Box>
 
-          <div className="min-h-[250px]">
+          <div className="min-h-62.5">
             {tabValue === 0 && (
               <div className="space-y-4">
                 {applications && applications.length > 0 ? applications.map((application) => (

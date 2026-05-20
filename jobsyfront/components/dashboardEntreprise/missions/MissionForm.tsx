@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation"
 import useSWR from "swr";
 
 interface Mission {
-  id: string;
+  id?: string;
   title: string;
   company: string;
   location: string;
@@ -27,7 +27,8 @@ interface Mission {
 }
 
 interface MissionFormProps {
-  initialData?: Mission; // Les données de la mission en mode édition
+  initialData?: Mission;
+  reopen?: boolean; // Les données de la mission en mode édition
 }
 
 interface Category{
@@ -52,11 +53,14 @@ interface FilterData {
 
 const fetcher = (url: string) => api.get(url).then(res => res.data.data);
 
-export default function MissionForm({initialData} : MissionFormProps){
+export default function MissionForm({initialData, reopen} : MissionFormProps){
     const { data, error, isLoading } = useSWR<FilterData>('/getFilterData', fetcher);
 
-    const router = useRouter()
-    const isEditing = !!initialData
+    const router = useRouter();
+    const isReopenning = !!reopen && !!initialData
+    const isEditing = !!initialData && !isReopenning;
+
+
     const [loading, setLoading] = useState(false);
 
     const [categories, setCategories] = useState<Category[] | []>([]);
@@ -87,10 +91,14 @@ export default function MissionForm({initialData} : MissionFormProps){
         setLoading(true);
         const dataToSend = {
             ...data,
-            skills: isEditing ? (Array.isArray(data?.skills) ? data.skills : (data?.skills || "").split(',').map(s => s.trim()).filter(s => s !== "")) : (data?.skills || "").split(',').map(s => s.trim()).filter(s => s !== ""),
+            skills: isEditing || isReopenning ? (Array.isArray(data?.skills) ? data.skills : (data?.skills || "").split(',').map(s => s.trim()).filter(s => s !== "")) : (data?.skills || "").split(',').map(s => s.trim()).filter(s => s !== ""),
             reward: data.reward
         };
         console.log("Données prêtes :", dataToSend);
+
+        if (isReopenning) {
+            delete dataToSend.id; 
+        }
 
         try {
             if (isEditing) {
@@ -218,9 +226,9 @@ export default function MissionForm({initialData} : MissionFormProps){
                 <button 
                 type="button" 
                 onClick={handleSubmit(onSubmit)}
-                className="w-full py-3 px-5 text-white bg-[#000080] hover:bg-[#000080]/70 font-bold rounded-lg shadow-lg hover:shadow-blue-500/30 transition-all duration-200 transform hover:-translate-y-0.5"
+                className="cursor-pointer w-full py-3 px-5 text-white bg-[#000080] hover:bg-[#000080]/70 font-bold rounded-lg shadow-lg hover:shadow-blue-500/30 transition-all duration-200 transform hover:-translate-y-0.5"
                 >
-                {isEditing ? "Mettre à jour" : "Créer la mission"}
+                {isEditing ? "Mettre à jour" : isReopenning ? "Relancer la mission" : "Créer la mission"}
                 </button>
             </form>
         </div>
