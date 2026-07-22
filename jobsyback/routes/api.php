@@ -4,14 +4,17 @@ use App\Http\Controllers\Admin\AdminWalletController;
 use App\Http\Controllers\Admin\ApplicantController;
 use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Admin\CourseController;
+use App\Http\Controllers\Admin\CourseValidationController;
 use App\Http\Controllers\Admin\ModuleController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Candidat\CandidatController;
+use App\Http\Controllers\Candidat\ExamSubmissionController;
 use App\Http\Controllers\Candidat\DiplomeController;
 use App\Http\Controllers\Candidat\FormationController;
 use App\Http\Controllers\Auth\RefreshTokenController;
 use App\Http\Controllers\Candidat\CandidatureController;
 use App\Http\Controllers\Candidat\CourseCatalogueController;
+use App\Http\Controllers\Candidat\CourseWorkspaceController;
 use App\Http\Controllers\Candidat\ProfileController;
 use App\Http\Controllers\Entreprise\EntrepriseController;
 use App\Http\Controllers\GeneralController;
@@ -23,6 +26,10 @@ use App\Http\Controllers\MissionTrackingController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PublicMissionController;
 use App\Http\Controllers\WebhookController;
+use App\Http\Controllers\Entreprise\DashboardController;
+use App\Http\Controllers\Admin\FinalExamQuestionController;
+use App\Http\Controllers\Admin\ExamProjectController;
+use App\Http\Controllers\CertificateVerificationController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -35,7 +42,10 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::post('logout', [AuthController::class, 'logout'])->middleware(['auth:sanctum', 'access.token']);
 Route::post('/webhooks/kkiapay', [WebhookController::class, 'handleKkiaPay']);
 Route::post('/webhooks/kkiapay/payouts', [WebhookController::class, 'handleKkiaPayPayouts']);
+Route::post('/webhooks/kkiapay/deposits', [WebhookController::class, 'depositWebhook']);
 Route::get('/public_missions', [PublicMissionController::class, 'index']);
+Route::get('/certificates/verify/{hash}', [CertificateVerificationController::class, 'verify']);
+Route::get('/courses/{courseId}/certificate/download', [CertificateVerificationController::class, 'downloadCertificate']);
 
 Route::post('/email/verification-notification', function (Request $request) {
     $request->user()->sendEmailVerificationNotification();
@@ -83,6 +93,7 @@ Route::middleware(['auth:sanctum' , 'access.token'])->group(function() {
     Route::get('/getFilterData', [GeneralController::class, 'getFilterData']);
     Route::get('/filter', [GeneralController::class, 'filter']);
     Route::post('/mission-offers/{id}/update-status', [MissionTrackingController::class, 'updateStatus']);
+    Route::get('/courses/{courseId}/certificate/download', [CertificateVerificationController::class, 'downloadCertificate']);
 });
 
 Route::middleware(['auth:sanctum', 'role:JEUNE', 'access.token'])->group(function() {
@@ -131,9 +142,24 @@ Route::middleware(['auth:sanctum', 'role:JEUNE', 'access.token'])->group(functio
 
     Route::resource('/open/courses', CourseCatalogueController::class);
     Route::get('/get_modules/{course}', [CourseCatalogueController::class, 'getModules']);  
+    Route::post('/candidat/formations/{id}/enroll', [CourseCatalogueController::class, 'enroll']);
+    Route::get('/getCourse/{id}', [CourseWorkspaceController::class, 'getCourse']);
+    Route::get('/candidat/formations/{course}/workspace-standard', [CourseWorkspaceController::class, 'showStandardWorkspace']);
+    Route::post('/candidat/formations/lessons/complete', [CourseWorkspaceController::class, 'completeLesson']);
+    Route::post('/candidat/modules/{moduleId}/submit-quiz', [CourseWorkspaceController::class, 'submitQuiz']);
 
+    Route::get('final-exam-workspace/{courseId}', [CourseWorkspaceController::class, 'showFinalExamQuestions']);
+    Route::post('final-exam/{courseId}/submit', [CourseWorkspaceController::class, 'submitFinalExam']);
 
+    Route::post('logistics/access/{enrollment}', [CourseWorkspaceController::class, 'accesLogisticCourse']);
+
+    // Soumission de l'examen par l'étudiant
+    Route::post('/exam-submissions/{projectId}', [ExamSubmissionController::class, 'submit']);
     
+    // Suivi de l'état de soumission de l'étudiant
+    Route::get('/exam-submissions/project/{courseId}', [ExamSubmissionController::class, 'getStudentSubmission']);
+
+    Route::post('/exam-sessions/{sessionId}/retry', [ExamSubmissionController::class, 'retry']);
 
 });
 
@@ -151,7 +177,11 @@ Route::middleware(['auth:sanctum', 'role:ENTREPRISE', 'access.token'])->group(fu
     Route::get('/missions/closed', [EntrepriseMissionController::class, 'getclosedJobs']);
     Route::get('/entreprise/confirmed-applicants/{id}', [EntrepriseMissionController::class, 'getConfirmedApplicants']);
     Route::post('/entreprise/payments/initiate-kkiapay', [PaymentController::class, 'initiateKkiaPay']);
+    Route::post('/entreprise/payments/lock_funds', [PaymentController::class, 'lockFunds']);
+    Route::post('/entreprise/wallet/initiate-deposit', [PaymentController::class, 'initiateDeposit']);
     Route::resource('/missions', EntrepriseMissionController::class);
+    Route::get('/index', [DashboardController::class, 'index']);
+    Route::get('/transactions-history', [DashboardController::class, 'transactionsHistory']);
 
 });
 
@@ -167,5 +197,34 @@ Route::middleware(['auth:sanctum', 'role:ADMIN', 'access.token'])->group(functio
     Route::post('/editModule/{module}', [CourseController::class, 'editModule']);  
     Route::resource('/modules', ModuleController::class);
 
+    Route::get('final-exam-questions/{courseId}', [FinalExamQuestionController::class, 'index']);
+    Route::get('getQuestions/{question}', [FinalExamQuestionController::class, 'show']);
+    Route::post('final-exam-questions/{courseId}', [FinalExamQuestionController::class, 'store']);
+    Route::post('update-question/{courseId}/{question}', [FinalExamQuestionController::class, 'update']);
+    Route::delete('final-exam-questions/{courseId}/{question}', [FinalExamQuestionController::class, 'destroy']);
+    Route::get('logistics/pending', [CourseValidationController::class, 'logisticEnrollment']);
+    Route::post('logistics/validate/{id}', [CourseValidationController::class, 'validateStep']);
 
+    // Liste / Récupération selon le cours
+    Route::get('/exam-projects/course/{courseId}', [ExamProjectController::class, 'getByCourse']);
+    
+    // Création
+    Route::post('/exam-projects/{courseId}', [ExamProjectController::class, 'store']);
+    
+    // Lecture d'un projet spécifique
+    Route::get('/exam-projects/{id}', [ExamProjectController::class, 'show']);
+    
+    // Modification
+    Route::post('/update-exam-project/{courseId}/{id}', [ExamProjectController::class, 'update']);
+    
+    // Suppression
+    Route::delete('/exam-projects/{courseId}/{id}', [ExamProjectController::class, 'destroy']);
+
+    // Récupération des soumissions pour un projet d'examen spécifique
+    Route::get('/exam-submissions/{projectId}', [ExamProjectController::class, 'getSubmissions']);
+
+    // Évaluation et notation d'une soumission
+    Route::post('exam-submissions/{sessionId}/review', [ExamProjectController::class, 'review']);
+
+    
 });

@@ -64,6 +64,7 @@
     "@types/pusher-js": "^4.2.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "enhanced-resolve": "^5.22.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.6",
     "tailwindcss": "^4",

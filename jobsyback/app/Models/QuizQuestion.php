@@ -14,10 +14,12 @@ class QuizQuestion extends Model
         'question_text',
         'options',
         'points',
+        'correct_answers',
     ];
 
     protected $casts = [
-        'options' => 'array', // Cast JSON to array
+        'options' => 'array', 
+        'correct_answers' => 'array',
     ];
 
     public function module() {

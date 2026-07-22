@@ -68,7 +68,7 @@ export default function MissionConfirmationPage() {
             </div>
             <div>
               <p className="text-[10px] font-black uppercase text-slate-400">Rémunération prévue</p>
-              <p className="text-lg font-black text-slate-800">{offer.application.mission.reward} €</p>
+              <p className="text-lg font-black text-slate-800">{offer.application.mission.reward} FCFA</p>
             </div>
           </div>
 

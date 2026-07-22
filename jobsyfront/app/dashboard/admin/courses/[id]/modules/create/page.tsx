@@ -1,6 +1,6 @@
 'use client'
 import PageInfo from "@/components/PageInfo";
-import ModuleForm from "@/components/dashboardAdmin/modules/ModuleForm";
+import ModuleForms from "@/components/dashboardAdmin/modules/ModuleForms";
 import {  
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
@@ -19,7 +19,7 @@ export default function CreateModule({ params }: { params: Promise<{ id: string 
             <div className="w-full mx-auto my-10 p-4 bg-white shadow-xl rounded-2xl border border-gray-100">
                 <h2 className="text-2xl font-bold text-gray-800 ml-4 mb-4">Ajouter un module</h2>
                 <DropdownMenuSeparator className="ml-4 mr-4 flex items-center justify-end" />
-                <ModuleForm courseId={id} />                
+                <ModuleForms courseId={id} />                
             </div>
         </div>
     ) 

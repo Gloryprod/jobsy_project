@@ -6,7 +6,7 @@ export default function CandidatsDashboardPage() {
   useAuth("JEUNE");
 
   return (
-    <div className="p-8">
+    <div className="p-2">
       <DashboardHome />
     </div>
   );

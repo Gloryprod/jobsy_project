@@ -44,7 +44,10 @@ export default function NotificationsPage() {
   }
 
   useEffect(() => {
-    loadNotifications();
+    // Use startTransition to avoid synchronous setState inside effect
+    startTransition(() => {
+      loadNotifications();
+    });
   }, []);
 
   function markAllAsRead() {
@@ -60,7 +63,7 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="p-6 max-w-3xl mx-auto min-h-screen">
+    <div className="p-6 max-w-4xl mx-auto min-h-screen">
       {/* HEADER */}
       <div className="flex items-center justify-between mb-8">
         <div>

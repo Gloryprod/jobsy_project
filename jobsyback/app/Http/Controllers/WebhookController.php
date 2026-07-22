@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Entreprise;
 use App\Models\MissionOffers;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
@@ -14,8 +15,8 @@ use Illuminate\Support\Facades\DB;
 
 class WebhookController extends Controller
 {
-    protected $walletService;
-    protected $kkiaPayService       ;
+    protected WalletService $walletService;
+    protected KkiapayService $kkiaPayService;
 
     public function __construct(WalletService $walletService, KkiapayService $kkiaPayService)
     {
@@ -96,7 +97,7 @@ class WebhookController extends Controller
                     $this->walletService->lockFundsForMission($wallet, $data['amount'], $offer);
 
                     Log::info("Mission {$offerId} activée avec succès.");
-                    return response()->json(['message' => 'OK'], 200);
+                    return response()->json(['message' => 'Transaction traitée avec succès.'], 200);
                 }
                 
                 return response()->json(['message' => 'Wallet ou Offre introuvable'], 404);
@@ -138,5 +139,51 @@ class WebhookController extends Controller
         }
 
         return response()->json(['message' => 'Événement traité']);
+    }
+
+    public function depositWebhook(Request $request)
+    {
+        $data = $request->all();
+
+        // 1. Récupérer les données envoyées par KkiaPay
+        $transactionId = $data['transactionId'];
+        
+        // IMPORTANT : KkiaPay envoie les infos personnalisées dans 'stateData' sous forme de STRING JSON
+        $stateData = json_decode($data['stateData'], true);
+        $entrepriseId = $stateData['entreprise_id'] ?? null;
+        $isVerified = $this->kkiaPayService->verifyTransaction($transactionId);
+
+        // Si on est en sandbox, on accepte le succès du webhook directement pour avancer
+        $paymentValid = $isVerified || (config('app.env') !== 'production' && ($data['isPaymentSucces'] ?? false));
+        // Sécurité log
+        Log::info("Webhook KkiaPay reçu pour la transaction : " . $transactionId);
+        Log::info($isVerified ? "Vérification réussie." : "Vérification échouée, mais on continue en mode sandbox.");
+
+        if ($paymentValid && $entrepriseId) {
+            
+            $amount = $data['amount'];
+
+            try {
+                DB::beginTransaction();
+
+                $entreprise = Entreprise::findOrFail($entrepriseId);
+                
+                $wallet = $entreprise->wallet;
+            
+                $this->walletService->deposit($wallet, $amount, [
+                    'type' => 'wallet_topup'
+                ]);
+
+                DB::commit();
+                return response()->json(['message' => 'Compte rechargé avec succès'], 200);
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error("Erreur Webhook Wallet : " . $e->getMessage());
+                return response()->json(['error' => 'Server Error'], 500);
+            }
+        }
+
+        return response()->json(['message' => 'Transaction ignorée ou échouée'], 200);
     }
 }

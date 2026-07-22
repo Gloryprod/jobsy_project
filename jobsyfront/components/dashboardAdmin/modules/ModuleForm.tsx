@@ -86,6 +86,7 @@ interface QuizQuestion {
     'module_id': number;
     'question_text': string;
     'options': string[];
+    'correct_answers': string[]; // Index des options correctes
     'points': number;
 }
 
@@ -157,6 +158,9 @@ export default function ModuleForm({ courseId, initialData }: ModuleFormProps) {
             quiz.options.forEach((opt, optIndex) => {
                 formData.append(`quiz_questions[${index}][options][${optIndex}]`, opt);
             });
+            quiz.correct_answers.forEach((ans, ansIndex) => {
+                formData.append(`quiz_questions[${index}][correct_answers][${ansIndex}]`, ans);
+            });
         });
 
         try {
@@ -226,9 +230,10 @@ export default function ModuleForm({ courseId, initialData }: ModuleFormProps) {
     const handleQuizContentChange = (container: any) => {
         const question_text = container.querySelector('[name="question_text"]').value;
         const options = container.querySelector('[name="options"]').value.split(',').map((opt: string) => opt.trim());
+        const correct_answers = container.querySelector('[name="correct_answers"]').value.split(',').map((ans: string) => ans.trim());
         const points = parseInt(container.querySelector('[name="points"]').value);
 
-        const formValues = { question_text, options, points };
+        const formValues = { question_text, options, correct_answers, points };
 
         const validation = quizQuestionSchema.safeParse(formValues);
 
@@ -449,6 +454,11 @@ export default function ModuleForm({ courseId, initialData }: ModuleFormProps) {
                             </div>
 
                             <div>
+                                <label className={labelClass}>Réponses Correctes (séparées par des virgules)</label>
+                                <input type="text" name="correct_answers" className={inputClass} placeholder="Option 1, Option 2, Option 3" />
+                            </div>
+
+                            <div>
                                 <label className={labelClass}>Points</label>
                                 <input type="number" name="points" className={inputClass} />
                             </div>
@@ -496,17 +506,30 @@ export default function ModuleForm({ courseId, initialData }: ModuleFormProps) {
                                 </div>
 
                                 {/* Colonne Droite : Les Options */}
-                                <div className="flex-1 p-4 border-t md:border-t-0 md:border-l border-green-100 bg-white">
+                                <div className="flex-2 p-4 border-t md:border-t-0 md:border-l border-green-100 bg-white">
                                     <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Options de réponse</p>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         {question.options.map((opt, i) => (
                                             <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-md border border-gray-100">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
+                                                <div className="w-1.5 h-1.5 rounded-full bg-yellow-400"></div>
                                                 <span className="text-xs text-gray-600 truncate">{opt}</span>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
+
+                                {question.correct_answers && (
+                                    <div className="flex-1 p-4 border-t md:border-t-0 md:border-l border-green-100 bg-white">
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Réponses correctes</p>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                            {question.correct_answers.map((ans, i) => (
+                                                <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-md border border-gray-100">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
+                                                <span className="text-xs text-gray-600 truncate">{ans}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>)}
 
                                 {/* Action : Supprimer (Barre latérale sur desktop, bouton flottant ou intégré) */}
                                 <div className="flex items-center justify-center p-2 bg-gray-50 md:bg-white border-t md:border-t-0 md:border-l border-gray-100">

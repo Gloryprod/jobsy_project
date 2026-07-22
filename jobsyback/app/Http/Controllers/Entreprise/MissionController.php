@@ -25,7 +25,7 @@ class MissionController extends Controller
     public function index(Request $request){
         $missions = Mission::where('entreprise_id', $request->user()->entreprise->id)
         ->whereNull('closed_at')
-        ->orderBy('created_at', 'desc')
+        ->orderBy('created_at', 'asc')
         ->with('applications.mission_offers')->get();
 
         return apiResponse(
@@ -75,7 +75,10 @@ class MissionController extends Controller
 
     public function update(MissionRequest $request, Mission $mission)
     {
-        $mission->update($request->validated());
+        $validated = $request->validated();
+
+        $mission->update($validated);
+
         return response()->json(['message' => 'Mission mise à jour !']);
     }
 
@@ -179,7 +182,7 @@ class MissionController extends Controller
         $offers = MissionOffers::whereHas('application', function($q) use ($id) {
             $q->where('mission_id', $id);
         })
-        ->with(['application.candidat.user', 'application.mission'])
+        ->with(['application.candidat.user', 'application.mission', 'application.mission.entreprise.wallet'])
         ->orderBy('created_at', 'desc')
         ->get();
 

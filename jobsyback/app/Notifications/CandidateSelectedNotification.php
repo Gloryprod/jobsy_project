@@ -13,7 +13,7 @@ class CandidateSelectedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    protected $offer;
+    protected MissionOffers $offer;
     
     public function __construct(MissionOffers $offer)
     {
@@ -33,7 +33,7 @@ class CandidateSelectedNotification extends Notification implements ShouldQueue
     /**
      * Get the mail representation of the notification.
      */
-    public function toMail($notifiable): MailMessage
+    public function toMail( $notifiable): MailMessage
     {
         return (new MailMessage)
             ->subject('Félicitations ! Vous avez été sélectionné pour une mission sur Jobsy 🎉')

@@ -100,10 +100,12 @@ class MissionTrackingController extends Controller
                     $application->candidat->user->email,
                     $application->mission->entreprise->user->email
                 ];
+                
                 Mail::to($emails)->send(new ContractSignedMail($application, $pdf->output()));
+                
                 return apiResponse(
                     null,
-                    'Mission validée et en cours pour ce candidat. Veuillez maintenant procéder au paiement de la mission.',
+                    'Mission validée et en cours pour ce candidat. Le paiement de la mission est lancé.',
                     'success',
                     200
                 );

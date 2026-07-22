@@ -91,8 +91,8 @@ export default function MissionsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-20">
-      <div className="bg-white border-b border-slate-100 pt-16 pb-12 shadow-sm">
+    <div className="min-h-screen  pb-20">
+      <div className="border-b pt-16 pb-12">
         <div className="max-w-7xl mx-auto px-4 text-center space-y-6">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#F0E68C]/20 rounded-full">
             <Target size={16} className="text-[#8B8000]" />

@@ -37,7 +37,7 @@ export default function AdminWithdrawals() {
     // États pour la recherche et la pagination
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 1;
+    const itemsPerPage = 10;
 
     // 1. Logique de Recherche
     const filteredData = withdrawals?.filter(item =>
@@ -155,7 +155,7 @@ export default function AdminWithdrawals() {
           )}
 
           {/* Pagination UI */}
-          {totalPages > 1 && (
+          {totalPages >= 1 && (
             <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
               <p className="text-xs font-black text-slate-400 uppercase tracking-widest">
                 Page {currentPage} sur {totalPages}

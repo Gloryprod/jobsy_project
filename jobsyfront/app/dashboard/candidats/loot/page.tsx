@@ -104,7 +104,7 @@ export default function WalletPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pt-6 pb-24 text-slate-900 animate-in fade-in duration-700">
+    <div className="min-h-screen pt-6 pb-24 text-slate-900 animate-in fade-in duration-700">
       <div className="max-w-7xl mx-auto px-4 space-y-10">
 
         {/* ==================== HEADER DYNAMIQUE ==================== */}

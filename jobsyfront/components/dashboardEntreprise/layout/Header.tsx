@@ -1,130 +1,146 @@
-'use client'
+'use client';
 
-import { Archive, ClipboardCheck, LayoutDashboard, Search } from "lucide-react";
-// import SearchBar from "@/components/SearchBar";
-import { useState } from "react";
-import { User, ChevronDown, Bell, X, Menu, LogOut, UsersRound } from "lucide-react";
+import { useState, useRef } from "react";
+import { 
+    Archive, ClipboardCheck, LayoutDashboard, Briefcase, User, 
+    ChevronDown, Bell, X, Menu, LogOut, UsersRound 
+} from "lucide-react";
 import { useUser } from "@/context/UserProvider";
 import { useLogout } from "@/lib/logout";
-import { useRef } from "react";
 import useOnClickOutside from "@/hooks/useOnClickOutside";
 import Link from "next/link";
 import Drawer from '@mui/material/Drawer';
-
 
 export default function Header() {
     const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
     const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
     const [mobileNotificationMenuOpen, setMobileNotificationMenuOpen] = useState(false);
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [open, setOpen] = useState(false);
-    const ref = useRef<HTMLDivElement>(null!);
-    const refUL = useRef<HTMLUListElement>(null!);
+    const [openDrawer, setOpenDrawer] = useState(false);
+    
+    const notificationRef = useRef<HTMLDivElement>(null!);
+    const profileRef = useRef<HTMLUListElement>(null!);
+    const mobileNotificationRef = useRef<HTMLDivElement>(null!);
+
     const { user } = useUser();
     const { handleLogout } = useLogout();
 
-    useOnClickOutside(refUL, () => setProfileDropdownOpen(false));
-    useOnClickOutside(ref, () => setNotificationDropdownOpen(false));
-    useOnClickOutside(refUL, () => setMobileMenuOpen(false));
-    useOnClickOutside(ref, () => setMobileNotificationMenuOpen(false));
+    // Gestion des clics à l'extérieur pour fermer les menus déroulants
+    useOnClickOutside(profileRef, () => setProfileDropdownOpen(false));
+    useOnClickOutside(notificationRef, () => setNotificationDropdownOpen(false));
+    useOnClickOutside(mobileNotificationRef, () => setMobileNotificationMenuOpen(false));
 
-    const toggleDrawer = (open: boolean) => () => {
-        setOpen(open);
+    const toggleDrawer = (state: boolean) => () => {
+        setOpenDrawer(state);
     };
 
-    const navItem = [
-        { id: "home", name: "Tableau de bord", icon: LayoutDashboard, href: "/dashboard/entreprises" },
-        { id: "openJobs", name: "Offres Ouvertes", icon: ClipboardCheck, href: "/dashboard/entreprises/missions/list" },
-        { id: "closeJobs", name: "Offres Clotûrées", icon: Archive, href: "/dashboard/entreprises/missions/closed/list" },
-    ]
-
-    const navJeunes = [
-        { id: "profileJeune", name: "Profils Candidats", icon: UsersRound, href: "/dashboard/entreprises/listCandidateProfile" },
-    ]
-
-    const navGeneral= [
-        { id: "profile", name: "Profil", icon: User, href: "/dashboard/entreprises/profile" },
-    ]
+    // Tableaux de données pour la navigation mobile (Drawer)
+    const sections = [
+        {
+            title: "Menu",
+            items: [{ id: "home", name: "Tableau de bord", icon: LayoutDashboard, href: "/dashboard/entreprises" }]
+        },
+        {
+            title: "Mes Missions",
+            items: [
+                { id: "openJobs", name: "Offres Ouvertes", icon: ClipboardCheck, href: "/dashboard/entreprises/missions/list" },
+                { id: "closeJobs", name: "Offres Clôturées", icon: Archive, href: "/dashboard/entreprises/missions/closed/list" },
+            ]
+        },
+        {
+            title: "Candidats",
+            items: [{ id: "profileJeune", name: "Profils Candidats", icon: UsersRound, href: "/dashboard/entreprises/listCandidateProfile" }]
+        },
+        {
+            title: "Général",
+            items: [{ id: "profile", name: "Profil", icon: User, href: "/dashboard/entreprises/profile" }]
+        }
+    ];
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-50 bg-[#000080]/80 backdrop-blur-xl  border-white/30 h-18">
+        <header className="fixed top-0 left-0 right-0 z-50 bg-[#000080]/90 backdrop-blur-xl border-b border-white/10 h-18">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center h-full justify-between">
-                {/* Logo */}
-                <div className="flex items-center space-x-2">
-                    <Search className="w-8 h-8 text-[#F0E68C]" strokeWidth={3} />
-                    <span className="text-white text-xl font-bold">Jobsy</span>
-                </div>
+                
+                {/* Logo principal */}
+                <Link href="/dashboard/entreprise" className="flex items-center space-x-2.5 group">
+                    <div className="bg-white/10 p-2 rounded-xl group-hover:bg-white/20 transition-all">
+                        <Briefcase className="w-5 h-5 text-white animate-pulse" strokeWidth={2.5} />
+                    </div>
+                    <span className="text-white text-xl font-black tracking-tight">Jobsy</span>
+                </Link>
 
-                {/* Desktop : Notifications + Profil avec Dropdown */}
-                <div className="hidden md:flex justify-end items-center space-x-3">                    
-                    <div className="relative">
-                        <button onClick={() => setNotificationDropdownOpen(!notificationDropdownOpen)} type="button" id="dropdownToggle" className="w-12 h-12 flex items-center justify-center rounded-full text-white border-none outline-none cursor-pointer hover:bg-white/10">
+
+                {/* --- VERSION DESKTOP --- */}
+                <div className="hidden md:flex items-center space-x-4">                     
+                    {/* Cloche de Notifications */}
+                    <div className="relative" ref={notificationRef}>
+                        <button 
+                            onClick={() => setNotificationDropdownOpen(!notificationDropdownOpen)} 
+                            className="w-10 h-10 flex items-center justify-center rounded-xl text-white cursor-pointer hover:bg-white/10 transition"
+                        >
                             <Bell className="w-5 h-5 text-white" />
-                            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
                         </button>
                     
                         {notificationDropdownOpen && (
-                            <div id="dropdownMenu" ref={ref} className="absolute block right-0 shadow-lg bg-white py-4 z-1000 min-w-full rounded-lg w-[410px] max-h-[500px] overflow-auto mt-2">
-                            <div className="flex items-center justify-between px-4 mb-4">
-                                <p className="text-xs text-[#000080] font-medium cursor-pointer">Clear all</p>
-                                <p className="text-xs text-[#000080] font-medium cursor-pointer">Mark as read</p>
-                            </div>
-                        
-                            <ul className="divide-y divide-gray-300">
-                                <li className="dropdown-item p-4 flex items-center hover:bg-gray-50 cursor-pointer">
-                                <img src="https://readymadeui.com/profile_2.webp" className="w-12 h-12 rounded-full shrink-0" />
-                        
-                                <div className="ml-6">
-                                    <h3 className="text-sm text-slate-900 font-medium">Your have a new message from Yin</h3>
-                                    <p className="text-xs text-slate-500 leading-relaxed mt-2 line-clamp-2">Hello there, check this new items in from
-                                    the your may interested from
-                                    the motion school.</p>
-                                    <p className="text-xs text-[#000080] font-medium leading-3 mt-2">10 minutes ago</p>
+                            <div className="absolute right-0 shadow-2xl bg-white py-4 z-50 rounded-xl w-95 max-h-112.5 overflow-auto mt-2 border border-gray-100">
+                                <div className="flex items-center justify-between px-4 mb-3">
+                                    <p className="text-xs text-[#000080] font-semibold cursor-pointer hover:underline">Tout effacer</p>
+                                    <p className="text-xs text-[#000080] font-semibold cursor-pointer hover:underline">Marquer comme lu</p>
                                 </div>
-                                </li>
-                        
-                            </ul>
-                            <p className="text-xs px-4 mt-6 mb-4 inline-block text-[#000080] font-medium cursor-pointer">View all Notifications</p>
-                        </div>
+                            
+                                <ul className="divide-y divide-gray-100">
+                                    <li className="p-4 flex items-start hover:bg-gray-50 cursor-pointer transition">
+                                        <img src="https://readymadeui.com/profile_2.webp" className="w-10 h-10 rounded-full shrink-0" alt="Avatar" />
+                                        <div className="ml-3">
+                                            <h3 className="text-xs text-slate-900 font-bold">Nouveau message de Yin</h3>
+                                            <p className="text-xs text-slate-500 leading-relaxed mt-1 line-clamp-2">
+                                                Bonjour, j&apos;ai jeté un coup d&apos;œil aux nouveaux profils disponibles...
+                                            </p>
+                                            <p className="text-[10px] text-[#000080]/60 font-medium mt-1">Il y a 10 minutes</p>
+                                        </div>
+                                    </li>
+                                </ul>
+                                <div className="text-center pt-2 border-t border-gray-100">
+                                    <p className="text-xs text-[#000080] font-bold cursor-pointer hover:underline inline-block py-1">Voir toutes les notifications</p>
+                                </div>
+                            </div>
                         )}
                     </div>
-                    {/* Bloc Profil cliquable */}
+
+                    {/* Bloc Profil Administrateur Entreprise */}
                     <div className="relative">
                         <button
                             onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                            className="flex cursor-pointer items-center space-x-3 rounded-xl hover:bg-white/10 px-4 py-2 transition"
+                            className="flex cursor-pointer items-center space-x-3 rounded-xl hover:bg-white/10 px-3 py-1.5 transition"
                         >
                             <div className="relative">
-                            <div className="w-12 h-12 rounded-full bg-linear-to-br from-[#F0E68C] to-yellow-400 p-0.5">
-                                <div className="w-full h-full rounded-full bg-[#000080] flex items-center justify-center">
-                                <User className="w-7 h-7 text-white" />
+                                <div className="w-10 h-10 rounded-full bg-linear-to-br from-[#F0E68C] to-yellow-400 p-0.5">
+                                    <div className="w-full h-full rounded-full bg-[#000080] flex items-center justify-center">
+                                        <User className="w-5 h-5 text-white" />
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-[#000080]"></div>
+                                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#000080]"></div>
                             </div>
                             <div className="text-left">
-                            <p className="text-white font-medium">{user?.entreprise.nom_entreprise}</p>
-                            <p className="text-[#F0E68C] text-xs">Espace Entreprise</p>
+                                <p className="text-white text-xs font-bold leading-tight">{user?.entreprise?.nom_entreprise || "Mon Entreprise"}</p>
+                                <p className="text-[#F0E68C] text-[10px]">Espace Entreprise</p>
                             </div>
-                            <ChevronDown className={`w-4 h-4 text-white/70 transition-transform ${profileDropdownOpen ? 'rotate-180' : ''}`} />
+                            <ChevronDown className={`w-4 h-4 text-white/70 transition-transform duration-200 ${profileDropdownOpen ? 'rotate-180' : ''}`} />
                         </button>
 
                         {profileDropdownOpen && ( 
-                            <ul id="dropdownMenu" ref={refUL} className="absolute block shadow-lg bg-white py-2 z-1000 min-w-full w-max rounded-lg max-h-96 overflow-auto">
-                                <Link href="/dashboard/admin/">
-                                    <li
-                                        className="dropdown-item py-2.5 px-5 flex items-center hover:bg-slate-100 text-slate-600 font-medium text-sm cursor-pointer">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="w-4 h-4 mr-3" viewBox="0 0 512 512">
-                                        <path
-                                            d="M197.332 170.668h-160C16.746 170.668 0 153.922 0 133.332v-96C0 16.746 16.746 0 37.332 0h160c20.59 0 37.336 16.746 37.336 37.332v96c0 20.59-16.746 37.336-37.336 37.336zM37.332 32A5.336 5.336 0 0 0 32 37.332v96a5.337 5.337 0 0 0 5.332 5.336h160a5.338 5.338 0 0 0 5.336-5.336v-96A5.337 5.337 0 0 0 197.332 32zm160 480h-160C16.746 512 0 495.254 0 474.668v-224c0-20.59 16.746-37.336 37.332-37.336h160c20.59 0 37.336 16.746 37.336 37.336v224c0 20.586-16.746 37.332-37.336 37.332zm-160-266.668A5.337 5.337 0 0 0 32 250.668v224A5.336 5.336 0 0 0 37.332 480h160a5.337 5.337 0 0 0 5.336-5.332v-224a5.338 5.338 0 0 0-5.336-5.336zM474.668 512h-160c-20.59 0-37.336-16.746-37.336-37.332v-96c0-20.59 16.746-37.336 37.336-37.336h160c20.586 0 37.332 16.746 37.332 37.336v96C512 495.254 495.254 512 474.668 512zm-160-138.668a5.338 5.338 0 0 0-5.336 5.336v96a5.337 5.337 0 0 0 5.336 5.332h160a5.336 5.336 0 0 0 5.332-5.332v-96a5.337 5.337 0 0 0-5.332-5.336zm160-74.664h-160c-20.59 0-37.336-16.746-37.336-37.336v-224C277.332 16.746 294.078 0 314.668 0h160C495.254 0 512 16.746 512 37.332v224c0 20.59-16.746 37.336-37.332 37.336zM314.668 32a5.337 5.337 0 0 0-5.336 5.332v224a5.338 5.338 0 0 0 5.336 5.336h160a5.337 5.337 0 0 0 5.332-5.336v-224A5.336 5.336 0 0 0 474.668 32zm0 0"
-                                            data-original="#000000"></path>
-                                        </svg>
-                                        Dashboard
+                            <ul ref={profileRef} className="absolute right-0 shadow-2xl bg-white py-1.5 z-50 w-48 rounded-xl mt-2 border border-gray-100 overflow-hidden">
+                                <Link href="/dashboard/entreprises/profile">
+                                    <li className="py-2 px-4 flex items-center hover:bg-slate-50 text-slate-700 font-medium text-xs cursor-pointer transition">
+                                        <User className="w-4 h-4 mr-2.5 text-slate-400" />
+                                        Mon Profil
                                     </li>
                                 </Link>
-                                <li onClick={handleLogout}
-                                    className="dropdown-item py-2.5 px-5 flex items-center hover:bg-slate-100 text-slate-600 font-medium text-sm cursor-pointer">
-                                    <LogOut className="w-5 h-5 mr-2 text-red-400" />             
+                                <li 
+                                    onClick={handleLogout}
+                                    className="py-2 px-4 flex items-center hover:bg-red-50 text-red-600 font-medium text-xs cursor-pointer transition border-t border-gray-100"
+                                >
+                                    <LogOut className="w-4 h-4 mr-2.5 text-red-400" />     
                                     Déconnexion
                                 </li>
                             </ul>
@@ -132,131 +148,93 @@ export default function Header() {
                     </div>
                 </div> 
                 
-                {/* Mobile Menu Button */}
-                <div className="md:hidden flex items-center">
-                    <button onClick={() => setMobileNotificationMenuOpen(!mobileNotificationMenuOpen)} className="relative cursor-pointer p-2 rounded-lg bg-white/5">
-                        <Bell className="w-5 h-5 text-white" />
-                        <span className="relative top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                    </button>
+                {/* --- VERSION MOBILE --- */}
+                <div className="md:hidden flex items-center space-x-2">
+                    {/* Cloche Notification Mobile */}
+                    <div className="relative" ref={mobileNotificationRef}>
+                        <button onClick={() => setMobileNotificationMenuOpen(!mobileNotificationMenuOpen)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 transition cursor-pointer">
+                            <Bell className="w-5 h-5 text-white" />
+                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+                        </button>
 
-                    {mobileNotificationMenuOpen && (
-                        <div id="dropdownMenu" ref={ref} className="absolute top-12 right-0 shadow-lg bg-white py-4 z-1000 rounded-lg  overflow-auto m-4">
-                            <div className="flex items-center justify-between px-4 mb-4">
-                                <p className="text-xs text-[#000080] font-medium cursor-pointer">Clear all</p>
-                                <p className="text-xs text-[#000080] font-medium cursor-pointer">Mark as read</p>
+                        {mobileNotificationMenuOpen && (
+                            <div className="absolute right-0 top-11 shadow-2xl bg-white py-4 z-50 rounded-xl w-72.5 border border-gray-100">
+                                <div className="flex items-center justify-between px-4 mb-2">
+                                    <p className="text-[10px] text-[#000080] font-bold cursor-pointer">Tout effacer</p>
+                                    <p className="text-[10px] text-[#000080] font-bold cursor-pointer">Marquer lu</p>
+                                </div>
+                                <ul className="divide-y divide-gray-100 max-h-60 overflow-y-auto">
+                                    <li className="p-3 flex items-start hover:bg-gray-50 cursor-pointer">
+                                        <div className="ml-2">
+                                            <p className="text-xs text-slate-900 font-medium">Nouveau message reçu</p>
+                                            <p className="text-[11px] text-[#000080] font-medium">Il y a 10 min</p>
+                                        </div>
+                                    </li>
+                                </ul>
                             </div>
-                        
-                            <ul className="divide-y divide-gray-300">
-                                <li className="dropdown-item p-4 flex items-center hover:bg-gray-50 cursor-pointer">
-                                <img src="https://readymadeui.com/profile_2.webp" className="w-12 h-12 rounded-full shrink-0" />
-                        
-                                <div className="ml-6">
-                                    <h3 className="text-sm text-slate-900 font-medium">Your have a new message from Yin</h3>
-                                    <p className="text-xs text-slate-500 leading-relaxed mt-2 line-clamp-2">Hello there, check this new items in from
-                                    the your may interested from
-                                    the motion school.</p>
-                                    <p className="text-xs text-[#000080] font-medium leading-3 mt-2">10 minutes ago</p>
-                                </div>
-                                </li>
-                            </ul>
-                            <p className="text-xs px-4 mt-6 mb-4 inline-block text-[#000080] font-medium cursor-pointer">View all Notifications</p>
-                        </div>
-                    )}
+                        )}
+                    </div>
 
-                     <button
-                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        className="relative p-2 cursor-pointer rounded-lg bg-white/5 hover:bg-white/10 ml-4"
-                    >
-                        {mobileMenuOpen ? <X className="w-6 h-6 text-white" /> : <User className="w-6 h-6 text-white" />}
+                    {/* Déclencheur du Menu Drawer Latéral Mobile */}
+                    <button 
+                        onClick={toggleDrawer(true)} 
+                        className="p-2 cursor-pointer rounded-xl bg-white/5 hover:bg-white/10 transition"
+                    > 
+                        <Menu className="w-5 h-5 text-white" />
                     </button>
 
-                    {mobileMenuOpen && ( 
-                        <ul id="dropdownMenu" ref={refUL} className="absolute top-12 right-0 shadow-lg bg-white py-2 rounded-lg  m-4">
-                            <Link href="/dashboard/admin/">
-                                <li
-                                    className="dropdown-item py-2.5 px-5 flex items-center hover:bg-slate-100 text-slate-600 font-medium text-sm cursor-pointer">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="w-4 h-4 mr-3" viewBox="0 0 512 512">
-                                    <path
-                                        d="M197.332 170.668h-160C16.746 170.668 0 153.922 0 133.332v-96C0 16.746 16.746 0 37.332 0h160c20.59 0 37.336 16.746 37.336 37.332v96c0 20.59-16.746 37.336-37.336 37.336zM37.332 32A5.336 5.336 0 0 0 32 37.332v96a5.337 5.337 0 0 0 5.332 5.336h160a5.338 5.338 0 0 0 5.336-5.336v-96A5.337 5.337 0 0 0 197.332 32zm160 480h-160C16.746 512 0 495.254 0 474.668v-224c0-20.59 16.746-37.336 37.332-37.336h160c20.59 0 37.336 16.746 37.336 37.336v224c0 20.586-16.746 37.332-37.336 37.332zm-160-266.668A5.337 5.337 0 0 0 32 250.668v224A5.336 5.336 0 0 0 37.332 480h160a5.337 5.337 0 0 0 5.336-5.332v-224a5.338 5.338 0 0 0-5.336-5.336zM474.668 512h-160c-20.59 0-37.336-16.746-37.336-37.332v-96c0-20.59 16.746-37.336 37.336-37.336h160c20.586 0 37.332 16.746 37.332 37.336v96C512 495.254 495.254 512 474.668 512zm-160-138.668a5.338 5.338 0 0 0-5.336 5.336v96a5.337 5.337 0 0 0 5.336 5.332h160a5.336 5.336 0 0 0 5.332-5.332v-96a5.337 5.337 0 0 0-5.332-5.336zm160-74.664h-160c-20.59 0-37.336-16.746-37.336-37.336v-224C277.332 16.746 294.078 0 314.668 0h160C495.254 0 512 16.746 512 37.332v224c0 20.59-16.746 37.336-37.332 37.336zM314.668 32a5.337 5.337 0 0 0-5.336 5.332v224a5.338 5.338 0 0 0 5.336 5.336h160a5.337 5.337 0 0 0 5.332-5.336v-224A5.336 5.336 0 0 0 474.668 32zm0 0"
-                                        data-original="#000000"></path>
-                                    </svg>
-                                    Dashboard
-                                </li>
-                            </Link>
-                            <li onClick={handleLogout}
-                                className="dropdown-item py-2.5 px-5 flex items-center hover:bg-slate-100 text-slate-600 font-medium text-sm cursor-pointer">
-                                <LogOut className="w-5 h-5 mr-2 text-red-400" />             
-                                Déconnexion
-                            </li>
-                        </ul>
-                    )}
-
-                    <button onClick={toggleDrawer(true)} className="relative p-2 cursor-pointer rounded-lg bg-white/5 hover:bg-white/10 ml-4" > <Menu className="w-6 h-6 text-white" /></button>
-                        <Drawer open={open} onClose={toggleDrawer(false)}>
-                            <div className="px-3 py-4 overflow-y-auto no-scrollbar border rounded-md">
-                                <div className="flex items justify-left mb-4">
-                                    <span className="text-black text-xs">Menu</span>
-                                </div>
-                                <nav className="space-y-2">
-                                    {navItem.map((item) => (
-                                        <Link
-                                            href={item.href}
-                                            key={item.id}
-                                            className="flex items-center p-2 text-sm font-normal text-[#000080] rounded-lg dark:text-white hover:bg-[#F0E68C] hover:text-black dark:hover:bg-gray-700 cursor-pointer"
-                                        >
-                                            <item.icon className="w-5 h-5" />
-                                            <span className="ml-2">{item.name}</span>
-                                        </Link>
-                                    ))}
-                                </nav>
-
-                                {/* <div className="flex items justify-left mb-4 pt-4">
-                                    <span className="text-black text-xs">Candidats</span>
-                                </div>
-                                <nav className="space-y-2 w-full ">
-                                    {navJeunes.map((item) => (
-                                        <Link
-                                            href={item.href}
-                                            key={item.id}
-                                            className="flex items-center p-2 text-sm font-normal text-[#000080] rounded-lg dark:text-white hover:bg-[#F0E68C] hover:text-black dark:hover:bg-gray-700 cursor-pointer"
-                                        >
-                                            <item.icon className="w-5 h-5" />
-                                            <span className="ml-2">{item.name}</span>
-                                        </Link>
-                                    ))}
-                                </nav>                             */}
-
-                                <div className="flex items justify-left mb-4 pt-4">
-                                    <span className="text-black text-xs">General</span>
-                                </div>
-                                <nav className="space-y-2">
-                                    {navGeneral.map((item) => (
-                                        <Link
-                                            href={item.href}
-                                            key={item.id}
-                                            className="flex items-center p-2 text-sm font-normal text-[#000080] rounded-lg dark:text-white hover:bg-[#F0E68C] hover:text-black dark:hover:bg-gray-700 cursor-pointer"
-                                        >
-                                            <item.icon className="w-5 h-5" />
-                                            <span className="ml-2">{item.name}</span>
-                                        </Link>
-
-                                    
-                                    ))}
-
-                                    <button onClick={handleLogout}
-                                        className="flex items-center p-2 text-sm font-normal text-white rounded-lg dark:text-white  cursor-pointer">
-                                        
-                                        <LogOut className="w-6 h-6 text-red-400" />
-                                        <span className="text-red-400 text-sm pl-2">Déconnexion</span>
+                    {/* Le Drawer Mui Nav Mobile */}
+                    <Drawer open={openDrawer} onClose={toggleDrawer(false)} anchor="right">
+                        <div className="w-64 h-full bg-[#000080]/90 text-white p-5 flex flex-col justify-between">
+                            <div className="space-y-6">
+                                {/* Header interne au tiroir mobile */}
+                                <div className="flex items-center justify-between pb-4 border-b border-white/10">
+                                    <span className="text-base font-black uppercase tracking-wider text-[#F0E68C]">Navigation</span>
+                                    <button onClick={toggleDrawer(false)} className="p-1 rounded-lg bg-white/10 text-white">
+                                        <X className="w-4 h-4" />
                                     </button>
-                                </nav>
+                                </div>
 
+                                {/* Parcours dynamique de toutes les sections de l'app */}
+                                <div className="space-y-5 overflow-y-auto no-scrollbar">
+                                    {sections.map((section, sIndex) => (
+                                        <div key={sIndex} className="space-y-2">
+                                            <span className="block px-2 text-[10px] font-black uppercase tracking-widest text-white/40">
+                                                {section.title}
+                                            </span>
+                                            <nav className="space-y-1">
+                                                {section.items.map((item) => (
+                                                    <Link
+                                                        href={item.href}
+                                                        key={item.id}
+                                                        onClick={toggleDrawer(false)}
+                                                        className="flex items-center px-3 py-2 text-xs font-bold text-white rounded-xl hover:bg-[#F0E68C] hover:text-black transition cursor-pointer"
+                                                    >
+                                                        <item.icon className="w-4 h-4 shrink-0 mr-3" />
+                                                        <span>{item.name}</span>
+                                                    </Link>
+                                                ))}
+                                            </nav>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        </Drawer>
+
+                            {/* Section Déconnexion basse */}
+                            <div className="pt-4 border-t border-white/10">
+                                <button 
+                                    onClick={() => { handleLogout(); setOpenDrawer(false); }}
+                                    className="flex items-center w-full px-3 py-2.5 text-xs font-bold text-red-300 bg-red-500/10 rounded-xl hover:bg-red-500/20 transition cursor-pointer"
+                                >
+                                    <LogOut className="w-4 h-4 shrink-0 mr-3" />
+                                    <span>Déconnexion</span>
+                                </button>
+                            </div>
+                        </div>
+                    </Drawer>
                 </div>
 
             </div>
-
         </header>
-    )
+    );
 }

@@ -1,13 +1,14 @@
 'use client'
 import React, { useState } from 'react';
-import { Search, SlidersHorizontal, BookOpen, GraduationCap, ChevronRight, Clock, Star, Target, ChevronLeft } from 'lucide-react';
+import { Search, SlidersHorizontal, BookOpen, GraduationCap, ChevronRight, Clock, Star, Target, ChevronLeft, ShoppingCart } from 'lucide-react';
 import useSWR from "swr";
 import api from "@/lib/api";
 import { ThreeDots } from 'react-loader-spinner';
 import { useRouter } from "next/navigation"
+import toast from 'react-hot-toast';
 
 interface Course {
-  id: string;
+  id: number;
   title: string;
   description: string;
   validation_mode: 'A' | 'B' | 'C';
@@ -28,26 +29,31 @@ interface Module {
     // quiz_questions?: QuizQuestion[];
 }
 
+interface ApiResponse {
+  is_enrolled: boolean;
+  course: Course;
+}
+
 const fetcher = (url: string) => api.get(url).then(res => res.data.data);
 
 export default function FormationCatalogue(){
-  const { data: courses = [], isLoading, error } = useSWR<Course[]>('/open/courses', fetcher);
+  const { data, isLoading, error } = useSWR<ApiResponse[]>('/open/courses', fetcher);
   const router = useRouter()
 
   const [activeFilter, setActiveFilter] = useState('TOUTES');
 
-  const filters = ['TOUTES', 'RESTAURATION', 'LOGISTIQUE', 'BTP', 'DIGITAL'];
+  const filters = ['TOUTES', 'STANDARD', 'LOGISTIQUE', 'EXPERT'];
 
   // États pour la recherche et la pagination
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 1;
+  const itemsPerPage = 10;
 
   // 1. Logique de Recherche
-  const filteredData = courses?.filter(item =>
-      item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.delivered_skills.some(skill => 
+  const filteredData = data?.filter(item =>
+      item.course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.course.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.course.delivered_skills.some(skill => 
         skill.toLowerCase().includes(searchTerm.toLowerCase())
       )
   );
@@ -58,8 +64,23 @@ export default function FormationCatalogue(){
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredData?.slice(indexOfFirstItem, indexOfLastItem);
 
+  const handleStartCourse = async (courseId: number) => {
+    try {
+      const response = await api.post(`/candidat/formations/${courseId}/enroll`);
+      if(response.data.data.is_enrolled === false){
+        toast.success(response.data.message);
+      }
+          
+      
+      // Une fois inscrit, on le redirige vers le workspace standard que l'on a créé
+      router.push(`/dashboard/candidats/formations/${courseId}/workspace`);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Erreur lors de l'inscription.");
+    }
+  };
+
   if (isLoading) return (
-    <div className="flex justify-center items-center h-screen bg-white">
+    <div className="flex justify-center items-center h-screen">
       <ThreeDots height="80" width="80" color="#000080" visible={true} />
     </div>
   );
@@ -71,7 +92,7 @@ export default function FormationCatalogue(){
   );
 
   return (
-    <div className="m-2 md:p-8 max-w-5xl mx-auto min-h-screen">
+    <div className="m-4 md:p-8 min-h-screen">
       <div className="pt-4 pb-12">
         <div className="max-w-7xl mx-auto px-4 text-center space-y-6">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#F0E68C]/20 rounded-full">
@@ -125,10 +146,10 @@ export default function FormationCatalogue(){
 
       {/* LISTE DES FORMATIONS (QUÊTES) */}
       <div className="space-y-4">
-        {currentItems.map((course) => (
+        {currentItems?.map((data) => (
           <div
-            onClick={() => router.push(`/dashboard/candidats/formations/${course.id}/modules`)} 
-            key={course.id}
+            // onClick={() => router.push(`/dashboard/candidats/formations/${course.id}/modules`)} 
+            key={data.course.id}
             className="group relative bg-white rounded-3xl border-2 border-slate-100 p-5 md:p-6 hover:border-[#000080]/30 hover:shadow-2xl hover:shadow-slate-200/50 transition-all duration-300 cursor-pointer"
           >
             <div className="flex flex-col md:flex-row md:items-center gap-6">
@@ -141,7 +162,7 @@ export default function FormationCatalogue(){
               <div className="flex-1 min-w-0">
                 {/* BADGES DE RANG (Comme sur ta photo) */}
                 <div className="flex items-center gap-3 mb-2">
-                  {course.delivered_skills.map((skill, index) => (
+                  {data.course.delivered_skills.map((skill, index) => (
                     <span key={index} className="px-2.5 py-0.5 bg-[#F0E68C]/30 text-[#000080] text-[10px] font-black rounded-md uppercase tracking-tighter border border-[#F0E68C]">
                       {skill}
                     </span>
@@ -149,7 +170,7 @@ export default function FormationCatalogue(){
                 </div>
 
                 <h3 className="text-xl font-black text-slate-800 mb-2 truncate group-hover:text-[#000080] transition-colors">
-                  {course.title}
+                  {data.course.title}
                 </h3>
 
                 <div className="flex flex-wrap items-center gap-4 text-slate-500">
@@ -159,7 +180,7 @@ export default function FormationCatalogue(){
                   </div>
                   <div className="flex items-center gap-1.5 text-xs font-bold">
                     <BookOpen size={14} className="text-[#000080]" />
-                    {course.modules.length} modules
+                    {data.course.modules.length} modules
                   </div>
                   <div className="flex items-center gap-1.5 text-xs font-bold">
                     <Star size={14} className="text-yellow-500 fill-yellow-500" />
@@ -172,16 +193,21 @@ export default function FormationCatalogue(){
               <div className="flex items-center justify-between md:flex-col md:items-end gap-2 border-t md:border-t-0 pt-4 md:pt-0 border-slate-50">
                 <div className="text-right">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gain estimé</p>
-                  <p className="text-2xl font-black text-[#000080]">+{course.reward_xp} XP</p>
+                  <p className="text-2xl font-black text-[#000080]">+{data.course.reward_xp} XP</p>
                 </div>
-                <ChevronRight onClick={() => router.push(`/dashboard/candidats/formations/${course.id}/modules`)} className="text-slate-300 group-hover:text-[#000080] group-hover:translate-x-1 transition-all" size={24} />
+
+                <button onClick={() => handleStartCourse(data.course.id)} className="cursor-pointer flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-2xl font-bold hover:bg-[#000060] transition-all shadow-lg shadow-[#000080]/20">
+                  <span className="tracking-widest text-xs">{data?.is_enrolled ? "Continuer" : "Démarrer"}</span>
+                  <ChevronRight size={16} />
+                </button>
+                {/* <ChevronRight onClick={() => router.push(`/dashboard/candidats/formations/${course.id}/modules`)} className="text-slate-300 group-hover:text-[#000080] group-hover:translate-x-1 transition-all" size={24} /> */}
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {totalPages > 1 && (
+      {totalPages >= 1 && (
           <div className="p-6 border-t border-slate-100 flex items-center justify-between">
             <p className="text-xs font-black text-slate-400 uppercase tracking-widest">
                 Page {currentPage} sur {totalPages}

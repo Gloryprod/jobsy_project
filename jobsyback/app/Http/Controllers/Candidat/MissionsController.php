@@ -25,7 +25,7 @@ class MissionsController extends Controller
             );
         }
 
-    public function show($id)
+    public function show(Int $id)
     {
         $mission = Mission::find($id);
         if (!$mission) {
@@ -77,6 +77,7 @@ class MissionsController extends Controller
         $missionOffers = MissionOffers::whereHas('application', 
             fn($q) => $q->where('candidat_id', $request->user()->candidat->id)
         )->whereNotNull('accepted_at')
+        ->orderBy('created_at', 'desc')
         ->with('application.mission')->get();
 
         return apiResponse($missionOffers, '    ', 'success', 200);

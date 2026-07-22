@@ -273,7 +273,7 @@ export default function MissionTrackingPage() {
 
 
     return (
-        <div className="bg-slate-50 min-h-screen p-4 md:p-10">
+        <div className="min-h-screen p-4 md:p-10">
             <div className="max-w-5xl mx-auto">
                 <header className="mb-20 mt-10 px-4 text-center space-y-6">
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#F0E68C]/20 rounded-full">

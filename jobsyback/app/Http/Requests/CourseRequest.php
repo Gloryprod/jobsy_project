@@ -25,6 +25,7 @@ class CourseRequest extends FormRequest
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'validation_mode' => 'required|in:A,B,C',
+            'type_contenu' => 'required|in:Kit,Digital',
             'delivered_skills'      => 'required|array|min:1',
             'delivered_skills.*'    => 'string',
             'reward_xp' => 'required|integer|min:0',

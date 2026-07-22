@@ -11,7 +11,7 @@ use Illuminate\Notifications\Notification;
 class MissionClosedNotification extends Notification
 {
     use Queueable;
-    protected $mission;
+    protected Mission $mission;
 
     /**
      * Create a new notification instance.

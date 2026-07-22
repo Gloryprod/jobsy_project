@@ -12,7 +12,8 @@ class Course extends Model
     protected $fillable = [
         'title',
         'description',
-        'validation_mode',
+        'validation_mode',     // standard, logistique, expert'
+        'type_contenu',     // standard, logistique, expert'
         'delivered_skills',
         'reward_xp',
         'reward_asset',

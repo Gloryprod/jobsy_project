@@ -30,6 +30,8 @@ interface Candidat{
 }
 
 
+
+
 interface MissionOffer {
     id: number;
     application_id: number;
@@ -79,6 +81,11 @@ interface Mission {
   min_rank_required: string;
   applications:Application[]
   closed_at:string
+  entreprise: {
+    wallet: {
+      balance: number;
+    }
+  }
 }
 
 export default function EnterpriseTrackingPage({ params }: { params: Promise<{ id: string }> }) {
@@ -92,6 +99,7 @@ export default function EnterpriseTrackingPage({ params }: { params: Promise<{ i
         const isExpanded = expandedId === offer.id;
         const candidat = offer.application.candidat;
         const mission = offer.application.mission;
+        const balance = offer.application.mission.entreprise.wallet.balance;
 
         const getStatusSeverity = (status: string) => {
             switch (status) {
@@ -104,7 +112,7 @@ export default function EnterpriseTrackingPage({ params }: { params: Promise<{ i
         };
 
         const handleUpdateStatus = async (offerId: number, nextStatus: string) => {
-            try {
+            try {   
                 const response = await api.post(`/mission-offers/${offerId}/update-status`, { status: nextStatus });
                 toast.success(response.data.message);
                 mutate(`/entreprise/confirmed-applicants/${id}`); 
@@ -113,28 +121,46 @@ export default function EnterpriseTrackingPage({ params }: { params: Promise<{ i
             }
         };
 
+
         const handlePayment = async (amount: number, offerId: number) => {
             try {
-                const response = await api.post('/entreprise/payments/initiate-kkiapay', { amount, candidat_id: candidat.id });
-                const { public_key, transaction_id, entreprise_id } = response.data.data;
+                // Si le solde du portefeuille est insuffisant -> On passe par KkiaPay
+                if (balance < amount) {
+                    const response = await api.post('/entreprise/payments/initiate-kkiapay', { 
+                        amount, 
+                        candidat_id: candidat.id
+                    });
+                    
+                    const { public_key, entreprise_id } = response.data;
 
-                console.log("Réponse de l'API pour le paiement :", response.data); // Log pour vérifier la réponse de l'API
+                    // 2. Ouvrir le widget KkiaPay
+                    openKkiapayWidget({
+                        amount: amount,
+                        api_key: public_key,
+                        sandbox: true, 
+                        phone: "97000000",
+                        data: JSON.stringify({
+                            entreprise_id: entreprise_id,
+                            offer_id: offerId 
+                        }), 
+                    }); 
 
-                // 2. Ouvrir le widget KkiaPay
-                openKkiapayWidget({
-                    amount: amount,
-                    api_key: public_key,
-                    sandbox: true, 
-                    phone: "97000000", 
-                    data: JSON.stringify({
-                        entreprise_id: entreprise_id,
-                        offer_id: offerId 
-                    }), 
-                }); 
-            } catch (err) {
-                toast.error("Un problème est survenu lors du paiement. Veuillez réessayer");
+                    toast.loading("Ouverture de la passerelle de paiement...");
+
+                } else {
+                    const response = await api.post('/entreprise/payments/lock_funds', { amount, offerId });
+                    
+                    if (response.data.status === 'success') {
+                        toast.success(response.data.message || "Fonds bloqués avec succès depuis votre portefeuille !");
+                    } else {
+                        toast.error(response.data.message || "Impossible de bloquer les fonds.");
+                    }
+                }
+                
+            } catch (err: any) {
+                const errorMessage = err.response?.data?.message || "Un problème est survenu lors du paiement. Veuillez réessayer";
+                toast.error(errorMessage);
             }
-            
         };
 
         return (

@@ -1,45 +1,58 @@
-'use client'
+'use client';
+import { useState } from "react";
 import Header from "@/components/dashboardAdmin/layout/Header";
 import Navigation from "@/components/dashboardAdmin/layout/Navigation";
 import { UserProvider } from "@/context/UserProvider";
 import { Toaster } from "react-hot-toast";
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const queryClient = new QueryClient();
 
-export default function layout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+    const [isCollapsed, setIsCollapsed] = useState(false);
+
     return (
         <QueryClientProvider client={queryClient}>
             <UserProvider>
-
                 <div className="flex h-screen overflow-hidden bg-gray-100">
-                    <aside className="hidden md:flex w-64 flex-col">
-                        <Navigation />
+                    
+                    {/* L'aside englobant s'adapte en largeur de manière fluide */}
+                    <aside 
+                        className={`hidden md:flex flex-col fixed left-0 top-18 bottom-0 bg-[#000080]/90 border-r border-white/10 shadow-2xl z-40 transition-all duration-300 ease-in-out ${
+                            isCollapsed ? "w-20" : "w-60"
+                        }`}
+                    >
+                        <Navigation isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
                     </aside>
 
-                    <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-                        
-                        <header className="h-16 flex items-center px-8 sticky top-0 z-10">
+                    {/* Zone de contenu : On ajoute une marge à gauche dynamique pour compenser la position fixed de l'aside */}
+                    <div 
+                        className={`flex flex-col flex-1 min-w-0 overflow-hidden transition-all duration-300 ease-in-out ${
+                            isCollapsed ? "md:pl-20" : "md:pl-60"
+                        }`}
+                    >
+                        {/* Ton Header */}
+                        <header className="h-18 flex items-center sticky top-0 z-10">
                             <Header /> 
                         </header>
 
+                        {/* Contenu principal */}
                         <main className="flex-1 overflow-y-auto p-8 no-scrollbar">
-                            <div className="max-w-5xl mx-auto">
+                            <div className="w-full mx-auto">
                                 <Toaster
                                     position="top-right"
                                     toastOptions={{
-                                    duration: 6000,
-                                    style: { borderRadius: '10px' },
+                                        duration: 6000,
+                                        style: { borderRadius: '10px' },
                                     }}
                                 />
                                 {children}
                             </div>
                         </main>
-                        
                     </div>
-                </div>  
 
+                </div>  
             </UserProvider>  
-        </QueryClientProvider>                     
-    )
+        </QueryClientProvider>                    
+    );
 }

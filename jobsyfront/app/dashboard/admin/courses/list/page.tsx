@@ -172,7 +172,10 @@ export default function AdminCourses() {
                                             <Edit className="h-4 w-4" />
                                             Modifier
                                         </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => router.push(`/dashboard/admin/courses/${course.id}/modules  `)} className="cursor-pointer"><Eye className="h-4 w-4" />Modules</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => router.push(`/dashboard/admin/courses/${course.id}/modules  `)} className="cursor-pointer"><Eye className="h-4 w-4" />Modules</DropdownMenuItem>
+                                        {course.validation_mode === 'C' ? 
+                                        (<DropdownMenuItem onClick={() => router.push(`/dashboard/admin/courses/${course.id}/final_project  `)} className="cursor-pointer"><Eye className="h-4 w-4" />Projet Pratique</DropdownMenuItem>)
+                                         : (<DropdownMenuItem onClick={() => router.push(`/dashboard/admin/courses/${course.id}/final_exam  `)} className="cursor-pointer"><Eye className="h-4 w-4" />Examen Final</DropdownMenuItem>)}
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem className="text-red-500 cursor-pointer" onClick={() => handleDelete(course.id)}><Trash className="h-4 w-4" />Supprimer</DropdownMenuItem>
                                         </DropdownMenuContent>

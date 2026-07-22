@@ -52,6 +52,7 @@ class ModuleRequest extends FormRequest
             'quiz_questions.*.question_text' => 'required|string',
             'quiz_questions.*.points' => 'required|integer',
             'quiz_questions.*.options' => 'required|array',
+            'quiz_questions.*.correct_answers' => 'required|array',
         ];
     }
 }

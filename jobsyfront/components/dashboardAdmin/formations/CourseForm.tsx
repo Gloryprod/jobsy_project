@@ -11,6 +11,7 @@ interface Course {
   title: string;
   description: string;
   validation_mode: 'A' | 'B' | 'C';
+  type_contenu: 'Kit' | 'Digital';
   delivered_skills: string;
   reward_xp: number;
   reward_asset: string;
@@ -27,7 +28,7 @@ export default function CourseForm({ initialData }: CourseFormProps) {
     const isEditing = !!initialData
     const [loading, setLoading] = useState(false);
 
-    const {register, handleSubmit, reset, control} = useForm<Course>({
+    const {register, handleSubmit, reset, control, watch} = useForm<Course>({
         values: initialData,
     })
 
@@ -42,10 +43,10 @@ export default function CourseForm({ initialData }: CourseFormProps) {
         setLoading(true);
         const dataToSend = {
             ...data,
+            type_contenu: validationMode == "A" ? "Digital" : validationMode == "B" ? "Kit" : data.type_contenu,
             delivered_skills: isEditing ? (Array.isArray(data?.delivered_skills) ? data.delivered_skills : (data?.delivered_skills || "").split(',').map(s => s.trim()).filter(s => s !== "")) : (data?.delivered_skills || "").split(',').map(s => s.trim()).filter(s => s !== ""),
             reward: data.reward_xp
         };
-        console.log("Données prêtes :", dataToSend);
 
         try {
             if (isEditing) {    
@@ -66,6 +67,8 @@ export default function CourseForm({ initialData }: CourseFormProps) {
             setLoading(false); // On débloque le bouton
         }
     };
+
+    const validationMode = watch("validation_mode") || "";
 
     // Classe réutilisable pour les inputs
     const inputClass = "w-full mt-1 p-2.5 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none transition-all";
@@ -91,6 +94,17 @@ export default function CourseForm({ initialData }: CourseFormProps) {
                         </select>
                     </div>
                 </div>
+
+                {validationMode === "C" && (
+                    <div>
+                        <label className={labelClass}>Type de contenu</label>
+                        <select {...register("type_contenu")} name="type_contenu" className={inputClass}>
+                            <option defaultValue="">Sélectionner le type de contenu pour le mode expert</option>
+                            <option value="Kit">Kit (Logistique)</option>
+                            <option value="Digital">Digital</option>
+                        </select>
+                    </div>
+                )}
 
                 <div>
                     <label className={labelClass}>Compétences à acquérir</label>
