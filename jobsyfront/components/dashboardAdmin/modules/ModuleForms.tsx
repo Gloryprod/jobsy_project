@@ -682,7 +682,7 @@ export default function ModuleForm({ courseId, initialData }: ModuleFormProps) {
     ) 
 }
 
-function OptionsFieldsList({ questionIndex, control, register, setValue }) {
+function OptionsFieldsList({ questionIndex, control, register, setValue }: { questionIndex: number, control: any, register: any, setValue: any }) {
   const { fields, append, remove } = useFieldArray({
     control,
     name: `quiz_questions.${questionIndex}.options` as string

@@ -319,10 +319,10 @@ export default function Header() {
     const [drawerOpen, setDrawerOpen] = useState(false);
 
     // Typage correct des refs pour éviter les erreurs de build Next.js
-    const profileRef = useRef<HTMLDivElement>(null);
-    const notificationRef = useRef<HTMLDivElement>(null);
-    const mobileMenuRef = useRef<HTMLUListElement>(null);
-    const mobileNotifRef = useRef<HTMLDivElement>(null);
+    const profileRef = useRef<HTMLDivElement>(null!);
+    const notificationRef = useRef<HTMLDivElement>(null!);
+    const mobileMenuRef = useRef<HTMLUListElement>(null!);
+    const mobileNotifRef = useRef<HTMLDivElement>(null!);
 
     const { user } = useUser();
     const { handleLogout } = useLogout();

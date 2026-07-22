@@ -1,55 +1,78 @@
 'use client'
+
+import { Suspense } from "react";
 import PageInfo from "@/components/PageInfo";
 import MissionForm from "@/components/dashboardEntreprise/missions/MissionForm";
 import {  
   DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"
-import { useEffect, useState } from "react"
+} from "@/components/ui/dropdown-menu";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import api from "@/lib/api"
+import api from "@/lib/api";
 import { ThreeDots } from 'react-loader-spinner';
 
+// Composant interne contenant la logique dépendant des URL Search Params
+function CreateJobContent() {
+  const searchParams = useSearchParams();
+  const missionId = searchParams.get('missionId');
+  const pageLink = `/dashboard/entreprises/missions/create`;
 
-export default function CreateJob(){
-    const searchParams = useSearchParams();
-    const missionId = searchParams.get('missionId');
-    const pageLink = `/dashboard/entreprises/missions/create`;
+  const [mission, setMission] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-    const [mission, setMission] = useState(null)
-    const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    api.get(`/missions/${missionId}`)
+      .then(res => {
+        setMission(res.data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [missionId]);
 
-    useEffect(() => {
-        api.get(`/missions/${missionId}`)
-        .then(res => {
-            setMission(res.data)
-            setLoading(false)
-        })
-        .catch(() => setLoading(false))
-    }, [missionId])
-
-    if (loading) return (
-        <div className="flex justify-center items-center h-screen">
-            <ThreeDots height="80" width="80" color="#000080" visible={true} />
-        </div>
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <ThreeDots height="80" width="80" color="#000080" visible={true} />
+      </div>
     );
-    if (!mission) return (
-        <div className="min-h-screen flex items-center justify-center">
-            <p className="text-red-400">Erreur de chargement des informations de la mission.</p>
-        </div>
+  }
+
+  if (missionId && !mission) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-red-400">Erreur de chargement des informations de la mission.</p>
+      </div>
     );
+  }
 
-    return(
-        <div className="min-h-screen relative p-4 md:p-8 bg-gray-100">
-            <div className="mb-6">
-                <PageInfo pageName="Ajouter une offre d'emploi" pageLink={pageLink} />
-            </div>
+  return (
+    <div className="min-h-screen relative p-4 md:p-8 bg-gray-100">
+      <div className="mb-6">
+        <PageInfo pageName="Ajouter une offre d'emploi" pageLink={pageLink} />
+      </div>
 
-            <div className="w-full mx-auto my-10 p-4 bg-white shadow-xl rounded-2xl border border-gray-100">
-                <h2 className="text-2xl font-bold text-gray-800 ml-4 mb-4">{mission ? "Relancer la mission" : "Ajouter une mission"}</h2>
-                <DropdownMenuSeparator className="ml-4 mr-4 flex items-center justify-end" />
-                
-                {mission ? <MissionForm initialData={mission} reopen={true} /> : <MissionForm />}              
-            </div>
+      <div className="w-full mx-auto my-10 p-4 bg-white shadow-xl rounded-2xl border border-gray-100">
+        <h2 className="text-2xl font-bold text-gray-800 ml-4 mb-4">
+          {mission ? "Relancer la mission" : "Ajouter une mission"}
+        </h2>
+        <DropdownMenuSeparator className="ml-4 mr-4 flex items-center justify-end" />
+        
+        {mission ? <MissionForm initialData={mission} reopen={true} /> : <MissionForm />}             
+      </div>
+    </div>
+  );
+}
+
+export default function CreateJob() {
+  return (
+    <Suspense 
+      fallback={
+        <div className="flex justify-center items-center h-screen bg-gray-100">
+          <ThreeDots height="80" width="80" color="#000080" visible={true} />
         </div>
-    ) 
+      }
+    >
+      <CreateJobContent />
+    </Suspense>
+  );
 }
