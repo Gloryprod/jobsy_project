@@ -93,8 +93,8 @@ class CourseWorkspaceController extends Controller
         $timeRemaining = 0;
         if ($finalExamScore && !$finalExamScore->is_passed) {
             $updatedAt = $finalExamScore->updated_at;
-            // $liberationDate = $updatedAt->copy()->addHours(24);
-            $liberationDate = "2026-07-21 11:35:00";
+            $liberationDate = $updatedAt->copy()->addHours(24);
+            // $liberationDate = "2026-07-21 11:35:00";
             $now = Carbon::now();
             $timeRemaining = $now->diffInSeconds($liberationDate, false);
 

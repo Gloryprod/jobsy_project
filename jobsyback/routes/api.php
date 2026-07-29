@@ -45,7 +45,7 @@ Route::post('/webhooks/kkiapay/payouts', [WebhookController::class, 'handleKkiaP
 Route::post('/webhooks/kkiapay/deposits', [WebhookController::class, 'depositWebhook']);
 Route::get('/public_missions', [PublicMissionController::class, 'index']);
 Route::get('/certificates/verify/{hash}', [CertificateVerificationController::class, 'verify']);
-Route::get('/courses/{courseId}/certificate/download', [CertificateVerificationController::class, 'downloadCertificate']);
+Route::get('/courses/{courseId}/{hash}/certificate/download', [CertificateVerificationController::class, 'downloadCertificate']);
 
 Route::post('/email/verification-notification', function (Request $request) {
     $request->user()->sendEmailVerificationNotification();
@@ -93,7 +93,6 @@ Route::middleware(['auth:sanctum' , 'access.token'])->group(function() {
     Route::get('/getFilterData', [GeneralController::class, 'getFilterData']);
     Route::get('/filter', [GeneralController::class, 'filter']);
     Route::post('/mission-offers/{id}/update-status', [MissionTrackingController::class, 'updateStatus']);
-    Route::get('/courses/{courseId}/certificate/download', [CertificateVerificationController::class, 'downloadCertificate']);
 });
 
 Route::middleware(['auth:sanctum', 'role:JEUNE', 'access.token'])->group(function() {
@@ -154,12 +153,19 @@ Route::middleware(['auth:sanctum', 'role:JEUNE', 'access.token'])->group(functio
     Route::post('logistics/access/{enrollment}', [CourseWorkspaceController::class, 'accesLogisticCourse']);
 
     // Soumission de l'examen par l'étudiant
+    Route::post('/exam-sessions/start/{project}', [ExamSubmissionController::class, 'start']);
     Route::post('/exam-submissions/{projectId}', [ExamSubmissionController::class, 'submit']);
+
+    Route::post('/exam-submissions/{projectId}/auto-submit', [ExamSubmissionController::class, 'autoSubmit']);
+    
+    Route::patch('/exam-sessions/{sessionId}/draft', [ExamSubmissionController::class, 'saveDraft']);
+    Route::post('/exam-sessions/{sessionId}/mark-failed-empty', [ExamSubmissionController::class, 'markFailedEmpty']);
+    Route::post('/exam-sessions/{sessionId}/retry', [ExamSubmissionController::class, 'retry']);
     
     // Suivi de l'état de soumission de l'étudiant
     Route::get('/exam-submissions/project/{courseId}', [ExamSubmissionController::class, 'getStudentSubmission']);
 
-    Route::post('/exam-sessions/{sessionId}/retry', [ExamSubmissionController::class, 'retry']);
+    Route::post('/upload-temp-file', [ExamSubmissionController::class, 'uploadTempFile']);
 
 });
 

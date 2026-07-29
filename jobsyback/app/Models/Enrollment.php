@@ -82,7 +82,7 @@ class Enrollment extends Model
         $this->update([
             'progress_percentage' => $progressPercentage,
             'status' => $progressPercentage == 100 ? 'evaluation_ready' : 'learning'
-        ]);
+        ]); 
 
         return $progressPercentage;
     }
@@ -122,7 +122,6 @@ class Enrollment extends Model
             'certificate_hash'    => $isPassed ? $hash : $this->certificate_hash,
             'certified_at'        => $isPassed ? ($this->certified_at ?? \Carbon\Carbon::now()) : null
         ]);
-
         return $globalScore;
     }
 }

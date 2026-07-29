@@ -165,16 +165,14 @@ class ExamProjectController extends Controller
             ]
         );
 
-        // Déclencheur de changement de statut d'inscription
-        if ($passed === true) {
-            $enrollment = Enrollment::where('course_id', $project->course_id)
-                ->where('candidat_id', $session->candidat_id)
-                ->first();
+       
+        $enrollment = Enrollment::where('course_id', $project->course_id)
+            ->where('candidat_id', $session->candidat_id)
+            ->first();
 
-            if ($enrollment) {
-                // Caluler et mettre à jour le score global du candidat pour cette formation
-                $enrollment->updateLearnerGlobalScore($passed); 
-            }
+        if ($enrollment) {
+            // Caluler et mettre à jour le score global du candidat pour cette formation
+            $enrollment->updateLearnerGlobalScore($passed); 
         }
 
         return response()->json([

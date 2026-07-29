@@ -134,12 +134,12 @@ export default function AdminExamReview({ project, session, onSuccess }: AdminEx
           {/* Note sur 100 */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
-              <Award className="w-4 h-4 text-amber-500" /> Note attribuable / 100
+              <Award className="w-4 h-4 text-amber-500" /> Note attribuable / 20
             </label>
             <input
               type="number"
               min="0"
-              max="100"
+              max="20"
               value={score}
               onChange={(e) => setScore(e.target.value === "" ? "" : Number(e.target.value))}
               placeholder={`Note de passage : ${project.passing_score}%`}

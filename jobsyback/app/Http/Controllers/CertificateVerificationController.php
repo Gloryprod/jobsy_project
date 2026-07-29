@@ -41,16 +41,13 @@ class CertificateVerificationController extends Controller
     }
 
 
-    public function downloadCertificate(Request $request, Int $courseId)
+    public function downloadCertificate(Request $request, Int $courseId, String $hash)
     {
-        $candidatId = $request->user()->candidat->id;
-
         // 1. Récupérer l'inscription certifiée avec les relations pour le nom et le titre du cours
-        $enrollment = Enrollment::with(['candidat.user', 'course'])
-            ->where('course_id', $courseId)
-            ->where('candidat_id', $candidatId)
+         $enrollment = Enrollment::with(['candidat.user', 'course'])
+            ->where('certificate_hash', $hash)
             ->where('status', 'certified')
-            ->firstOrFail(); // Renvoie une 404 si pas encore certifié
+            ->firstorFail();
 
         // 2. Préparer les données pour le template HTML
         $data = [

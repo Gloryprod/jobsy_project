@@ -81,9 +81,9 @@ export default function VerifyCertificatePage() {
   }
 
   const handleDownloadPDF = async () => {
-    try {
+    try { 
         // Avec Axios, on passe la configuration en 2e paramètre pour un GET
-        const response = await api.get(`/courses/${certData.course_id}/certificate/download`, {
+        const response = await api.get(`/courses/${certData.course_id}/${hash}/certificate/download`, {
         responseType: 'blob', // Crucial pour récupérer un fichier binaire/PDF
         headers: {
             "Authorization": `Bearer ${localStorage.getItem("token")}`, // Optionnel si ton instance gère déjà les tokens
@@ -193,7 +193,7 @@ export default function VerifyCertificatePage() {
             {certData.certificate_hash}
           </code>
 
-          <button onClick={handleDownloadPDF} className="w-full cursor-pointer m-4 p-4 bg-[#000080] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-900/10 hover:bg-blue-900 active:scale-95 flex items-center justify-center transition-all gap-2">
+          <button onClick={handleDownloadPDF} className="w-full cursor-pointer mt-4 p-4 bg-[#000080] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-900/10 hover:bg-blue-900 active:scale-95 flex items-center justify-center transition-all gap-2">
             <Download className="w-3 h-3" /> Télécharger le certificat
           </button>
         </div>

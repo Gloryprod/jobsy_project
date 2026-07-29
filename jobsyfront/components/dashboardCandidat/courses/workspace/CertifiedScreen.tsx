@@ -161,7 +161,7 @@ export default function CertifiedScreen({ courseId, courseTitle, certificateHash
   const handleDownloadPDF = async () => {
     try {
         // Avec Axios, on passe la configuration en 2e paramètre pour un GET
-        const response = await api.get(`/courses/${courseId}/certificate/download`, {
+        const response = await api.get(`/courses/${courseId}/${certificateHash}/certificate/download`, {
         responseType: 'blob', // Crucial pour récupérer un fichier binaire/PDF
         headers: {
             "Authorization": `Bearer ${localStorage.getItem("token")}`, // Optionnel si ton instance gère déjà les tokens
