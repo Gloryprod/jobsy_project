@@ -329,7 +329,7 @@ export default function FinalExamProjectForm({ courseId, initialData, onSuccess,
         {/* Section 4 : Paramètres de Validation Globale */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center pt-4 border-t border-slate-100">
           <div>
-            <label className={labelClass}>Note de passage (%)</label>
+            <label className={labelClass}>Note de passage / 20</label>
             <input
               {...register("passing_score", { valueAsNumber: true })}
               type="number"
@@ -337,7 +337,7 @@ export default function FinalExamProjectForm({ courseId, initialData, onSuccess,
               max="100"
               className={inputClass}
             />
-            <p className="text-[10px] text-slate-400 mt-1">Généralement réglé à 70%.</p>
+            <p className="text-[10px] text-slate-400 mt-1">Généralement réglé à 15.</p>
           </div>
 
           <div>

@@ -142,7 +142,7 @@ export default function AdminExamReview({ project, session, onSuccess }: AdminEx
               max="20"
               value={score}
               onChange={(e) => setScore(e.target.value === "" ? "" : Number(e.target.value))}
-              placeholder={`Note de passage : ${project.passing_score}%`}
+              placeholder={`Note de passage : ${project.passing_score}`}
               required
               className="w-full p-3 bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl focus:border-slate-800 outline-none"
             />
@@ -161,8 +161,8 @@ export default function AdminExamReview({ project, session, onSuccess }: AdminEx
                 {isPassed ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
                 <span>
                   {isPassed
-                    ? `Validé (>= ${project.passing_score}%)`
-                    : `Insuffisant (< ${project.passing_score}%)`}
+                    ? `Validé (>= ${project.passing_score})`
+                    : `Insuffisant (< ${project.passing_score})`}
                 </span>
               </div>
             )}

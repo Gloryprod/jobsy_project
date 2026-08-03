@@ -19,6 +19,8 @@ class UserExamSession extends Model
         'started_at',
         'submitted_at',
         'reviewed_at',
+        'attempts_count',
+        'is_blocked',
     ];
 
     protected $casts = [

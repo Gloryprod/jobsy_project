@@ -231,7 +231,7 @@ export default function AdminExamSubmissionsList({
                               : "text-rose-600"
                           }
                         >
-                          {item.final_score} / 100
+                          {item.final_score} / 20
                         </span>
                       ) : (
                         <span className="text-slate-300">—</span>

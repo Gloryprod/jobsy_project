@@ -11,6 +11,8 @@ use App\Models\Module;
 use App\Models\ModuleResult;
 use App\Models\FinalExamQuestion;
 use App\Models\FinalExamResults;
+use App\Models\UserExamSession;
+use App\Models\ExamProjects;
 use Carbon\Carbon;
 
 class CourseWorkspaceController extends Controller
@@ -37,6 +39,7 @@ class CourseWorkspaceController extends Controller
         // 2. Charger le cours, ses modules, ses leçons et les questions de quiz associées au module
         $course = Course::with(['modules.lessons', 'modules.quiz_questions'])
             ->findOrFail($courseId);
+        
 
         // 3. Vérifier l'inscription à la formation
         $enrollment = Enrollment::where('course_id', $courseId)
@@ -45,6 +48,12 @@ class CourseWorkspaceController extends Controller
 
         $finalExamScore = FinalExamResults::where('candidat_id', $candidatId)
             ->where('course_id', $courseId)
+            ->first();
+
+        $project = ExamProjects::where('course_id', $course->id)->first();
+
+        $session = UserExamSession::where('candidat_id', $candidatId)
+            ->where('exam_project_id', $project->id)
             ->first();
 
         $isValidForProgress = false;
@@ -91,14 +100,62 @@ class CourseWorkspaceController extends Controller
 
         $can_retry = true;
         $timeRemaining = 0;
+        $isPermanentlyBlocked = false;
+        $attemptsCount = $session ? $session->attempts_count : 0;
         if ($finalExamScore && !$finalExamScore->is_passed) {
-            $updatedAt = $finalExamScore->updated_at;
-            $liberationDate = $updatedAt->copy()->addHours(24);
-            // $liberationDate = "2026-07-21 11:35:00";
-            $now = Carbon::now();
-            $timeRemaining = $now->diffInSeconds($liberationDate, false);
+            // $updatedAt = $finalExamScore->updated_at;
+            // $liberationDate = $updatedAt->copy()->addHours(24);
+            // // $liberationDate = "2026-07-21 11:35:00";
+            // $now = Carbon::now();
+            // $timeRemaining = $now->diffInSeconds($liberationDate, false);
 
-            $can_retry = $timeRemaining > 0 ? false : true;
+            // $can_retry = $timeRemaining > 0 ? false : true;
+
+            // --- CAS 1 : FORMATIONS EN MODE C (Projet Pratique / Expert) ---
+            if ($course->validation_mode === 'C') {
+
+                // A. Vérification du blocage définitif (2 tentatives consommées OU indicateur is_blocked actif)
+                if ($attemptsCount >= 2 || ($session && $session->is_blocked)) {
+                    $can_retry = false;
+                    $isPermanentlyBlocked = true;
+                    $timeRemaining = 0;
+                } 
+                // B. Première tentative échouée -> Vérification du délai des 24h
+                else {
+                    $updatedAt = $finalExamScore->updated_at;
+                    // $liberationDate = $updatedAt->copy()->addHours(24);
+                    $liberationDate = "2026-08-03 16:35:00";
+                    $now = Carbon::now();
+
+                    $diffInSeconds = $now->diffInSeconds($liberationDate, false);
+
+                    if ($diffInSeconds > 0) {
+                        $can_retry = false;
+                        $timeRemaining = $diffInSeconds;
+                    } else {
+                        $can_retry = true; // 24h écoulées -> Autorisé à lancer la 2ème (et dernière) tentative
+                        $timeRemaining = 0;
+                    }
+                }
+            } 
+            
+            // --- CAS 2 : AUTRES MODES (A ou B) ---
+            else {
+                // Tentatives illimitées, mais obligation de respecter le délai de 24h après chaque échec
+                $updatedAt = $finalExamScore->updated_at;
+                $liberationDate = $updatedAt->copy()->addHours(24);
+                $now = Carbon::now();
+
+                $diffInSeconds = $now->diffInSeconds($liberationDate, false);
+
+                if ($diffInSeconds > 0) {
+                    $can_retry = false;
+                    $timeRemaining = $diffInSeconds;
+                } else {
+                    $can_retry = true; // 24h écoulées -> Autorisé à retenter (3ème, 4ème fois, etc.)
+                    $timeRemaining = 0;
+                }
+            }
         }
 
         // 4. Récupérer la liste des IDs des leçons déjà terminées par ce candidat
@@ -165,7 +222,9 @@ class CourseWorkspaceController extends Controller
                 'certificate_hash' => $enrollment->certificate_hash,
                 'sections' => $sections,
                 'can_retry' => $can_retry,
-                'time_remaining' => $timeRemaining
+                'time_remaining' => $timeRemaining,
+                'attempts_count' => $attemptsCount,
+                'is_permanently_blocked' => $isPermanentlyBlocked,
             ]
         ]);
     }

@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('user_exam_sessions', function (Blueprint $table) {
-            $table->timestamp('extended_at')->nullable();
-            $table->integer('extra_time')->nullable();
+            $table->integer('attempts_count')->default(1); // Démarre à 1 dès la création
+            $table->boolean('is_blocked')->default(false);
         });
     }
 
@@ -23,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('user_exam_sessions', function (Blueprint $table) {
-            //
+            $table->dropColumn(['attempts_count', 'is_blocked']);
         });
     }
 };

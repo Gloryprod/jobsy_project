@@ -205,6 +205,13 @@ class ExamSubmissionController extends Controller
             ], 400);
         }
 
+        if ($session->is_blocked || $session->attempts_count >= 2) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Vous avez atteint le nombre maximal de 2 tentatives autorisées pour ce projet pratique.'
+            ], 403);
+        }
+
         // Remise à zéro des données de soumission et passage en in_progress
         $session->update([
             'status' => 'in_progress',
@@ -214,6 +221,7 @@ class ExamSubmissionController extends Controller
             'submitted_at' => null,
             'reviewed_at' => null,
             'started_at' => now(), // Recommence le chrono d'examen
+            'attempts_count' => $session->attempts_count + 1,
         ]);
 
         $finalExamScore = FinalExamResults::where('candidat_id', $session->candidat_id)
@@ -320,6 +328,8 @@ class ExamSubmissionController extends Controller
     {
         $candidat = $request->user()->candidat;
 
+        $isBlocked = false;
+
         if (!$candidat) {
             return response()->json(['message' => "Profil candidat introuvable."], 403);
         }
@@ -328,8 +338,13 @@ class ExamSubmissionController extends Controller
             ->where('candidat_id', $candidat->id)
             ->firstOrFail();
 
+        if($session->attempts_count >= 2){          
+            $isBlocked = true;
+        }
+
         $session->update([
             'status' => 'failed',
+            'is_blocked' => $isBlocked,
             'final_score' => 0,
             'admin_feedback' => "Copie blanche : Aucun livrable transmis dans le temps imparti.",
             'submitted_at' => Carbon::now(),

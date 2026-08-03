@@ -144,12 +144,17 @@ class ExamProjectController extends Controller
         // Détermination automatique du statut en fonction du score de passage
         $passed = $score >= $project->passing_score;
         $newStatus = $passed ? 'approved' : 'failed';
+        $isBlocked = false;
+        if($newStatus == "failed" && $session->attempts_count <=2){
+            $isBlocked = true;
+        }
 
         $session->update([
             'final_score' => $score,
             'admin_feedback' => $feedback,
             'admin_id' => $request->user()->id,
             'status' => $newStatus,
+            'is_blocked' => $isBlocked,
             'reviewed_at' => now(), // si tu as cette colonne
         ]);
 

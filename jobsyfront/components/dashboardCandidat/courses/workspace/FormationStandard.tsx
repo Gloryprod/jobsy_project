@@ -48,6 +48,8 @@ interface ApiResponse {
     sections: Section[];
     can_retry: boolean
     time_remaining: number | 0;
+    attempts_count: number | 0;
+    is_permanently_blocked: boolean;
   };
 }
 
@@ -108,7 +110,7 @@ export default function FormationStandardDetail({ params }: { params: { id: stri
     );
   }
 
-  const { course_title, progress_percentage, sections, status, certificate_hash, validation_mode, can_retry, time_remaining } = data!.data;  
+  const { course_title, progress_percentage, sections, status, certificate_hash, validation_mode, can_retry, time_remaining, attempts_count, is_permanently_blocked } = data!.data;  
 
   switch (status) {
 
@@ -118,7 +120,7 @@ export default function FormationStandardDetail({ params }: { params: { id: stri
     case "evaluation_ready" : 
       // L'écran d'accueil du grand test final
       if (validation_mode === "C") {
-        return <FinalExamProject courseId={params.id} can_retry={can_retry} time_remaining={time_remaining} onMutate={mutate} />;
+        return <FinalExamProject courseId={params.id} attempts_count={attempts_count} is_permanently_blocked={is_permanently_blocked} can_retry={can_retry} time_remaining={time_remaining}  onMutate={mutate} />;
       } else {
         return <FinalExamIntro courseId={params.id} courseTitle={course_title} onExamFinished={mutate} />;
       }
@@ -126,7 +128,7 @@ export default function FormationStandardDetail({ params }: { params: { id: stri
     case "failed" : 
       if (can_retry){
         if (validation_mode === "C") {
-          return <FinalExamProject courseId={params.id} can_retry={can_retry} time_remaining={time_remaining} onMutate={mutate} />;
+          return <FinalExamProject courseId={params.id} attempts_count={attempts_count} is_permanently_blocked={is_permanently_blocked} can_retry={can_retry} time_remaining={time_remaining} onMutate={mutate} />;
         } else {
           return <FinalExamIntro courseId={params.id} courseTitle={course_title} onExamFinished={mutate} />;
         }
@@ -134,7 +136,7 @@ export default function FormationStandardDetail({ params }: { params: { id: stri
         return (
           <div>
             {validation_mode === "C" ? (
-              <FinalExamProject courseId={params.id} can_retry={can_retry} time_remaining={time_remaining} onMutate={mutate} />
+              <FinalExamProject courseId={params.id} attempts_count={attempts_count} is_permanently_blocked={is_permanently_blocked} can_retry={can_retry} time_remaining={time_remaining} onMutate={mutate} />
             ) : (
               <FinalExamIntro courseId={params.id} courseTitle={course_title} onExamFinished={mutate} />
             )}
