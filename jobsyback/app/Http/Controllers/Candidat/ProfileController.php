@@ -17,10 +17,13 @@ class ProfileController extends Controller
             $rankInfo = Rank::where('rank', "E")->first();
 
             if ($rankInfo) {
-                $candidat->update([
-                    'rank_id' => $rankInfo->id,
-                ]);
-
+                if(!$candidat->rank){
+                    $candidat->update([
+                        'rank_id' => $rankInfo->id,
+                        'score' => $rankInfo->points
+                    ]);
+                }
+                
                 return apiResponse(
                     $candidat->with('rank')->find($candidat->id),
                     'Profil mis à jour avec le rang' ,
@@ -62,12 +65,15 @@ class ProfileController extends Controller
             $rankInfo = Rank::where('rank', $rankCode)->first();
 
             if ($rankInfo) {
-                $candidat->update([
-                    'rank_id' => $rankInfo->id,
-                    'niveau_etude' => $dernierDiplome['Degree'],
-                    'domaine_competence' => $cv_data->raw_ai_data['Title'] ?? null,
-                ]);
-
+                if(!$candidat->rank){
+                    $candidat->update([
+                        'rank_id' => $rankInfo->id,
+                        'niveau_etude' => $dernierDiplome['Degree'],
+                        'domaine_competence' => $cv_data->raw_ai_data['Title'] ?? null,
+                        'score' => $rankInfo->points
+                    ]);
+                }
+                
                 return apiResponse(
                     $candidat->with('rank')->find($candidat->id),
                     'Profil mis à jour avec le rang ' ,

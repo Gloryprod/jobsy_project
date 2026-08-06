@@ -111,6 +111,13 @@ class Enrollment extends Model
             $hash = hash('sha256', $stringToHash);
             $this->candidat->update(['score' => $this->candidat->score + $this->course->reward_xp]);
 
+            // Récupération des compétences transmises par la formation
+            $deliveredSkills = $this->course->delivered_skills ?? [];
+
+            if (!empty($deliveredSkills) && is_array($deliveredSkills)) {
+                // Appels des méthodes de catégorisation et de synchronisation
+                processSkillsFromIA($this->candidat, $deliveredSkills);
+            }
         }
 
         // Sauvegarder la moyenne dans la table enrollments
@@ -122,6 +129,7 @@ class Enrollment extends Model
             'certificate_hash'    => $isPassed ? $hash : $this->certificate_hash,
             'certified_at'        => $isPassed ? ($this->certified_at ?? \Carbon\Carbon::now()) : null
         ]);
+
         return $globalScore;
     }
 }

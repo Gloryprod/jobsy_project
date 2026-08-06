@@ -52,10 +52,14 @@ class CourseWorkspaceController extends Controller
 
         $project = ExamProjects::where('course_id', $course->id)->first();
 
-        $session = UserExamSession::where('candidat_id', $candidatId)
+        $session = null;
+
+        if($project){
+            $session = UserExamSession::where('candidat_id', $candidatId)
             ->where('exam_project_id', $project->id)
             ->first();
-
+        }
+        
         $isValidForProgress = false;
 
         switch ($course->validation_mode) {
@@ -542,7 +546,8 @@ class CourseWorkspaceController extends Controller
             ]
         );
 
-        // 6. Déclencheur de changement de statut d'inscription
+        // 6. Déclencheur de changement de statut U
+        // Vérifier lors des tests si la condition est necessaire
         if ($isPassed === true) {
             $enrollment = Enrollment::where('course_id', $courseId)
                 ->where('candidat_id', $candidatId)

@@ -47,7 +47,7 @@ function getCategoryIdFromText(string $text): ?int
         }
     }
 
-    return null; // À ranger dans "Divers" si aucun match
+    return 11; // À ranger dans "Divers" si aucun match
 }
 
 function processSkillsFromIA(Candidat $candidat, array $skillsIA)

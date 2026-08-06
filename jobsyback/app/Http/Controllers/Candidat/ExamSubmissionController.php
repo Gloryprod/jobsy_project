@@ -304,7 +304,7 @@ class ExamSubmissionController extends Controller
             [
                 'status' => 'submitted',
                 'submitted_data' => $request->input('answers', []),
-                'submitted_at' => Carbon::now(),
+                'submitted_at' => now(),
                 'admin_id' => null,
                 'detailed_marks' => null,
                 'final_score' => null,
@@ -347,8 +347,8 @@ class ExamSubmissionController extends Controller
             'is_blocked' => $isBlocked,
             'final_score' => 0,
             'admin_feedback' => "Copie blanche : Aucun livrable transmis dans le temps imparti.",
-            'submitted_at' => Carbon::now(),
-            'reviewed_at' => Carbon::now(),
+            'submitted_at' => now(),
+            'reviewed_at' => now(),
         ]);
 
         // Enregistrement ou mise à jour du score en base de données

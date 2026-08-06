@@ -167,68 +167,86 @@ export default function ListCandidateProfile() {
                 <p className="text-slate-500 flex items-center justify-center"><i>Vue d&apos;ensemble des talents inscrits</i></p>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-3 mb-6">
-                <button 
-                    onClick={() => setIsMenuOpen(true)}
-                    className="cursor-pointer flex items-center justify-center gap-2 bg-white p-4 rounded-2xl shadow-sm border border-gray-100 font-bold text-gray-700 hover:bg-gray-50 active:scale-95 transition"
-                >
-                    <Filter size={18} className="text-indigo-600" />
-                    <span className="text-sm">Domaines</span>
-                </button>
+            <div className="max-w-7xl mx-auto">
 
-                <button 
-                    onClick={() => setIsMenuRankOpen(true)}
-                    className="cursor-pointer flex items-center justify-center gap-2 bg-white p-4 rounded-2xl shadow-sm border border-gray-100 font-bold text-gray-700 hover:bg-gray-50 active:scale-95 transition"
-                >
-                    <Filter size={18} className="text-blue-600" />
-                    <span className="text-sm">Diplômes</span>
-                </button>
+                {/* BARRE D'OUTILS : Filtres + Recherche */}
+                <div className="flex flex-col lg:flex-row gap-3 mb-6">
+                    <div className="flex gap-3 overflow-x-auto no-scrollbar lg:flex-none">
+                        <button
+                            onClick={() => setIsMenuOpen(true)}
+                            className="cursor-pointer shrink-0 flex items-center justify-center gap-2 bg-white px-5 py-3.5 rounded-2xl shadow-sm border border-slate-200/80 font-bold text-slate-700 hover:border-[#000080]/30 hover:bg-slate-50 active:scale-95 transition-all"
+                        >
+                            <Filter size={16} className="text-[#000080]" />
+                            <span className="text-xs uppercase tracking-wide">Domaines</span>
+                        </button>
 
-                <button 
-                    onClick={() => resetFilters()}
-                    className="cursor-pointer flex-none md:w-auto flex items-center justify-center gap-2 bg-red-50 p-4 rounded-2xl font-bold text-red-600 hover:bg-red-100 active:scale-95 transition"
-                >
-                    <RotateCcw size={18} />
-                    <span className="text-sm md:hidden lg:inline">Réinitialiser</span>
-                </button>
-            </div>
+                        <button
+                            onClick={() => setIsMenuRankOpen(true)}
+                            className="cursor-pointer shrink-0 flex items-center justify-center gap-2 bg-white px-5 py-3.5 rounded-2xl shadow-sm border border-slate-200/80 font-bold text-slate-700 hover:border-[#000080]/30 hover:bg-slate-50 active:scale-95 transition-all"
+                        >
+                            <Filter size={16} className="text-[#000080]" />
+                            <span className="text-xs uppercase tracking-wide">Diplômes</span>
+                        </button>
 
-            <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-6 gap-8">
-                
+                        <button
+                            onClick={() => resetFilters()}
+                            className="cursor-pointer shrink-0 flex items-center justify-center gap-2 bg-red-50 px-5 py-3.5 rounded-2xl font-bold text-red-600 hover:bg-red-100 active:scale-95 transition-all"
+                        >
+                            <RotateCcw size={16} />
+                            <span className="text-xs uppercase tracking-wide">Réinitialiser</span>
+                        </button>
+                    </div>
+
+                    {/* Barre de Recherche */}
+                    <div className="relative flex-1 lg:max-w-sm lg:ml-auto">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Rechercher un nom ou prénom..."
+                            value={searchTerm}
+                            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                            className="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#000080]/10 focus:border-[#000080] transition-all"
+                        />
+                    </div>
+                </div>
+
                 {/* SIDEBAR CATEGORIES */}
                 <div className={`
-                    fixed inset-0 z-50 lg:relative lg:inset-auto lg:z-0 lg:col-span-2
-                    transition-transform duration-300 ease-in-out
-                    ${isMenuOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+                    fixed inset-0 z-50
+                    transition-opacity duration-300
+                    ${isMenuOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}
                 `}>
-                    {/* Overlay mobile pour fermer le menu en cliquant à côté */}
-                    <div 
-                        className="absolute inset-0 bg-black/50 " 
+                    <div
+                        className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]"
                         onClick={() => setIsMenuOpen(false)}
                     ></div>
 
-                    {/* Contenu de la Sidebar */}
-                    <div className="absolute right-0 w-4/5 max-w-sm h-full bg-white lg:w-full lg:rounded-xl shadow-xl lg:shadow-sm overflow-y-auto no-scrollbar">
-                        <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0">
-                            <h2 className="font-bold text-gray-800 text-lg">Catégories</h2>
-                            <button onClick={() => setIsMenuOpen(false)} className="lg:hidden p-2 text-gray-500">
-                                <X size={24} />
+                    <div className={`
+                        absolute right-0 top-0 w-4/5 max-w-sm h-full bg-white shadow-2xl overflow-y-auto no-scrollbar
+                        transition-transform duration-300 ease-out
+                        ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}
+                    `}>
+                        <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
+                            <h2 className="font-black text-slate-800 text-lg">Domaines</h2>
+                            <button onClick={() => setIsMenuOpen(false)} className="p-2 text-slate-400 hover:bg-slate-50 rounded-xl transition-colors">
+                                <X size={22} />
                             </button>
                         </div>
-                        
+
                         <div className="p-3 space-y-1">
                             {categories?.map((category) => (
-                                <button 
-                                    onClick={() => {setIsMenuOpen(false); handleFilter(category.id, 0)}}
-                                    key={category.id} 
-                                    className={`cursor-pointer w-full flex items-center justify-between p-3 rounded-xl transition-colors`}>
+                                <button
+                                    onClick={() => { setIsMenuOpen(false); handleFilter(category.id, 0) }}
+                                    key={category.id}
+                                    className="cursor-pointer group w-full flex items-center justify-between p-3.5 rounded-xl hover:bg-slate-50 transition-colors text-left"
+                                >
                                     <div className="flex items-center gap-3">
-                                        <div className="w-3 h-3 rounded-full shadow-sm" style={{backgroundColor: category.color}}></div>
-                                        <span className="text-sm font-semibold text-gray-600 group-hover:text-indigo-700">
+                                        <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: category.color }}></div>
+                                        <span className="text-sm font-semibold text-slate-600 group-hover:text-[#000080]">
                                             {category.name}
                                         </span>
                                     </div>
-                                    <ChevronRight size={14} className="text-gray-300 group-hover:text-indigo-400" />
+                                    <ChevronRight size={14} className="text-slate-300 group-hover:text-[#000080]" />
                                 </button>
                             ))}
                         </div>
@@ -237,158 +255,146 @@ export default function ListCandidateProfile() {
 
                 {/* SIDEBAR RANKS */}
                 <div className={`
-                    fixed inset-0 z-50 lg:relative lg:inset-auto lg:z-0 lg:col-span-2
-                    transition-transform duration-300 ease-in-out
-                    ${isMenuRankOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+                    fixed inset-0 z-50
+                    transition-opacity duration-300
+                    ${isMenuRankOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}
                 `}>
-                    <div 
-                        className="absolute inset-0 bg-black/50 " 
+                    <div
+                        className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]"
                         onClick={() => setIsMenuRankOpen(false)}
                     ></div>
 
-                    <div className="absolute right-0 w-4/5 max-w-sm h-full bg-white lg:w-full lg:rounded-xl shadow-xl lg:shadow-sm overflow-y-auto no-scrollbar">
-                        <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0">
-                            <h2 className="font-bold text-gray-800 text-lg">Diplômes</h2>
-                            <button onClick={() => setIsMenuRankOpen(false)} className="lg:hidden p-2 text-gray-500">
-                                <X size={24} />
+                    <div className={`
+                        absolute right-0 top-0 w-4/5 max-w-sm h-full bg-white shadow-2xl overflow-y-auto no-scrollbar
+                        transition-transform duration-300 ease-out
+                        ${isMenuRankOpen ? 'translate-x-0' : 'translate-x-full'}
+                    `}>
+                        <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
+                            <h2 className="font-black text-slate-800 text-lg">Diplômes</h2>
+                            <button onClick={() => setIsMenuRankOpen(false)} className="p-2 text-slate-400 hover:bg-slate-50 rounded-xl transition-colors">
+                                <X size={22} />
                             </button>
                         </div>
-                        
+
                         <div className="p-3 space-y-1">
                             {ranks?.map((rank) => (
-                                <button 
-                                    onClick={() => {setIsMenuRankOpen(false); handleFilter(0, rank.id)}}
-                                    key={rank.id} 
-                                    className="cursor-pointer w-full group flex items-center justify-between p-3 rounded-xl hover:bg-indigo-50 transition-colors text-left"
+                                <button
+                                    onClick={() => { setIsMenuRankOpen(false); handleFilter(0, rank.id) }}
+                                    key={rank.id}
+                                    className="cursor-pointer group w-full flex items-center justify-between p-3.5 rounded-xl hover:bg-slate-50 transition-colors text-left"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className="w-3 h-3 rounded-full shadow-sm" style={{backgroundColor: rank.code_hexa}}></div>
-                                        <span className="text-sm font-semibold text-gray-600 group-hover:text-indigo-700">
+                                        <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: rank.code_hexa }}></div>
+                                        <span className="text-sm font-semibold text-slate-600 group-hover:text-[#000080]">
                                             {rank.label} (Rang {rank.rank})
                                         </span>
                                     </div>
-                                    <ChevronRight size={14} className="text-gray-300 group-hover:text-indigo-400" />
+                                    <ChevronRight size={14} className="text-slate-300 group-hover:text-[#000080]" />
                                 </button>
                             ))}
                         </div>
                     </div>
                 </div>
 
-                {/* Barre de Recherche */}
-                <div className="mb-2 mt-2 relative w-full max-w-sm flex items-end justify-end">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 " size={16} />
-                    <input
-                        type="text"
-                        placeholder="Rechercher un nom ou prénom..."
-                        value={searchTerm}
-                        onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                        className="w-full pl-10 pr-4 py-4 bg-white border-slate-100 rounded-2xl shadow-sm focus:ring-2 focus:ring-[#000080]/10 focus:border-[#000080] transition-all"
-                    />
-                </div>
+                {/* LISTE DES CANDIDATS */}
+                {loading ? (
+                    <div className="flex justify-center items-center py-24">
+                        <ThreeDots height="70" width="70" color="#000080" visible={true} />
+                    </div>
+                ) : currentItems.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {currentItems.map((candidat) => {
+                            const uniqueCategories = Array.from(
+                                new Map(
+                                    (candidat.skills || [])
+                                        .filter(skill => skill.category)
+                                        .map(skill => [skill.category.id, skill.category])
+                                ).values()
+                            );
 
-                {loading ? 
-                (<div className="flex justify-center items-center h-screen">
-                    <ThreeDots height="80" width="80" color="#000080" visible={true} />
-                </div>) : (
-                    <div className="col-span-1 lg:col-span-4 space-y-4">
-                        {currentItems.length > 0 ? (
-                            currentItems.map((candidat) => (
-                                <div key={candidat.id} className="flex flex-col p-4 bg-white border rounded-2xl shadow-sm hover:shadow-md transition">
-                                    <div className="flex justify-between items-start">
-                                        <div className="flex items-center">
-                                            <div className="w-12 h-12 bg-gray-200 rounded-full"><Avatar width = {48} height = {48} fontSize = {24} nom = {candidat.user?.nom} prenom = {candidat.user?.prenom} />
-                                            </div> <div className="ml-3">
-                                                <h3 className="font-bold text-gray-900">{candidat.user?.nom} {candidat.user?.prenom}</h3>
-                                                <p className="text-sm text-gray-500">{candidat.domaine_competence }</p>
+                            return (
+                                <Link key={candidat.id} href={`/dashboard/admin/detailProfilCandidat/${candidat.id}`}>
+                                    <div className="h-full flex flex-col p-5 bg-white border border-slate-200/80 rounded-2xl shadow-sm hover:shadow-md hover:border-[#000080]/20 transition-all cursor-pointer">
+                                        
+                                        <div className="flex justify-between items-start gap-3">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div className="w-11 h-11 shrink-0 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center">
+                                                    <Avatar width={44} height={44} fontSize={18} nom={candidat.user?.nom} prenom={candidat.user?.prenom} />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <h3 className="font-bold text-slate-900 text-sm truncate">{candidat.user?.nom} {candidat.user?.prenom}</h3>
+                                                    <p className="text-xs text-slate-500 truncate">{candidat.domaine_competence || "Apprenti Junior Jobsy"}</p>
+                                                </div>
                                             </div>
+                                            <span
+                                                className="shrink-0 px-2.5 py-1 text-[10px] font-black uppercase rounded-lg"
+                                                style={{ backgroundColor: `${candidat.rank?.code_hexa}20`, color: candidat.rank?.code_hexa }}
+                                            >
+                                                Rang {candidat.rank.rank}
+                                            </span>
                                         </div>
-                                        <span className="px-2 py-1 text-xs font-semibold rounded" style={{ backgroundColor: `${candidat.rank?.code_hexa}20`, color: candidat.rank?.code_hexa }} > Rang {candidat.rank.rank}</span> 
+
+                                        <div className="mt-3.5 flex flex-wrap gap-1.5 flex-1">
+                                            {uniqueCategories.length > 0 ? (
+                                                uniqueCategories.map((cat) => (
+                                                    <span
+                                                        key={cat.id}
+                                                        className="px-2.5 py-1 text-[11px] font-bold rounded-full"
+                                                        style={{
+                                                            backgroundColor: `${cat.color || '#E1F5FE'}20`,
+                                                            color: `${cat.color}`
+                                                        }}
+                                                    >
+                                                        {cat.name}
+                                                    </span>
+                                                ))
+                                            ) : (
+                                                <span className="text-xs text-slate-400 italic">Aucun domaine renseigné</span>
+                                            )}
+                                        </div>
+
+                                        <div className="mt-4 pt-3 border-t border-slate-100 flex justify-end">
+                                            <span className="text-xs text-[#000080] font-bold flex items-center gap-1">
+                                                Voir profil
+                                                <ChevronRight size={14} />
+                                            </span>
+                                        </div>
                                     </div>
-                                    
-                                    {(() => {
-                                        const uniqueCategories = Array.from(
-                                            new Map(
-                                                (candidat.skills || [])
-                                                    .filter(skill => skill.category) // Sécurité au cas où category est null
-                                                    .map(skill => [skill.category.id, skill.category])
-                                            ).values()
-                                        );
-
-                                        return (
-                                            <div className="mt-3 flex flex-wrap gap-2">
-                                                {uniqueCategories.length > 0 ? (
-                                                    uniqueCategories.map((cat) => (
-                                                        <span 
-                                                            key={cat.id} 
-                                                            className="px-2 py-1 text-xs font-bold rounded-full"
-                                                            style={{ 
-                                                                backgroundColor: `${cat.color || '#E1F5FE'}20`, 
-                                                                color:  `${cat.color}`
-                                                            }}
-                                                        >
-                                                            {cat.name}
-                                                        </span>
-                                                    ))
-                                                ) : (
-                                                    <span className="text-xs text-gray-400 bg-gray-50 italic">Aucun domaine</span>
-                                                )}
-                                            </div>
-                                        );
-                                    })()}
-                                    <Link href={`/dashboard/admin/detailProfilCandidat/${candidat.id}`}>
-                                        <div className="mt-4 flex justify-end space-x-2">
-                                            <button className="text-sm text-indigo-600 font-medium cursor-pointer">Voir profil</button>
-                                        </div>
-                                    </Link>
-                                </div>
-                            ))) : (
-
-                                // <div className="flex flex-col p-4 bg-white border rounded-2xl shadow-sm hover:shadow-md transition">
-                                //     <div className="flex justify-between items-start">
-                                //         <div className="flex items-center">
-                                //             <div className="ml-3">
-                                //                 <h3 className="font-bold text-gray-900 text-center">Aucun candidat trouvé</h3>
-                                //             </div>
-                                //         </div>
-                                //     </div>
-                                // </div>
-                                ""
-                            )                        
-                        }
+                                </Link>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <div className="py-20 text-center">
+                        <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-slate-100">
+                            <Search size={22} className="text-slate-300" />
+                        </div>
+                        <p className="text-slate-400 font-medium italic text-sm">Aucun résultat pour cette recherche.</p>
                     </div>
                 )}
 
-                {filteredData!.length === 0 && (
-                    <div className="p-20 text-center">
-                    <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Search size={24} className="text-slate-300" />
-                    </div>
-                    <p className="text-slate-400 font-medium italic">Aucun résultat pour cette recherche.</p>
-                    </div>
-                )}
-
-                {/* Pagination UI */}
-                {totalPages >= 1 && (
-                    <div className="p-6 border-t border-slate-100 flex items-center justify-between">
-                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">
-                        Page {currentPage} sur {totalPages}
-                    </p>
-                    <div className="flex gap-2">
-                        <button 
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
-                        className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-[#000080] hover:text-white transition-all cursor-pointer"
-                        >
-                        <ChevronLeft size={20} />
-                        </button>
-                        <button 
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={currentPage === totalPages}
-                        className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-[#000080] hover:text-white transition-all cursor-pointer"
-                        >
-                        <ChevronRight size={20} />
-                        </button>
-                    </div>
+                {/* Pagination */}
+                {totalPages >= 1 && currentItems.length > 0 && (
+                    <div className="mt-6 pt-6 border-t border-slate-200/80 flex items-center justify-between">
+                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                            Page {currentPage} sur {totalPages}
+                        </p>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                                className="p-2.5 bg-white border border-slate-200 rounded-xl disabled:opacity-30 hover:bg-[#000080] hover:text-white hover:border-[#000080] transition-all cursor-pointer"
+                            >
+                                <ChevronLeft size={18} />
+                            </button>
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                                className="p-2.5 bg-white border border-slate-200 rounded-xl disabled:opacity-30 hover:bg-[#000080] hover:text-white hover:border-[#000080] transition-all cursor-pointer"
+                            >
+                                <ChevronRight size={18} />
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>

@@ -79,7 +79,7 @@ export default function MissionsPage() {
   };
 
   if (isLoading) return (
-    <div className="flex justify-center items-center h-screen bg-white">
+    <div className="flex justify-center items-center h-screen">
       <ThreeDots height="80" width="80" color="#000080" visible={true} />
     </div>
   );

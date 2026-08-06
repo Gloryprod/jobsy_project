@@ -170,7 +170,6 @@ class ExamProjectController extends Controller
             ]
         );
 
-       
         $enrollment = Enrollment::where('course_id', $project->course_id)
             ->where('candidat_id', $session->candidat_id)
             ->first();

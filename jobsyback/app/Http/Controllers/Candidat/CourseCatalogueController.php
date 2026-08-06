@@ -16,19 +16,22 @@ class CourseCatalogueController extends Controller
         $courseInfo = [];
 
         foreach ($courses as $course) {
-            $isEnrolled = false;    
-            if ($request->user() && $request->user()->candidat) {
-                $enrollment = Enrollment::where('course_id', $course->id)
-                    ->where('candidat_id', $request->user()->candidat->id)
-                    ->first();
+            $isEnrolled = false;   
+            
+            $enrollment = Enrollment::where('course_id', $course->id)
+            ->where('candidat_id', $request->user()->candidat->id)
+            ->first(); 
 
+            if ($request->user() && $request->user()->candidat) {
                 if ($enrollment) {
                     $isEnrolled = true;
                 }
             }
+
             $courseInfo[] = [
                 'course' => $course,
-                'is_enrolled' => $isEnrolled
+                'is_enrolled' => $isEnrolled,
+                'enrollment' => $enrollment
             ];
         }
 
