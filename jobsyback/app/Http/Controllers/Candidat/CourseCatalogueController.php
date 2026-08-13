@@ -111,4 +111,30 @@ class CourseCatalogueController extends Controller
         );
     }
 
+    public function myLearnings(Request $request)
+    {
+        // 1. Récupération du candidat connecté
+        // Adaptable selon tes relations (ex: $request->user()->candidat->id ou $request->user()->id)
+        $candidat = $request->user()->candidat;
+
+        if (!$candidat) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Profil candidat non trouvé.',
+            ], 404);
+        }
+
+        // 2. Récupération des enrollments avec la relation course et ses modules
+        $enrollments = Enrollment::with(['course.modules'])
+            ->where('candidat_id', $candidat->id)
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        // 3. Retour au format standard
+        return response()->json([
+            'success' => true,
+            'data' => $enrollments,
+        ]);
+    }
+
 }

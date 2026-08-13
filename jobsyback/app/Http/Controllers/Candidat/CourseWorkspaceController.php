@@ -436,9 +436,9 @@ class CourseWorkspaceController extends Controller
     }
 
     public function submitFinalExam(Request $request, Int $courseId){
-        $candidatId = $request->user()->candidat->id; 
+        $candidat = $request->user()->candidat; 
 
-        $lastResult = FinalExamResults::where('candidat_id', $candidatId)
+        $lastResult = FinalExamResults::where('candidat_id', $candidat->id)
                                   ->where('course_id', $courseId)
                                   ->first();
 
@@ -537,8 +537,8 @@ class CourseWorkspaceController extends Controller
         // 5. Enregistrement ou mise à jour du score en base de données
         $result = FinalExamResults::updateOrCreate(
             [
-                'candidat_id' => $candidatId,
-                'course_id' => $courseId,
+                'candidat_id' => $candidat->id,
+                'course_id' => $course->id,
             ],
             [
                 'score' => $scorePercentage,
@@ -546,18 +546,19 @@ class CourseWorkspaceController extends Controller
             ]
         );
 
+        $enrollment = Enrollment::where('course_id', $courseId)
+            ->where('candidat_id', $candidat->id)
+            ->first();
+
         // 6. Déclencheur de changement de statut U
         // Vérifier lors des tests si la condition est necessaire
-        if ($isPassed === true) {
-            $enrollment = Enrollment::where('course_id', $courseId)
-                ->where('candidat_id', $candidatId)
-                ->first();
 
-            if ($enrollment) {
-                // Caluler et mettre à jour le score global du candidat pour cette formation
-                $enrollment->updateLearnerGlobalScore($isPassed); 
-            }
-        }
+        if ($enrollment) {
+            // Caluler et mettre à jour le score global du candidat pour cette formation
+            $enrollment->updateLearnerGlobalScore($isPassed); 
+        }           
+
+        sendResultEmail($isPassed, $enrollment->global_score, $candidat, $course, $enrollment->certificate_hash);
 
         return response()->json([
             'status' => 'success',

@@ -6,7 +6,6 @@ import api from "@/lib/api";
 import useSWR from "swr";
 import { ThreeDots } from "react-loader-spinner";
 
-
 interface ApiResponse {
   status: string;
   course: {

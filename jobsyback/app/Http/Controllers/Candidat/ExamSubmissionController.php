@@ -373,6 +373,9 @@ class ExamSubmissionController extends Controller
             $enrollment->updateLearnerGlobalScore($result->is_passed); 
         }
 
+        // Envoyer l'email de résultat
+        sendResultEmail(false, $enrollment->global_score, $candidat, $session->examProject->course, null);
+
         return response()->json([
             'message' => 'Session marquée comme échouée (copie blanche).',
             'session' => $session

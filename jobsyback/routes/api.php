@@ -167,6 +167,8 @@ Route::middleware(['auth:sanctum', 'role:JEUNE', 'access.token'])->group(functio
 
     Route::post('/upload-temp-file', [ExamSubmissionController::class, 'uploadTempFile']);
 
+    Route::get('/courses/my-learnings', [CourseCatalogueController::class, 'myLearnings']);
+
 });
 
 Route::middleware(['auth:sanctum', 'role:ENTREPRISE', 'access.token'])->group(function() {

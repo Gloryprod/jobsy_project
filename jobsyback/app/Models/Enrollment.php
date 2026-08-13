@@ -20,8 +20,11 @@ class Enrollment extends Model
         'project_path',
         'admin_feedback',
         'certificate_hash',
-        'certified_at'
+        'certified_at',
+        'badge'
     ];
+
+    protected $appends = ['badge_details'];
 
     protected $casts = [
         'certified_at' => 'datetime',
@@ -87,49 +90,164 @@ class Enrollment extends Model
         return $progressPercentage;
     }
 
+    // public function updateLearnerGlobalScore(bool $isPassed)
+    // {
+    //     // Récupérer tous les résultats de quiz pour ce candidat et cette formation
+    //     $sumQuizScore = ModuleResult::where('candidat_id', $this->candidat_id)
+    //         ->whereHas('module', function($query) {
+    //             $query->where('course_id', $this->course_id);
+    //         })
+    //         ->sum('score');
+
+    //     $finalExamScore = FinalExamResults::where('candidat_id', $this->candidat_id)
+    //         ->where('course_id', $this->course_id)
+    //         ->first();
+
+    //     // Calculer la moyenne des scores de quiz
+    //     $globalScore = $sumQuizScore + ($finalExamScore ? $finalExamScore->score : 0);
+
+    //     $hash = $this->certificate_hash;
+
+    //     // 2. Si l'examen est réussi ET que le candidat n'a pas encore de hash, on en génère un TOUT NOUVEAU
+    //     if ($isPassed && is_null($hash)) {
+    //         $stringToHash = "jobsy-cert-{$this->candidat_id}-{$this->course_id}-" . now()->timestamp;
+    //         $hash = hash('sha256', $stringToHash);
+    //         $this->candidat->update(['score' => $this->candidat->score + $this->course->reward_xp]);
+
+    //         // Récupération des compétences transmises par la formation
+    //         $deliveredSkills = $this->course->delivered_skills ?? [];
+
+    //         if (!empty($deliveredSkills) && is_array($deliveredSkills)) {
+    //             // Appels des méthodes de catégorisation et de synchronisation
+    //             processSkillsFromIA($this->candidat, $deliveredSkills);
+    //         }
+    //     }
+
+    //     // Sauvegarder la moyenne dans la table enrollments
+    //     $this->update([
+    //         'average_quiz_score' => $sumQuizScore,
+    //         'final_project_score' => $finalExamScore ? $finalExamScore->score : 0,  
+    //         'global_score' => $globalScore,
+    //         'status' => $isPassed ? 'certified' : 'failed',
+    //         'certificate_hash'    => $isPassed ? $hash : $this->certificate_hash,
+    //         'certified_at'        => $isPassed ? ($this->certified_at ?? \Carbon\Carbon::now()) : null
+    //     ]);
+
+    //     return $globalScore;
+    // }
+
     public function updateLearnerGlobalScore(bool $isPassed)
     {
-        // Récupérer tous les résultats de quiz pour ce candidat et cette formation
+        // 1. Somme des scores (%) obtenus sur les modules de cette formation
         $sumQuizScore = ModuleResult::where('candidat_id', $this->candidat_id)
             ->whereHas('module', function($query) {
                 $query->where('course_id', $this->course_id);
             })
             ->sum('score');
 
+        // 2. Nombre total de modules associés à ce cours
+        $nbrTotalModule = Module::where('course_id', $this->course_id)->count();
+
+        // Calcul de la moyenne en % des quiz inter-modules
+        $quizPercentage = $nbrTotalModule > 0 ? ($sumQuizScore / $nbrTotalModule) : 0;
+
+        // 3. Récupérer le résultat de l'examen final ou du projet
         $finalExamScore = FinalExamResults::where('candidat_id', $this->candidat_id)
             ->where('course_id', $this->course_id)
             ->first();
 
-        // Calculer la moyenne des scores de quiz
-        $globalScore = $sumQuizScore + ($finalExamScore ? $finalExamScore->score : 0);
+        $examOrProjectScoreRaw = $finalExamScore ? $finalExamScore->score : 0;
 
+        // 4. Calcul du score global normalisé sur 100% selon le mode de validation
+        $globalScore = 0;
+        $validationMode = strtoupper($this->course->validation_mode ?? 'A');
+
+        switch ($validationMode) {
+            case 'A':
+            case 'B':
+                // Formations Standards & Logistique : 30% Quiz + 70% Examen Final (/100)
+                $globalScore = ($quizPercentage * 0.30) + ($examOrProjectScoreRaw * 0.70);
+                break;
+
+            case 'C':
+                // Formations Experts : 20% Quiz + 80% Projet Pratique (/20 ramené sur /100)
+                $projectScoreInPercent = ($examOrProjectScoreRaw / 20) * 100;
+                $globalScore = ($quizPercentage * 0.20) + ($projectScoreInPercent * 0.80);
+                break;
+
+            default:
+                $globalScore = $quizPercentage;
+                break;
+        }
+
+        $globalScore = round(min(100, max(0, $globalScore)), 2);
+
+        // 5. Détermination du badge selon le score global
+        $badge = null;
+        if ($isPassed && $globalScore >= 60) {
+            $badge = match (true) {
+                $globalScore >= 90 => 'GOLD',
+                $globalScore >= 75 => 'SILVER',
+                $globalScore >= 60 => 'BRONZE',
+                default => null,
+            };
+        }
+
+        // 6. Génération du certificat et attribution XP
         $hash = $this->certificate_hash;
 
-        // 2. Si l'examen est réussi ET que le candidat n'a pas encore de hash, on en génère un TOUT NOUVEAU
         if ($isPassed && is_null($hash)) {
             $stringToHash = "jobsy-cert-{$this->candidat_id}-{$this->course_id}-" . now()->timestamp;
             $hash = hash('sha256', $stringToHash);
             $this->candidat->update(['score' => $this->candidat->score + $this->course->reward_xp]);
 
-            // Récupération des compétences transmises par la formation
             $deliveredSkills = $this->course->delivered_skills ?? [];
 
             if (!empty($deliveredSkills) && is_array($deliveredSkills)) {
-                // Appels des méthodes de catégorisation et de synchronisation
                 processSkillsFromIA($this->candidat, $deliveredSkills);
             }
         }
 
-        // Sauvegarder la moyenne dans la table enrollments
+        // 7. Sauvegarde dans la table enrollments
         $this->update([
-            'average_quiz_score' => $sumQuizScore,
-            'final_project_score' => $finalExamScore ? $finalExamScore->score : 0,  
-            'global_score' => $globalScore,
-            'status' => $isPassed ? 'certified' : 'failed',
+            'average_quiz_score'  => round($quizPercentage, 2),
+            'final_project_score' => $examOrProjectScoreRaw,  
+            'global_score'        => $globalScore,
+            'badge'               => $badge,
+            'status'              => $isPassed ? 'certified' : 'failed',
             'certificate_hash'    => $isPassed ? $hash : $this->certificate_hash,
             'certified_at'        => $isPassed ? ($this->certified_at ?? \Carbon\Carbon::now()) : null
         ]);
 
         return $globalScore;
+    }
+
+
+    public function getBadgeDetailsAttribute(): ?array
+    {
+        return match ($this->badge) {
+            'GOLD' => [
+                'code'  => 'GOLD',
+                'label' => 'Badge Or - Expert',
+                'color' => '#EAB308', // Tailwind yellow-500
+                'bg'    => '#FEF9C3',
+                'icon'  => 'trophy-gold',
+            ],
+            'SILVER' => [
+                'code'  => 'SILVER',
+                'label' => 'Badge Argent - Avancé',
+                'color' => '#6B7280', // Tailwind gray-500
+                'bg'    => '#F3F4F6',
+                'icon'  => 'award-silver',
+            ],
+            'BRONZE' => [
+                'code'  => 'BRONZE',
+                'label' => 'Badge Bronze - Validé',
+                'color' => '#B45309', // Tailwind amber-700
+                'bg'    => '#FEF3C7',
+                'icon'  => 'medal-bronze',
+            ],
+            default => null,
+        };
     }
 }

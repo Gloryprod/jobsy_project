@@ -179,6 +179,8 @@ class ExamProjectController extends Controller
             $enrollment->updateLearnerGlobalScore($passed); 
         }
 
+        sendResultEmail($passed, $enrollment->global_score, $session->candidat, $project->course, $enrollment->certificate_hash);
+
         return response()->json([
             'message' => 'Soumission évaluée avec succès.',
             'session' => $session

@@ -54,7 +54,10 @@ class CertificateVerificationController extends Controller
             'name' => $enrollment->candidat->user->prenom . ' ' . $enrollment->candidat->user->nom,
             'courseTitle' => $enrollment->course->title,
             'date' => $enrollment->certified_at ? $enrollment->certified_at->format('d/m/Y') : now()->format('d/m/Y'),
-            'hash' => $enrollment->certificate_hash
+            'hash' => $enrollment->certificate_hash,
+            'badge' => $enrollment->badge,
+            'badgeDetails' => $enrollment->badge_details,
+            'skills' => $enrollment->course->delivered_skills ?? [],
         ];
 
         // 3. Charger la vue HTML et forcer le format A4 en Paysage (landscape)
