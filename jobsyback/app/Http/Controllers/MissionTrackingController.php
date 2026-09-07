@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\ContractSignedMail;
 use App\Models\MissionOffers;
+use App\Services\BadgeEvaluatorService;
 use App\Services\WalletService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -18,7 +19,8 @@ class MissionTrackingController extends Controller
     {
         $this->walletService = $walletService;
     }
-    public function updateStatus(Request $request, int $id)
+
+    public function updateStatus(Request $request, int $id, BadgeEvaluatorService $badgeEvaluator)
     {
         $offer = MissionOffers::with(['application.mission'])->findOrFail($id);
         $user = $request->user();
@@ -71,6 +73,8 @@ class MissionTrackingController extends Controller
                 if (!$isEntreprise || $offer->status !== 'service_started') abort(403, "Action impossible");
 
                 $application = $offer->application;
+                // Récupération sécurisée du booléen is_on_time depuis la requête
+                $isOnTime = $request->boolean('is_on_time');
     
                 // 1. Préparer les données
                 $data = [
@@ -93,7 +97,7 @@ class MissionTrackingController extends Controller
                 // 4. Récupérer le chemin pour l'enregistrer en base de données si besoin
                 $path = $fileName;
                     
-                $offer->update(['status' => 'in_progress', 'started_at' => now(), 'contract_path' => $path ]);
+                $offer->update(['status' => 'in_progress', 'is_on_time' => $isOnTime, 'started_at' => now(), 'contract_path' => $path ]);
 
                 // 5. Envoyer le mail (On verra le détail du Mail juste après)
                 $emails = [
@@ -124,10 +128,15 @@ class MissionTrackingController extends Controller
 
             case 'validated':
                 if (!$isEntreprise || $offer->status !== 'work_finished') abort(403, "Action impossible");
-                $offer->update(['status' => 'validated', 'validated_at' => now()]);
+                // Récupération sécurisée avec valeurs par défaut
+                $rating = $request->input('rating', 4);
+                $recruiterReview = $request->input('recruiter_review');
+                $offer->update(['status' => 'validated', 'rating' => $rating, 'recruiter_review' => $recruiterReview ?? null, 'validated_at' => now()]);
                 $candidat = $offer->application->candidat;
                 $candidat->increment('score', 250);
                 $this->walletService->processFinalPayment($offer, 0.10); // 10% de commission
+                // Évaluer et débloquer les badges du candidat
+                $badgeEvaluator->evaluateMissionBadges($candidat);
                 return apiResponse(
                     null,
                     'Mission validée et paiement traité avec succès. Le candidat recevra bientôt son paiement net après déduction de la commission Jobsy.',

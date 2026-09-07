@@ -25,7 +25,7 @@ class ProfileController extends Controller
                 }
                 
                 return apiResponse(
-                    $candidat->with('rank')->find($candidat->id),
+                    $candidat->with('rank', 'skills')->find($candidat->id),
                     'Profil mis à jour avec le rang' ,
                     'success'
                 );
@@ -75,7 +75,7 @@ class ProfileController extends Controller
                 }
                 
                 return apiResponse(
-                    $candidat->with('rank')->find($candidat->id),
+                    $candidat->with('rank', 'skills')->find($candidat->id),
                     'Profil mis à jour avec le rang ' ,
                     'success'
                 );

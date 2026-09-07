@@ -20,6 +20,7 @@ use App\Http\Controllers\Entreprise\EntrepriseController;
 use App\Http\Controllers\GeneralController;
 use App\Http\Controllers\Candidat\MissionsController as CandidatMissionController;
 use App\Http\Controllers\Candidat\WalletController;
+use App\Http\Controllers\Candidat\BadgeController;
 use App\Http\Controllers\Entreprise\MissionController as EntrepriseMissionController;
 use App\Http\Controllers\Entreprise\PaymentController;
 use App\Http\Controllers\MissionTrackingController;
@@ -168,6 +169,9 @@ Route::middleware(['auth:sanctum', 'role:JEUNE', 'access.token'])->group(functio
     Route::post('/upload-temp-file', [ExamSubmissionController::class, 'uploadTempFile']);
 
     Route::get('/courses/my-learnings', [CourseCatalogueController::class, 'myLearnings']);
+
+    Route::get('/candidate/inventory', [BadgeController::class, 'index']);
+    Route::patch('/candidate/inventory/{badgeId}/equip', [BadgeController::class, 'toggleEquip']);
 
 });
 

@@ -28,6 +28,9 @@ class MissionOffers extends Model
         'paid_at',
         'transaction_id',
         'payment_status',
+        'rating',            
+        'is_on_time',        
+        'recruiter_review',  
     ];
 
     protected function casts(): array

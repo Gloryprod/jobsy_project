@@ -25,6 +25,7 @@ class CandidatController extends Controller
             ->with('contact')
             ->with('cv')
             ->with('diplomes')
+            ->with('formations')
             ->with('rank')
             ->first();
 
@@ -107,45 +108,29 @@ class CandidatController extends Controller
     public function createFormation(Request $request)
     {
         $candidat = $request->user()->candidat;
+        
+        $path = $request->file('certificat')->store('certificats', 'public');
 
-        $formation = null;
-        if ($request->filled('id')) {
-            $formation = $candidat->formations()
-                ->where('id', $request->id)
-                ->firstOrFail();
-        }
+        $data = $request->only([
+            'titre',
+            'organisme',
+        ]);
 
         if ($request->hasFile('certificat')) {
-
-            if ($formation && $formation->certificat) {
-                Storage::disk('public')->delete($formation->certificat);
-            }
-
-            $path = $request->file('certificat')->store('certificats', 'public');
-        }
-
-        $data = $request->except(['id', 'certificat']);
-
-        if (isset($path)) {
             $data['certificat'] = $path;
         }
 
-        if ($formation) {
-            $formation->update($data);
-            $message = 'Formation mise à jour avec succès';
-            $status = 200;
-        } else {
-            $candidat->formations()->create($data);
-            $message = 'Formation ajoutée avec succès';
-            $status = 201;
-        }
+        $data['en_cours'] = false;
+       
+        $candidat->formations()->create($data);
+        $message = 'Formation ajoutée avec succès';
+        $status = 201;
 
         return apiResponse(
-            null,
             $message,
             'success',
             $status
-        );
+        );    
     }
 
     public function saveCv(CvRequest $request)

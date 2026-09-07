@@ -83,7 +83,23 @@ class Candidat extends Model
         return $this->hasMany(Application::class);
     }
 
+    public function enrollments() {
+        return $this->hasMany(Enrollment::class);
+    }
+
     public function wallet() {
         return $this->hasOne(Wallet::class, 'candidat_id');
+    }
+
+    public function badges()
+    {
+        return $this->belongsToMany(Badge::class, 'candidat_badges')
+                    ->withPivot(['unlocked', 'unlocked_at', 'progress_current', 'progress_max', 'equipped', 'equipped_at'])
+                    ->withTimestamps();
+    }
+
+    public function equippedBadges()
+    {
+        return $this->badges()->wherePivot('equipped', true);
     }
 }

@@ -154,6 +154,7 @@ class MissionController extends Controller
 
     public function selectApplicants(MissionOffersRequest $request, Int $applicationId) {
         $application = Application::findOrFail($applicationId);
+        
         $application->update(['status' => 'accepted']);
 
         $validated = $request->validated();

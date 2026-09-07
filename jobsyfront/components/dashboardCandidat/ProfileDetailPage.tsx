@@ -30,6 +30,13 @@ interface Diplome {
   fichier: string;
 }
 
+interface Formation {
+  id: number;
+  titre: string;
+  organisme?: string;
+  certificat: string;
+}
+
 interface CV {
   id: number;
   fichier: string;
@@ -59,6 +66,7 @@ interface CandidatData {
   xp?: number;
   contact?: Contact;
   diplomes: Diplome[];
+  formations: Formation[];
   cv?: CV;
   rank?: Rank;
 }
@@ -77,6 +85,7 @@ export default function ProfileDetailPage() {
 
   const [profile, setData] = useState<CandidatData | null>(null);
   const [diplomes, setDiplomes] = useState<Diplome[]>([]);
+  const [formations, setFormations] = useState<Formation[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<string | null>(null);
   const [infoForm, setInfoForm] = useState<any>({});
@@ -85,9 +94,13 @@ export default function ProfileDetailPage() {
   // const [error, setError] = useState<string | null>(null);
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [diplomeFile, setDiplomeFile] = useState<File | null>(null);
+  const [certificateFile, setCertificateFile] = useState<File | null>(null);
   const [intitule, setIntitule] = useState<string | null>(null);
+  const [title, setTitle] = useState<string | null>(null);
+  const [organisme, setOrganisme] = useState<string | null>(null);
   const [cvLoading, setCvLoading] = useState(false);
   const [diplomeLoading, setDiplomeLoading] = useState(false);
+  const [certificateLoading, setCertificateLoading] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newPassword_confirmation, setConfirmPassword] = useState('');
@@ -106,6 +119,7 @@ export default function ProfileDetailPage() {
         setContactForm(data.data.contact || {});
         setCv(data.data.cv || null);
         setDiplomes(data.data.diplomes || []);  
+        setFormations(data.data.formations || []);  
         console.log('data', data);
         setLoading(false);
     };
@@ -120,6 +134,7 @@ export default function ProfileDetailPage() {
     setContactForm(data.data.contact || {});
     setCv(data.data.cv || null);
     setDiplomes(data.data.diplomes || []);  
+    setFormations(data.data.formations || []);  
   };
     
 
@@ -174,7 +189,7 @@ const uploadCv = async () => {
         Swal.fire({
           icon: 'success',
           title: 'CV uploadé avec succès',
-          text: 'Veuillez soumettre les fichiers de vos attestations de diplômes pour valider votre profil.',
+            text: 'Veuillez soumettre les fichiers de vos attestations de diplômes pour valider votre profil.',
           showConfirmButton: true,
         });
       }
@@ -224,6 +239,39 @@ const uploadDiplome = async () => {
   }
 };
 
+const uploadCertificate = async () => {
+  if (!certificateFile || !title || !organisme) {
+    toast.error('Veuillez remplir tous les champs et sélectionner un fichier avant de soumettre.');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('certificat', certificateFile);
+  formData.append('titre', title);
+  formData.append('organisme', organisme);
+
+  try {
+    setCertificateLoading(true);
+
+    await api.post('/candidat/formation', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+
+    // refresh profil
+    handleUpdate();
+    setTitle(null);
+    setCertificateFile(null);
+    setOrganisme(null);
+
+    toast.success('Certificat uploadé avec succès');
+
+  } catch (e) {
+    toast.error('Erreur lors de l’upload du certificat');
+  } finally {
+    setCertificateLoading(false);
+  }
+};
+
 const deleteCv = async () => {
   try {
     await api.delete('/candidat/cv');
@@ -246,6 +294,18 @@ const deleteDiplome = async (id: number) => {
     setDiplomes(prev => prev.filter(d => d.id !== id));
   } catch (e) {
     toast.error('Erreur lors de la suppression du Diplome');
+  }
+};
+
+const deleteCertificate = async (id: number) => {
+  try {
+    await api.delete('/candidat/formations/' + id);
+
+    toast.success('Certificat supprimé');
+
+    setFormations(prev => prev.filter(f => f.id !== id));
+  } catch (e) {
+    toast.error('Erreur lors de la suppression du Certificat');
   }
 };
 
@@ -286,7 +346,7 @@ if (error) {
 }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-24">
+    <div className="min-h-screen   pb-24">
       <div className="max-w-5xl mx-auto px-4 space-y-10">
 
         {/* ==================== HEADER : CARTE D'IDENTITÉ AVENTURIER ==================== */}
@@ -325,7 +385,7 @@ if (error) {
         </header>
 
         {/* ==================== GRID DE SECTIONS ==================== */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
 
           {/* INFOS PERSONNELLES */}
           <Section title="Informations Personnelles" icon={Shield} onEdit={() => setEditing('info')}>
@@ -391,14 +451,14 @@ if (error) {
               ) : (
                 <div className="space-y-4">
                   <div className="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center hover:bg-slate-50 transition-colors">
-                    <input type="file" accept=".pdf,.doc,.docx" onChange={e => setCvFile(e.target.files?.[0] || null)} className="hidden" id="cv-upload" />
+                    <input type="file" accept=".pdf,.doc,.docx" onChange={e => setCvFile(e.target.files?.[0] || null)} className="hidden " id="cv-upload" />
                     <label htmlFor="cv-upload" className="cursor-pointer">
                       <FileText className="mx-auto mb-2 text-slate-300" size={32} />
                       <p className="text-sm font-medium text-slate-500">Cliquez pour ajouter votre parchemin (PDF, DOC)</p>
                     </label>
                   </div>
                   <button disabled={!cvFile || cvLoading} onClick={uploadCv} className="w-full py-4 bg-[#000080] text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-blue-900/20 disabled:opacity-30">
-                    {cvLoading ? 'Magie en cours...' : 'Uploader le CV'}
+                    {cvLoading ? 'Téléchargement...' : 'Uploader le CV'}
                   </button>
                 </div>
               )}
@@ -430,8 +490,44 @@ if (error) {
               <div className="pt-4 border-t border-slate-100 mt-4">
                 <Input placeholder="Intitulé du diplôme (ex: Master IT)" value={intitule} onChange={(i: string) => setIntitule(i)} />
                 <div className="flex gap-2 mt-3">
-                  <input type="file" onChange={e => setDiplomeFile(e.target.files?.[0] || null)} className="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-[#F0E68C]/20 file:text-[#8B8000] cursor-pointer" />
+                  <input type="file" onChange={e => setDiplomeFile(e.target.files?.[0] || null)} className="text-xs file:ml-1 text-slate-500 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-[#F0E68C]/20 file:text-[#8B8000] cursor-pointer" />
                   <button disabled={!diplomeFile} onClick={uploadDiplome} className="px-6 py-2 bg-[#000080] text-white rounded-xl text-[10px] font-black uppercase tracking-widest">
+                    Ajouter
+                  </button>
+                </div>
+              </div>
+            </div>
+          </Section>
+
+
+          {/* FORMATIONS / CERTIFICATIONS */}
+          <Section title="Certifications" icon={GraduationCap}>
+            <div className="space-y-4 mt-2">
+              {formations?.map(d => (
+                <div key={d.id} className="bg-white border border-slate-100 p-4 rounded-2xl flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-[#F0E68C]/20 rounded-xl flex items-center justify-center text-[#8B8000]">
+                      <Trophy size={20} />
+                    </div>
+                    <div>
+                      <p className="font-black text-slate-800 text-sm uppercase leading-none mb-1">{d.titre}</p>
+                      <a href={`${process.env.NEXT_PUBLIC_API_URL}/storage/${d.certificat}`} target="_blank" className="text-[10px] font-bold text-[#000080] flex items-center gap-1">
+                        VOIR <FileText size={10} />
+                      </a>
+                    </div>
+                  </div>
+                  <button onClick={() => deleteCertificate(d.id)} className="p-2 hover:bg-red-50 rounded-lg text-red-400 transition-colors">
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              ))}
+
+              <div className="pt-4 border-t border-slate-100 mt-4">
+                <Input placeholder="Intitulé du certificat" value={title} onChange={(i: string) => setTitle(i)} />
+                <Input placeholder="Organisme délivrant le certificat" value={organisme} onChange={(i: string) => setOrganisme(i)} />
+                <div className="flex gap-2 mt-3">
+                  <input type="file" onChange={e => setCertificateFile(e.target.files?.[0] || null)} className="text-xs text-slate-500 file:ml-1 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-[#F0E68C]/20 file:text-[#8B8000] cursor-pointer" />
+                  <button disabled={!certificateFile} onClick={uploadCertificate} className="px-6 py-2 bg-[#000080] text-white rounded-xl text-[10px] font-black uppercase tracking-widest">
                     Ajouter
                   </button>
                 </div>
@@ -442,7 +538,7 @@ if (error) {
           {/* MOT DE PASSE */}
 
           <Section title="Mot de passe" icon={UserRoundCog}>
-              <form onSubmit={handlePasswordChange} className="space-y-5">
+              <form onSubmit={handlePasswordChange} className="space-y-2">
                 <Input type="password" value={currentPassword}  placeholder="Mot de passe actuel" onChange={(i: string) => setCurrentPassword(i)}/>
                 <Input type="password" name="newPassword" value={newPassword} placeholder="Nouveau mot de passe" onChange={(i: string) => setNewPassword(i)} />
                 <Input type="password" name="newPassword_confirmation" value={newPassword_confirmation} placeholder="Confirmer le mot de passe" onChange={(i: string) => setConfirmPassword(i)} />
@@ -480,7 +576,7 @@ function Input({ label, value, onChange, placeholder, type, name }: any) {
     <div className="space-y-1.5">
       {label && <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{label}</label>}
       <input
-        className="w-full p-4 bg-slate-50 rounded-2xl border border-slate-100 text-slate-700 font-bold focus:outline-none focus:border-[#000080]/30 transition-all placeholder:text-slate-300"
+        className="w-full p-4 mb-2 bg-slate-50 rounded-2xl border border-slate-100 text-slate-700 font-bold focus:outline-none focus:border-[#000080]/30 transition-all placeholder:text-slate-300"
         value={value || ''}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}

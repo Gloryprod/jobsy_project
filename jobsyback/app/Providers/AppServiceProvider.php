@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use App\Models\MissionOffers;
+use App\Observers\MissionOffersObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -28,6 +30,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        MissionOffers::observe(MissionOffersObserver::class);
     }
 }
