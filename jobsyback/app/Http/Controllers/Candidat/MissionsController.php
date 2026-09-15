@@ -39,9 +39,14 @@ class MissionsController extends Controller
         );
     }
 
-    public function getMissionOffers($id)
+    public function getMissionOffers(Int $id)
     {
         $offer = MissionOffers::find($id);
+
+        if (!$offer) {
+            return apiResponse(null, 'Offre de mission non trouvée', 'error', 404);
+        }
+        
         $offer->load('application.mission');
         
         return apiResponse(

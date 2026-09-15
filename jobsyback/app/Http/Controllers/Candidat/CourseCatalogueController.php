@@ -62,6 +62,15 @@ class CourseCatalogueController extends Controller
         // 1. Vérifier si le cours existe et s'il est actif
         $course = Course::where('is_active', true)->findOrFail($courseId);
 
+        if (!$course) {
+            return apiResponse(
+                null,
+                'Cours introuvable ou inactif.',
+                'error',
+                404
+            );
+        }
+
         // 2. Vérifier si le candidat est déjà inscrit
         $existingEnrollment = Enrollment::where('course_id', $courseId)
             ->where('candidat_id', $candidatId)

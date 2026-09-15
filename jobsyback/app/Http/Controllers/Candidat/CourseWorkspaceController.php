@@ -22,6 +22,15 @@ class CourseWorkspaceController extends Controller
         ->select('validation_mode')
         ->first();
 
+        if (!$course) {
+            return apiResponse(
+                null,
+                'Cours introuvable.',
+                'error',
+                404
+            );
+        }
+
         return response()->json([
             'status' => 'success',
             'course' => $course
@@ -39,7 +48,15 @@ class CourseWorkspaceController extends Controller
         // 2. Charger le cours, ses modules, ses leçons et les questions de quiz associées au module
         $course = Course::with(['modules.lessons', 'modules.quiz_questions'])
             ->findOrFail($courseId);
-        
+
+        if (!$course) {
+            return apiResponse(
+                null,
+                'Cours introuvable.',
+                'error',
+                404
+            );
+        }
 
         // 3. Vérifier l'inscription à la formation
         $enrollment = Enrollment::where('course_id', $courseId)
@@ -286,6 +303,14 @@ class CourseWorkspaceController extends Controller
         
         // 2. Récupérer le module avec ses questions de quiz
         $module = Module::with('quiz_questions')->findOrFail($moduleId);
+
+        if (!$module) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Module introuvable.'
+            ], 404);
+        }
+
         $questions = $module->quiz_questions;
         
         if ($questions->count() === 0) {
@@ -384,8 +409,16 @@ class CourseWorkspaceController extends Controller
     public function showFinalExamQuestions(Int $courseId, Request $request){
         $course = Course::findOrFail($courseId);
 
-        $questions = FinalExamQuestion::where('course_id', $courseId)
-        ->get();
+        if (!$course) {
+            return apiResponse(
+                null,
+                'Cours introuvable.',
+                'error',
+                404
+            );
+        }
+
+        $questions = FinalExamQuestion::where('course_id', $courseId)->get();
 
         $secureQuestions = $questions->map(function ($question) {
             return [
@@ -438,6 +471,17 @@ class CourseWorkspaceController extends Controller
     public function submitFinalExam(Request $request, Int $courseId){
         $candidat = $request->user()->candidat; 
 
+        $course = Course::findOrFail($courseId);
+
+        if (!$course) {
+            return apiResponse(
+                null,
+                'Cours introuvable.',
+                'error',
+                404
+            );
+        }
+
         $lastResult = FinalExamResults::where('candidat_id', $candidat->id)
                                   ->where('course_id', $courseId)
                                   ->first();
@@ -456,8 +500,6 @@ class CourseWorkspaceController extends Controller
                 ]);
             }
         }
-
-        $course = Course::findOrFail($courseId);
         
         // 2. Récupérer toutes les vraies questions de l'examen pour ce cours
         $questions = FinalExamQuestion::where('course_id', $courseId)->get();
@@ -574,6 +616,13 @@ class CourseWorkspaceController extends Controller
 
     public function accesLogisticCourse(Request $request, Enrollment $enrollment)
     {
+        if (!$enrollment) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "Inscription introuvable.",
+            ], 404);
+        }
+        
         if ($enrollment->candidat_id !== $request->user()->candidat->id) {
             return response()->json([
                 'status' => 'error',

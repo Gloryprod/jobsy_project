@@ -21,6 +21,13 @@ class ExamSubmissionController extends Controller
     {
         $candidat = $request->user()->candidat;
 
+        if (!$project) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Projet d\'examen introuvable.'
+            ], 404);
+        }
+
         // 2. Recherche d'une session déjà existante
         $existingSession = UserExamSession::where('candidat_id', $candidat->id)
             ->where('exam_project_id', $project->id)
@@ -71,6 +78,12 @@ class ExamSubmissionController extends Controller
     public function submit(Request $request, int $projectId): JsonResponse
     {
         $project = ExamProjects::findOrFail($projectId);
+
+        if (!$project) {
+            return response()->json([
+                'message' => "Projet d'examen introuvable."
+            ], 404);
+        }
         
         // Récupération du candidat lié à l'utilisateur connecté
         $candidat = $request->user()->candidat;
@@ -198,6 +211,12 @@ class ExamSubmissionController extends Controller
             })
             ->firstOrFail();
 
+        if (!$session) {
+            return response()->json([
+                'message' => "Session d'examen introuvable."
+            ], 404);
+        }
+
         // Vérification du statut
         if ($session->status !== 'failed') {
             return response()->json([
@@ -251,6 +270,12 @@ class ExamSubmissionController extends Controller
             ->where('candidat_id', $candidat->id)
             ->firstOrFail();
 
+        if (!$session) {
+            return response()->json([
+                'message' => "Session d'examen introuvable."
+            ], 404);
+        }
+
         // Seule une session en cours peut recevoir un brouillon
         if ($session->status !== 'in_progress') {
             return response()->json([
@@ -281,8 +306,14 @@ class ExamSubmissionController extends Controller
     {
         $candidat = $request->user()->candidat;
 
+        $project = ExamProjects::find($projectId);
+
         if (!$candidat) {
             return response()->json(['message' => "Profil candidat introuvable."], 403);
+        }
+
+        if (!$project) {
+            return response()->json(['message' => "Projet d'examen introuvable."], 404);
         }
 
         $session = UserExamSession::where('candidat_id', $candidat->id)
@@ -337,6 +368,12 @@ class ExamSubmissionController extends Controller
         $session = UserExamSession::where('id', $sessionId)
             ->where('candidat_id', $candidat->id)
             ->firstOrFail();
+
+        if(!$session) {
+            return response()->json([
+                'message' => "Session d'examen introuvable."
+            ], 404);
+        }
 
         if($session->attempts_count >= 2){          
             $isBlocked = true;

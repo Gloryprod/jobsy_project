@@ -64,6 +64,15 @@ class CandidatureController extends Controller
         Log::info($applicationId);
 
         $application = Application::find($applicationId);
+
+        if (!$application) {
+            return apiResponse(
+                "Candidature introuvable !",
+                'error',
+                404
+            );
+        }
+
         $assessment = $application->assessment;
         Log::info("Assessment " . $assessment);
         $candidat = $application->candidat;
@@ -148,6 +157,15 @@ class CandidatureController extends Controller
 
     public function finalize_assessment(Request $request, Int $applicationId, ApplicationAIService $aiService) {
         $application = Application::find($applicationId);
+
+        if (!$application) {
+            return apiResponse(
+                "Candidature introuvable !",
+                'error',
+                404
+            );
+        }
+
         $assessment = $application->assessment;
 
         $step2Data = $assessment->step_2_data;
@@ -180,6 +198,7 @@ class CandidatureController extends Controller
     }
 
     public function getApplications(Candidat $candidat) {
+
         $applications = $candidat->applications()
         ->with(['mission', 'assessment', 'mission_offers'])
         ->orderBy('created_at', 'desc')

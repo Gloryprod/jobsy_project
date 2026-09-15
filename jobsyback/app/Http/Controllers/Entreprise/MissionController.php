@@ -138,6 +138,10 @@ class MissionController extends Controller
     
     public function getApplications(Mission $mission)
     {
+        if ($mission->entreprise_id !== request()->user()->entreprise->id) {
+            return apiResponse(null, 'Accès non autorisé à cette mission.', 'error', 403);
+        }
+        
         $applications = $mission->applications()
         ->with(['candidat.user', 'candidat.rank', 'assessment'])
         ->orderByRaw("FIELD(badge, 'EXPERT', 'CONFIRMED', 'JUNIOR', 'REJECTED') ASC")
@@ -154,6 +158,11 @@ class MissionController extends Controller
 
     public function selectApplicants(MissionOffersRequest $request, Int $applicationId) {
         $application = Application::findOrFail($applicationId);
+
+        // Ajout : vérifier que la mission liée appartient bien à l'entreprise connectée
+        if ($application->mission->entreprise_id !== $request->user()->entreprise->id) {
+            return apiResponse(null, 'Accès non autorisé à cette candidature.', 'error', 403);
+        }
         
         $application->update(['status' => 'accepted']);
 

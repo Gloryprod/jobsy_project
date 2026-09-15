@@ -35,11 +35,11 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Models\User;
 
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/refresh', [RefreshTokenController::class, 'refresh']);
-Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
-Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
+Route::post('/refresh', [RefreshTokenController::class, 'refresh'])->middleware('throttle:10,1');
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:3,1');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:5,1');
 Route::post('logout', [AuthController::class, 'logout'])->middleware(['auth:sanctum', 'access.token']);
 Route::post('/webhooks/kkiapay', [WebhookController::class, 'handleKkiaPay']);
 Route::post('/webhooks/kkiapay/payouts', [WebhookController::class, 'handleKkiaPayPayouts']);
