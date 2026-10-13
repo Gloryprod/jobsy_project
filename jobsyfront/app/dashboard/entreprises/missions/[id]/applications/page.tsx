@@ -1,71 +1,437 @@
+// 'use client';
+
+// import useSWR from "swr";
+// import api from "@/lib/api";
+// import { use } from "react";
+// import { ThreeDots } from "react-loader-spinner";
+// import PageInfo from "@/components/PageInfo";
+// import { Star, CheckCircle, ChevronRight, ChevronLeft, Search } from "lucide-react";
+// import Avatar from "@/components/Avatar";
+// import Link from 'next/link';
+// import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+// import { useState } from "react";
+// import { Input } from "@/components/ui/input";
+// import { Button } from "@/components/ui/button";
+// import { Editor, EditorTextChangeEvent } from 'primereact/editor';
+// import { toast } from 'react-hot-toast';
+
+
+// interface Candidat{
+//     id: number;
+//     domaine_competence : string;
+//     niveau_etude : string;
+//     bio : string;
+//     ville : string;
+//     user:{
+//         nom : string;
+//         prenom : string;
+//         email : string;
+//         role : string
+//     }
+//     rank: {
+//         id: number;
+//         label: string;
+//         rank: string;
+//         code_hexa: string;
+//     }
+// }
+
+// interface Assessment {
+//     id: number;
+//     application_id: number;
+//     step_1_data: JSON;
+//     step_2_data: JSON;
+//     ai_feedback_details: JSON;
+// }
+
+// interface Mission {
+//   id: number;
+//   title: string;
+//   company: string;
+//   location: string;
+//   reward: number;
+//   duration: string;
+//   deadline: string;
+//   urgency: 'normal' | 'urgent' | 'premium';
+//   test_severity: 'light' | 'standard' | 'expert';
+//   applicants: number;
+//   type_contrat: string;
+//   active: boolean;
+//   min_rank_required: string;
+// }
+
+
+// interface Application {
+//     id: number;
+//     candidat_id: number;
+//     mission_id: number;
+//     status: 'draft' | 'pending' | 'accepted'| 'rejected';
+//     global_score: number;
+//     badge: string;
+//     ai_summary: string;
+//     created_at: string;
+//     completed_at: string;
+//     updated_at: string;
+//     candidat: Candidat;
+//     assessment: Assessment;
+//     mission: Mission
+// }
+
+// const fetcher = (url: string) => api.get(url).then(res => res.data.data); 
+
+// // const getBadgeStyle = (badge: string) => {
+// //     switch (badge?.toUpperCase()) {
+// //         case 'EXPERT': return 'bg-purple-100 text-purple-700 border-purple-200';
+// //         case 'CONFIRMED': return 'bg-blue-100 text-blue-700 border-blue-200';
+// //         case 'JUNIOR': return 'bg-amber-100 text-amber-700 border-amber-200';
+// //         default: return 'bg-gray-100 text-gray-500 border-gray-200';
+// //     }
+// // };
+
+// export default function ApplicationsPage({ params }: { params: Promise<{ id: string }> }) {
+//     const {id} = use(params);
+//     const { data: applications, isLoading, error } = useSWR<Application[] | []>(`/missions/${id}/applications`, fetcher);
+//     const pageLink = `/dashboard/entreprises/missions/${id}/applications`;
+//     const [openDialog, setOpenDialog] = useState(false);
+//     const [selectedApp, setSelectedApp] = useState<Application[]>([]);
+//     const [selectedIds, setSelectedIds] = useState<number[]>([]);
+//     const [invitationDetails, setInvitationDetails] = useState({
+//         start_date: '',
+//         start_time: '',
+//         place: '',
+//         contact_person: '',
+//         onboarding_instructions: '',
+//         expiry_date: ''
+//     });
+
+//     // États pour la recherche et la pagination
+//     const [searchTerm, setSearchTerm] = useState('');
+//     const [currentPage, setCurrentPage] = useState(1);
+//     const itemsPerPage = 5;
+
+//     // 1. Logique de Recherche
+//     const filteredData = applications?.filter(item =>
+//         item.candidat.user.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+//         item.candidat.user.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+//         item.candidat.rank.rank.toLowerCase().includes(searchTerm.toLowerCase()) ||
+//         item.candidat.rank.label.toLowerCase().includes(searchTerm.toLowerCase())
+//     );
+
+//     // 2. Logique de Pagination
+//     const totalPages = Math.ceil((filteredData?.length ?? 0) / itemsPerPage);
+//     const indexOfLastItem = currentPage * itemsPerPage;
+//     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+//     const currentItems = filteredData?.slice(indexOfFirstItem, indexOfLastItem);
+
+//     const handleCheckboxChange = (event : React.ChangeEvent<HTMLInputElement>) => {
+//         const { value, checked } = event.target;
+//         const appId = parseInt(value, 10);
+        
+//         setSelectedIds(prevCheckedItems => {
+//         if (checked) {
+//             if (applications) {
+//                 for (const app of applications) {
+//                     if (app.id === appId) {
+//                         setSelectedApp([...selectedApp, app]);
+//                         break;
+//                     }            
+//                 }
+//             }
+//             return [...prevCheckedItems, appId];
+//         } else {
+//             setSelectedApp(selectedApp.filter(app => app.id !== appId));
+//             return prevCheckedItems.filter(item => item !== appId);
+//         }
+//         });
+//     };
+
+//     const  handleSelectApplicants = async () => {
+//         try {
+//             for (const app of selectedApp) {
+//                 await api.post(`/entreprise/applications/${app.id}/select`, {
+//                     start_date: invitationDetails.start_date,
+//                     start_time: invitationDetails.start_time,
+//                     place: invitationDetails.place,
+//                     contact_person: invitationDetails.contact_person,
+//                     onboarding_instructions: invitationDetails.onboarding_instructions,
+//                     expires_at: invitationDetails.expiry_date
+//                 });
+//             }
+//             toast.success("Invitation(s) de prise de service envoyée(s) avec succès !");
+//         } catch (error : any) {
+//             const messages = error.response?.data?.message;
+//             toast.error(messages);
+//         }
+
+//     };
+
+//     if (error) return <div>Failed to load</div>;
+//     if (isLoading) return (
+//         <div className="flex justify-center items-center h-screen">
+//             <ThreeDots height="80" width="80" color="#000080" visible={true} />
+//         </div>
+//     );
+
+//     return (
+//        <div className="min-h-screen relative p-4 md:p-8 bg-gray-100">
+//             <div className="mb-6">
+//                 <PageInfo pageName="Candidatures" pageLink={pageLink} />
+//             </div>
+
+//             <div className="mb-8 ">
+//                 <h1 className="text-2xl font-black text-slate-800 flex items-center justify-center">Gestion des Candidatures</h1>
+//                 <p className="text-slate-500 flex items-center justify-center"><i>Vue d&apos;ensemble des candidatures reçues pour cette mission</i></p>
+//             </div>
+
+//             <div className="flex items-end justify-end mb-6">
+//                 <button onClick={() => {if (selectedApp.length > 0) {setOpenDialog(true)} else{toast.error("Veuillez sélectionner au moins un candidat.")}; }} className="p-2 mb-2 bg-[#000080] border-2 border-slate-100 hover:bg-[#000080] text-white rounded-xl font-bold text-sm transition-all gap-2 group cursor-pointer">
+//                     Accepter Candidature
+//                 </button>
+//             </div>
+
+//             {/* Barre de Recherche */}
+//             <div className="mb-6 mt-6 relative w-full max-w-sm flex items-end justify-end">
+//                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 " size={16} />
+//                 <input
+//                     type="text"
+//                     placeholder="Rechercher un nom, un rang, un diplôme..."
+//                     value={searchTerm}
+//                     onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+//                     className="w-full pl-10 pr-4 py-4 bg-white border-slate-100 rounded-2xl shadow-sm focus:ring-2 focus:ring-[#000080]/10 focus:border-[#000080] transition-all"
+//                 />
+//             </div>
+
+//             <div className="grid grid-cols-1 md:grid-cols-1 xl:grid-cols-3 gap-6">
+//                 {currentItems && currentItems.length > 0 ? currentItems.map((app) => {
+//                     return (
+//                         <div key={app.id} className="group bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
+//                             <div>
+//                                 <input type="checkbox" className="w-4 h-4 border border-black rounded-xs bg-slate-50 mb-4" checked={selectedIds.some(a => a === app.id)} onChange={(e) => handleCheckboxChange({...e, target: {...e.target, value: app.id.toString()}})} />
+//                             </div>
+//                             {/* Score IA en haut à droite */}
+//                             <div className="absolute top-6 right-6 flex flex-col items-center">
+//                                 <div className={`w-12 h-12 rounded-full border-4 flex items-center justify-center font-black text-sm ${app.global_score >= 70 ? 'border-emerald-500 text-emerald-600' : 'border-slate-100 text-slate-400'}`}>
+//                                     {app.global_score}
+//                                 </div>
+//                                 <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">Score IA</span>
+//                             </div>
+
+//                             <div className="flex items-start gap-4 mb-6">
+//                                 {/* Avatar avec initiales */}
+//                                 <div className="w-14 h-14 bg-[#000080] text-white rounded-xl flex items-center justify-center font-black text-xl shadow-lg shadow-blue-900/20 shrink-0">
+//                                     <Avatar width = {70} height = {70} fontSize = {30} nom = {app.candidat.user.nom} prenom = {app.candidat.user.prenom} />
+//                                 </div>
+                                
+//                                 <div className="pr-12">
+//                                     <h2 className="text-lg font-black text-slate-800 leading-tight">
+//                                         {app.candidat.user.prenom} {app.candidat.user.nom} - <span style={{color: app.candidat.rank?.code_hexa }}>Rang {app.candidat.rank.rank}</span> 
+//                                     </h2>
+//                                     <p className="text-indigo-600 font-bold text-xs uppercase tracking-wide mt-1">
+//                                         {app.candidat.rank.rank == "E" ? "Apprenti Junior - Aucun Diplôme" : app.candidat.rank.rank == "D" ? "Agent Certifié - BAC" : app.candidat.domaine_competence}
+//                                     </p>
+//                                 </div>
+//                             </div>
+
+//                             {/* <div className="space-y-3 mb-6">
+//                                 <div className="flex items-center gap-2 text-slate-500 text-sm">
+//                                     <MapPin size={16} className="text-slate-300" />
+//                                     {app.candidat.ville}
+//                                 </div>
+//                                 <div className="flex items-center gap-2 text-slate-500 text-sm">
+//                                     <GraduationCap size={16} className="text-slate-300" />
+//                                     {app.candidat.niveau_etude}
+//                                 </div>
+//                                 <div className={`inline-block px-3 py-1 rounded-full text-[10px] font-black border uppercase tracking-widest ${getBadgeStyle(app.badge)}`}>
+//                                     {app.badge || 'Analyse en cours'}
+//                                 </div>
+//                             </div> */}
+
+//                             {/* IA Summary Box */}
+//                             <div className="bg-slate-50 rounded-2xl p-4 mb-6 border border-slate-100">
+//                                 <p className="text-xs text-slate-600 leading-relaxed italic line-clamp-2">
+//                                     <Star size={12} className="inline mr-1 mb-1 text-amber-500" />
+//                                     {app.ai_summary || "Analyse de l'IA en attente..."}
+//                                 </p>
+//                             </div>
+
+//                             <Link href={`/dashboard/entreprises/detailProfilCandidat/${app.candidat.id}`}>
+//                                 <button className="w-full p-2 bg-white border-2 border-slate-100 hover:border-[#000080] hover:text-[#000080] text-slate-600 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 group cursor-pointer">
+//                                     Voir le dossier complet
+//                                 </button>
+//                             </Link>                               
+                           
+//                         </div>
+//                     );
+//                 }) : (
+//                     <div className="col-span-full text-center py-20">
+//                         <p className="text-slate-500 italic">Aucune candidature pour cette mission pour le moment.</p>
+//                     </div>
+//                 )}
+//             </div>
+
+//                 {filteredData!.length === 0 && (
+//                     <div className="p-20 text-center">
+//                     <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+//                         <Search size={24} className="text-slate-300" />
+//                     </div>
+//                     <p className="text-slate-400 font-medium italic">Aucun résultat pour cette recherche.</p>
+//                     </div>
+//                 )}
+
+//                 {/* Pagination UI */}
+//                 {totalPages >= 1 && (
+//                     <div className="p-6 border-t border-slate-100 flex items-center justify-between">
+//                     <p className="text-xs font-black text-slate-400 uppercase tracking-widest">
+//                         Page {currentPage} sur {totalPages}
+//                     </p>
+//                     <div className="flex gap-2">
+//                         <button 
+//                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+//                         disabled={currentPage === 1}
+//                         className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-[#000080] hover:text-white transition-all cursor-pointer"
+//                         >
+//                         <ChevronLeft size={20} />
+//                         </button>
+//                         <button 
+//                         onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+//                         disabled={currentPage === totalPages}
+//                         className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-[#000080] hover:text-white transition-all cursor-pointer"
+//                         >
+//                         <ChevronRight size={20} />
+//                         </button>
+//                     </div>
+//                     </div>
+//                 )}
+//                 <p>Currently selected: {JSON.stringify(selectedIds)}</p>
+
+//             {/* Dialog pour accepter la candidature */}
+//             {openDialog && (
+//                 <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+//                     <DialogContent className="sm:max-w-lg">
+//                         <DialogHeader>
+//                             <div className="flex items-center gap-3">
+//                             <div className="p-2 bg-blue-100 rounded-full text-[#000080]">
+//                                 <CheckCircle size={24} />
+//                             </div>
+//                             <DialogTitle className="text-xl font-black">Félicitations !</DialogTitle>
+//                             </div>
+//                             <DialogDescription>
+//                             Vous sélectionnez le(s) candidat(s) suivant(s) <strong>{selectedApp.map(app => `${app.candidat.user.prenom} ${app.candidat.user.nom}`).join(', ')} </strong> pour la mission.
+//                             Précisez les modalités de démarrage ci-dessous.
+//                             </DialogDescription>
+//                         </DialogHeader>
+
+//                         <div className="space-y-4 py-4 max-h-[50vh] overflow-y-auto no-scrollbar">
+//                             <div className="grid grid-cols-2 gap-4">
+//                                 <div className="space-y-2">
+//                                     <label className="text-sm font-medium text-muted-foreground">Date de début prévue</label>
+//                                     <Input name="start_date" type="date" value={invitationDetails.start_date} onChange={(e) => setInvitationDetails({...invitationDetails, start_date: e.target.value})} />
+//                                 </div>
+//                                 <div className="space-y-2">
+//                                     <label className="text-sm font-medium text-muted-foreground">Heure de début prévue</label>
+//                                     <Input name="start_time" type="time" value={invitationDetails.start_time} onChange={(e) => setInvitationDetails({...invitationDetails, start_time: e.target.value})} />
+//                                 </div>
+//                                 <div className="space-y-2">
+//                                     <label className="text-sm font-medium text-muted-foreground">Lieu de prise de service</label>
+//                                     <Input name="place" type="text" value={invitationDetails.place} onChange={(e) => setInvitationDetails({...invitationDetails, place: e.target.value})} />
+//                                 </div>
+//                                 <div className="space-y-2">
+//                                     <label className="text-sm font-medium text-muted-foreground">Personne à contacter</label>
+//                                     <Input name="contact_person" type="text" placeholder="John Doe - 0145643456" value={invitationDetails.contact_person} onChange={(e) => setInvitationDetails({...invitationDetails, contact_person: e.target.value})} />
+//                                 </div>
+//                             </div>
+
+//                             <div className="space-y-2">
+//                                 <label className="text-sm font-medium text-muted-foreground">Instructions particulière</label>
+//                                 <Editor name="onboarding_instructions" value={invitationDetails.onboarding_instructions || ""} className="w-full min-h-[120px] p-4 border rounded-xl focus:ring-2 focus:ring-[#000080]/20 outline-none text-gray-600"  style={{ height: '320px' }} onTextChange={(e: EditorTextChangeEvent) => setInvitationDetails({...invitationDetails, onboarding_instructions: e.htmlValue ?? ""})} />
+//                             </div>
+//                             <div className="space-y-2">
+//                                 <label className="text-sm font-medium text-muted-foreground">Délai de validité de l&apos;offre</label>
+//                                 <Input name="expiry_date" type="date" value={invitationDetails.expiry_date} onChange={(e) => setInvitationDetails({...invitationDetails, expiry_date: e.target.value})} />
+//                             </div>
+//                         </div>
+
+
+//                         <DialogFooter className="flex justify-end gap-4">
+//                             <Button className="cursor-pointer" onClick={() => setOpenDialog(false)} variant="ghost">Annuler</Button>
+//                             <Button className="bg-[#000080] hover:bg-[#000060] font-bold cursor-pointer" onClick={handleSelectApplicants}>
+//                                 Envoyer l&apos;invitation
+//                             </Button>
+//                         </DialogFooter> 
+//                     </DialogContent>
+//                 </Dialog>
+//             )}
+//         </div>
+//     );
+
+// }
+
 'use client';
 
 import useSWR from "swr";
 import api from "@/lib/api";
-import { use } from "react";
+import { use, useState } from "react";
 import { ThreeDots } from "react-loader-spinner";
 import PageInfo from "@/components/PageInfo";
-import { Star, CheckCircle, ChevronRight, ChevronLeft, Search } from "lucide-react";
+import { Star, CheckCircle, ChevronRight, ChevronLeft, Search, Sparkles, UserCheck, Award } from "lucide-react";
 import Avatar from "@/components/Avatar";
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Editor, EditorTextChangeEvent } from 'primereact/editor';
 import { toast } from 'react-hot-toast';
+import CandidateProfileModal from "@/components/dashboardEntreprise/candidat/CandidateProfileModal";
 
-
-interface Candidat{
+interface Candidat {
     id: number;
-    domaine_competence : string;
-    niveau_etude : string;
-    bio : string;
-    ville : string;
-    user:{
-        nom : string;
-        prenom : string;
-        email : string;
-        role : string
-    }
-    rank: {
+    domaine_competence: string;
+    niveau_etude: string;
+    bio: string;
+    ville: string;
+    user: {
+        nom: string;
+        prenom: string;
+        email: string;
+        role: string;
+    };
+    rank?: {
         id: number;
         label: string;
         rank: string;
         code_hexa: string;
-    }
+    };
 }
 
 interface Assessment {
     id: number;
     application_id: number;
-    step_1_data: JSON;
-    step_2_data: JSON;
-    ai_feedback_details: JSON;
+    step_1_data: unknown;
+    step_2_data: unknown;
+    ai_feedback_details: unknown;
 }
 
 interface Mission {
-  id: number;
-  title: string;
-  company: string;
-  location: string;
-  reward: number;
-  duration: string;
-  deadline: string;
-  urgency: 'normal' | 'urgent' | 'premium';
-  test_severity: 'light' | 'standard' | 'expert';
-  applicants: number;
-  type_contrat: string;
-  active: boolean;
-  min_rank_required: string;
+    id: number;
+    title: string;
+    company: string;
+    location: string;
+    reward: number;
+    duration: string;
+    deadline: string;
+    urgency: 'normal' | 'urgent' | 'premium';
+    test_severity: 'light' | 'standard' | 'expert';
+    applicants: number;
+    type_contrat: string;
+    active: boolean;
+    min_rank_required: string;
 }
-
 
 interface Application {
     id: number;
     candidat_id: number;
     mission_id: number;
-    status: 'draft' | 'pending' | 'accepted'| 'rejected';
+    status: 'draft' | 'pending' | 'accepted' | 'rejected';
     global_score: number;
     badge: string;
     ai_summary: string;
@@ -74,23 +440,35 @@ interface Application {
     updated_at: string;
     candidat: Candidat;
     assessment: Assessment;
-    mission: Mission
+    mission: Mission;
 }
 
-const fetcher = (url: string) => api.get(url).then(res => res.data.data); 
+interface SuggestedCandidate {
+    id: number;
+    full_name: string;
+    title: string;
+    match_score: number;
+    skills_breakdown?: {
+        matching_skills: string[];
+        missing_skills: string[];
+    };
+    equipped_badges?: Array<{ id: number; name: string }>;
+}
 
-// const getBadgeStyle = (badge: string) => {
-//     switch (badge?.toUpperCase()) {
-//         case 'EXPERT': return 'bg-purple-100 text-purple-700 border-purple-200';
-//         case 'CONFIRMED': return 'bg-blue-100 text-blue-700 border-blue-200';
-//         case 'JUNIOR': return 'bg-amber-100 text-amber-700 border-amber-200';
-//         default: return 'bg-gray-100 text-gray-500 border-gray-200';
-//     }
-// };
+const fetcher = (url: string) => api.get(url).then(res => res.data.data);
+const fetcher1 = (url: string) => api.get(url).then(res => res.data);
 
 export default function ApplicationsPage({ params }: { params: Promise<{ id: string }> }) {
-    const {id} = use(params);
-    const { data: applications, isLoading, error } = useSWR<Application[] | []>(`/missions/${id}/applications`, fetcher);
+    const { id } = use(params);
+
+    // Candidatures postulées
+    const { data: applications, isLoading: isLoadingApps, error: errorApps } = useSWR<Application[]>(`/missions/${id}/applications`, fetcher);
+    
+    // Candidats suggérés par l'algorithme de matching
+    const { data: suggestedData, isLoading: isLoadingSuggested } = useSWR(`/missions/${id}/suggested-candidates`, fetcher1);
+
+    const [selectedCandidateId, setSelectedCandidateId] = useState(null);
+
     const pageLink = `/dashboard/entreprises/missions/${id}/applications`;
     const [openDialog, setOpenDialog] = useState(false);
     const [selectedApp, setSelectedApp] = useState<Application[]>([]);
@@ -104,48 +482,46 @@ export default function ApplicationsPage({ params }: { params: Promise<{ id: str
         expiry_date: ''
     });
 
-    // États pour la recherche et la pagination
+    // Recherche et pagination pour les candidatures reçues
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 5;
+    const itemsPerPage = 6;
 
-    // 1. Logique de Recherche
     const filteredData = applications?.filter(item =>
         item.candidat.user.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.candidat.user.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.candidat.rank.rank.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.candidat.rank.label.toLowerCase().includes(searchTerm.toLowerCase())
+        item.candidat.rank?.rank.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.candidat.rank?.label.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // 2. Logique de Pagination
     const totalPages = Math.ceil((filteredData?.length ?? 0) / itemsPerPage);
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = filteredData?.slice(indexOfFirstItem, indexOfLastItem);
 
-    const handleCheckboxChange = (event : React.ChangeEvent<HTMLInputElement>) => {
+    const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const { value, checked } = event.target;
         const appId = parseInt(value, 10);
-        
+
         setSelectedIds(prevCheckedItems => {
-        if (checked) {
-            if (applications) {
-                for (const app of applications) {
-                    if (app.id === appId) {
-                        setSelectedApp([...selectedApp, app]);
-                        break;
-                    }            
+            if (checked) {
+                if (applications) {
+                    for (const app of applications) {
+                        if (app.id === appId) {
+                            setSelectedApp([...selectedApp, app]);
+                            break;
+                        }
+                    }
                 }
+                return [...prevCheckedItems, appId];
+            } else {
+                setSelectedApp(selectedApp.filter(app => app.id !== appId));
+                return prevCheckedItems.filter(item => item !== appId);
             }
-            return [...prevCheckedItems, appId];
-        } else {
-            setSelectedApp(selectedApp.filter(app => app.id !== appId));
-            return prevCheckedItems.filter(item => item !== appId);
-        }
         });
     };
 
-    const  handleSelectApplicants = async () => {
+    const handleSelectApplicants = async () => {
         try {
             for (const app of selectedApp) {
                 await api.post(`/entreprise/applications/${app.id}/select`, {
@@ -158,212 +534,317 @@ export default function ApplicationsPage({ params }: { params: Promise<{ id: str
                 });
             }
             toast.success("Invitation(s) de prise de service envoyée(s) avec succès !");
-        } catch (error : any) {
-            const messages = error.response?.data?.message;
-            toast.error(messages);
+            setOpenDialog(false);
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
+            toast.error(err.response?.data?.message || "Une erreur est survenue.");
         }
-
     };
 
-    if (error) return <div>Failed to load</div>;
-    if (isLoading) return (
+    if (errorApps) return <div className="p-8 text-center text-red-500 font-bold">Erreur de chargement des candidatures.</div>;
+    if (isLoadingApps || isLoadingSuggested) return (
         <div className="flex justify-center items-center h-screen">
             <ThreeDots height="80" width="80" color="#000080" visible={true} />
         </div>
     );
 
+    const suggestedCandidates = suggestedData?.candidates || [];
+
+    console.log(suggestedCandidates)
+
     return (
-       <div className="min-h-screen relative p-4 md:p-8 bg-gray-100">
-            <div className="mb-6">
-                <PageInfo pageName="Candidatures" pageLink={pageLink} />
+        <div className="min-h-screen relative p-4 md:p-8 space-y-10">
+            <div>
+                <PageInfo pageName="Candidatures & Matching" pageLink={pageLink} />
             </div>
 
-            <div className="mb-8 ">
-                <h1 className="text-2xl font-black text-slate-800 flex items-center justify-center">Gestion des Candidatures</h1>
-                <p className="text-slate-500 flex items-center justify-center"><i>Vue d&apos;ensemble des candidatures reçues pour cette mission</i></p>
+            <div className="text-center  mx-auto space-y-2">
+                <h1 className="text-3xl font-black text-slate-800 tracking-tight">Gestion des Candidatures & Matching</h1>
+                <p className="text-slate-500 text-sm">
+                    Examinez les candidatures reçues ou découvrez les talents recommandés par l&apos;IA pour cette mission.
+                </p>
             </div>
 
-            <div className="flex items-end justify-end mb-6">
-                <button onClick={() => {if (selectedApp.length > 0) {setOpenDialog(true)} else{toast.error("Veuillez sélectionner au moins un candidat.")}; }} className="p-2 mb-2 bg-[#000080] border-2 border-slate-100 hover:bg-[#000080] text-white rounded-xl font-bold text-sm transition-all gap-2 group cursor-pointer">
-                    Accepter Candidature
-                </button>
-            </div>
+            {/* ========================================== */}
+            {/* SECTION 1: CANDIDATURES REÇUES            */}
+            {/* ========================================== */}
+            <section className="space-y-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-blue-50 text-[#000080] rounded-2xl">
+                            <UserCheck size={22} />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-black text-slate-800">
+                                Candidatures Directes
+                            </h2>
+                            <p className="text-xs text-slate-500">Candidats ayant expressément soumis leur dossier à cette mission</p>
+                        </div>
+                    </div>
 
-            {/* Barre de Recherche */}
-            <div className="mb-6 mt-6 relative w-full max-w-sm flex items-end justify-end">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 " size={16} />
-                <input
-                    type="text"
-                    placeholder="Rechercher un nom, un rang, un diplôme..."
-                    value={searchTerm}
-                    onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                    className="w-full pl-10 pr-4 py-4 bg-white border-slate-100 rounded-2xl shadow-sm focus:ring-2 focus:ring-[#000080]/10 focus:border-[#000080] transition-all"
-                />
-            </div>
+                    <button 
+                        onClick={() => {
+                            if (selectedApp.length > 0) {
+                                setOpenDialog(true);
+                            } else {
+                                toast.error("Veuillez sélectionner au moins un candidat.");
+                            }
+                        }} 
+                        className="px-4 py-2.5 bg-[#000080] hover:bg-blue-900 text-white rounded-xl font-bold text-sm transition-all shadow-md hover:shadow-lg cursor-pointer shrink-0"
+                    >
+                        Accepter Candidature ({selectedApp.length})
+                    </button>
+                </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-1 xl:grid-cols-3 gap-6">
-                {currentItems && currentItems.length > 0 ? currentItems.map((app) => {
-                    return (
-                        <div key={app.id} className="group bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
+                {/* Recherche */}
+                <div className="relative w-full max-w-md">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                    <input
+                        type="text"
+                        placeholder="Rechercher par nom, prénom, rang..."
+                        value={searchTerm}
+                        onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm shadow-sm focus:ring-2 focus:ring-[#000080]/10 focus:border-[#000080] transition-all outline-none"
+                    />
+                </div>
+
+                {/* Grille des candidatures */}
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {currentItems && currentItems.length > 0 ? currentItems.map((app) => (
+                        <div key={app.id} className="group bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 relative overflow-hidden flex flex-col justify-between">
                             <div>
-                                <input type="checkbox" className="w-4 h-4 border border-black rounded-xs bg-slate-50 mb-4" checked={selectedIds.some(a => a === app.id)} onChange={(e) => handleCheckboxChange({...e, target: {...e.target, value: app.id.toString()}})} />
-                            </div>
-                            {/* Score IA en haut à droite */}
-                            <div className="absolute top-6 right-6 flex flex-col items-center">
-                                <div className={`w-12 h-12 rounded-full border-4 flex items-center justify-center font-black text-sm ${app.global_score >= 70 ? 'border-emerald-500 text-emerald-600' : 'border-slate-100 text-slate-400'}`}>
-                                    {app.global_score}
+                                <div className="flex items-center justify-between mb-4">
+                                    <input 
+                                        type="checkbox" 
+                                        className="w-4 h-4 text-[#000080] border-slate-300 rounded focus:ring-[#000080] cursor-pointer" 
+                                        checked={selectedIds.some(a => a === app.id)} 
+                                        onChange={(e) => handleCheckboxChange({...e, target: {...e.target, value: app.id.toString()}})} 
+                                    />
+                                    {/* Score IA */}
+                                    <div className="flex flex-col items-center">
+                                        <div className={`w-11 h-11 rounded-full border-4 flex items-center justify-center font-black text-xs ${app.global_score >= 70 ? 'border-emerald-500 text-emerald-600 bg-emerald-50' : 'border-slate-200 text-slate-500 bg-slate-50'}`}>
+                                            {app.global_score}
+                                        </div>
+                                        <span className="text-[9px] font-black text-slate-400 mt-0.5 uppercase tracking-tighter">Score IA</span>
+                                    </div>
                                 </div>
-                                <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">Score IA</span>
-                            </div>
 
-                            <div className="flex items-start gap-4 mb-6">
-                                {/* Avatar avec initiales */}
-                                <div className="w-14 h-14 bg-[#000080] text-white rounded-xl flex items-center justify-center font-black text-xl shadow-lg shadow-blue-900/20 shrink-0">
-                                    <Avatar width = {70} height = {70} fontSize = {30} nom = {app.candidat.user.nom} prenom = {app.candidat.user.prenom} />
+                                <div className="flex items-start gap-4 mb-4">
+                                    <div className="w-12 h-12 bg-[#000080] text-white rounded-xl flex items-center justify-center font-black text-lg shadow-md shrink-0">
+                                        <Avatar width={48} height={48} fontSize={20} nom={app.candidat.user.nom} prenom={app.candidat.user.prenom} />
+                                    </div>
+                                    
+                                    <div>
+                                        <h3 className="text-base font-black text-slate-800 leading-snug">
+                                            {app.candidat.user.prenom} {app.candidat.user.nom}
+                                        </h3>
+                                        {app.candidat.rank && (
+                                            <p className="text-xs font-bold mt-0.5" style={{ color: app.candidat.rank.code_hexa }}>
+                                                Rang {app.candidat.rank.rank} - {app.candidat.rank.label}
+                                            </p>
+                                        )}
+                                        <p className="text-xs font-semibold text-slate-500 mt-1">
+                                            {app.candidat.rank?.rank === "E" ? "Apprenti Junior" : app.candidat.rank?.rank === "D" ? "Agent Certifié" : app.candidat.domaine_competence}
+                                        </p>
+                                    </div>
                                 </div>
-                                
-                                <div className="pr-12">
-                                    <h2 className="text-lg font-black text-slate-800 leading-tight">
-                                        {app.candidat.user.prenom} {app.candidat.user.nom} - <span style={{color: app.candidat.rank?.code_hexa }}>Rang {app.candidat.rank.rank}</span> 
-                                    </h2>
-                                    <p className="text-indigo-600 font-bold text-xs uppercase tracking-wide mt-1">
-                                        {app.candidat.rank.rank == "E" ? "Apprenti Junior - Aucun Diplôme" : app.candidat.rank.rank == "D" ? "Agent Certifié - BAC" : app.candidat.domaine_competence}
+
+                                {/* Résumé de l'IA */}
+                                <div className="bg-slate-50 rounded-xl p-3 mb-4 border border-slate-100">
+                                    <p className="text-xs text-slate-600 italic line-clamp-2 leading-relaxed">
+                                        <Star size={12} className="inline mr-1 text-amber-500 fill-amber-500" />
+                                        {app.ai_summary || "Analyse de l'IA en attente..."}
                                     </p>
                                 </div>
                             </div>
 
-                            {/* <div className="space-y-3 mb-6">
-                                <div className="flex items-center gap-2 text-slate-500 text-sm">
-                                    <MapPin size={16} className="text-slate-300" />
-                                    {app.candidat.ville}
-                                </div>
-                                <div className="flex items-center gap-2 text-slate-500 text-sm">
-                                    <GraduationCap size={16} className="text-slate-300" />
-                                    {app.candidat.niveau_etude}
-                                </div>
-                                <div className={`inline-block px-3 py-1 rounded-full text-[10px] font-black border uppercase tracking-widest ${getBadgeStyle(app.badge)}`}>
-                                    {app.badge || 'Analyse en cours'}
-                                </div>
-                            </div> */}
-
-                            {/* IA Summary Box */}
-                            <div className="bg-slate-50 rounded-2xl p-4 mb-6 border border-slate-100">
-                                <p className="text-xs text-slate-600 leading-relaxed italic line-clamp-2">
-                                    <Star size={12} className="inline mr-1 mb-1 text-amber-500" />
-                                    {app.ai_summary || "Analyse de l'IA en attente..."}
-                                </p>
-                            </div>
-
                             <Link href={`/dashboard/entreprises/detailProfilCandidat/${app.candidat.id}`}>
-                                <button className="w-full p-2 bg-white border-2 border-slate-100 hover:border-[#000080] hover:text-[#000080] text-slate-600 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 group cursor-pointer">
+                                <button className="w-full py-2 px-3 bg-white border-2 border-slate-100 hover:border-[#000080] hover:text-[#000080] text-slate-600 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1 cursor-pointer">
                                     Voir le dossier complet
                                 </button>
-                            </Link>                               
-                           
+                            </Link>
                         </div>
-                    );
-                }) : (
-                    <div className="col-span-full text-center py-20">
-                        <p className="text-slate-500 italic">Aucune candidature pour cette mission pour le moment.</p>
+                    )) : (
+                        <div className="col-span-full text-center py-16 bg-white rounded-2xl border border-slate-200">
+                            <p className="text-slate-400 italic text-sm">Aucune candidature enregistrée pour le moment.</p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className="p-4 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                            Page {currentPage} sur {totalPages}
+                        </p>
+                        <div className="flex gap-2">
+                            <button 
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                                className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-[#000080] hover:text-white transition-all cursor-pointer"
+                            >
+                                <ChevronLeft size={18} />
+                            </button>
+                            <button 
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                                className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-[#000080] hover:text-white transition-all cursor-pointer"
+                            >
+                                <ChevronRight size={18} />
+                            </button>
+                        </div>
                     </div>
                 )}
-            </div>
+            </section>
 
-                {filteredData!.length === 0 && (
-                    <div className="p-20 text-center">
-                    <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Search size={24} className="text-slate-300" />
+            {/* ========================================== */}
+            {/* SECTION 2: CANDIDATS SUGGÉRÉS (MATCHING)  */}
+            {/* ========================================== */}
+            <section className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200/80 shadow-sm space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-indigo-50 text-[#000080] rounded-2xl">
+                            <Sparkles size={22} className="animate-pulse" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">
+                                Candidats Recommandés (Score ≥ 50%)
+                                <span className="px-2.5 py-0.5 bg-indigo-100 text-[#000080] text-xs font-bold rounded-full">
+                                    {suggestedCandidates.length}
+                                </span>
+                            </h2>
+                            <p className="text-xs text-slate-500">Profils dont le score de compétences correspond aux exigences de l&apos;offre</p>
+                        </div>
                     </div>
-                    <p className="text-slate-400 font-medium italic">Aucun résultat pour cette recherche.</p>
+                </div>
+
+                {suggestedCandidates.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {suggestedCandidates.map((candidate : any) => (
+                            <div key={candidate.id} className="group bg-slate-50/60 hover:bg-white rounded-2xl p-6 border border-slate-200/60 hover:border-indigo-200 hover:shadow-lg transition-all duration-300 relative flex flex-col justify-between">
+                                <div className="space-y-4">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-12 h-12 bg-[#000080] text-white rounded-xl flex items-center justify-center font-black text-lg shadow-md shrink-0">
+                                                {candidate.full_name.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <h3 className="font-black text-slate-800 text-base leading-tight">
+                                                    {candidate.full_name}
+                                                </h3>
+                                                <p className="text-xs font-semibold text-indigo-600 mt-0.5">
+                                                    {candidate.title}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Score de Match */}
+                                        <div className="flex flex-col items-center shrink-0">
+                                            <div className="w-11 h-11 rounded-full border-2 border-indigo-600 text-indigo-700 bg-indigo-50 flex items-center justify-center font-black text-xs shadow-inner">
+                                                {candidate.match_score}%
+                                            </div>
+                                            <span className="text-[9px] font-extrabold text-slate-400 mt-1 uppercase tracking-tighter">Match</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Compétences Clés Matchées */}
+                                    {candidate.skills_breakdown?.matching_skills && candidate.skills_breakdown.matching_skills.length > 0 && (
+                                        <div className="space-y-1.5 pt-2">
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Compétences validées</span>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {candidate.skills_breakdown.matching_skills.map((skill : string, idx : number) => (
+                                                    <span key={idx} className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-md text-[11px] font-bold flex items-center gap-1">
+                                                        <CheckCircle size={10} />
+                                                        {skill}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="pt-4 mt-4 border-t border-slate-200/40">
+                                    <button onClick={() => setSelectedCandidateId(candidate.id)} className="w-full py-2 px-3 bg-white hover:bg-[#000080] border border-slate-200 hover:border-[#000080] text-slate-700 hover:text-white rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer">
+                                        <UserCheck className="w-4 h-4" />
+                                        Consulter le Profil Complet
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-12 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                        <Award size={32} className="mx-auto text-slate-300 mb-2" />
+                        <p className="text-slate-500 text-sm font-medium">Aucun candidat ne dépasse actuellement le seuil de matching de 50% pour cette offre.</p>
                     </div>
                 )}
+            </section>
 
-                {/* Pagination UI */}
-                {totalPages >= 1 && (
-                    <div className="p-6 border-t border-slate-100 flex items-center justify-between">
-                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">
-                        Page {currentPage} sur {totalPages}
-                    </p>
-                    <div className="flex gap-2">
-                        <button 
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
-                        className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-[#000080] hover:text-white transition-all cursor-pointer"
-                        >
-                        <ChevronLeft size={20} />
-                        </button>
-                        <button 
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={currentPage === totalPages}
-                        className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-[#000080] hover:text-white transition-all cursor-pointer"
-                        >
-                        <ChevronRight size={20} />
-                        </button>
-                    </div>
-                    </div>
-                )}
-                <p>Currently selected: {JSON.stringify(selectedIds)}</p>
+            {/* Modale Profil Complet */}
+            {selectedCandidateId && (
+                <CandidateProfileModal 
+                candidateId={selectedCandidateId} 
+                missionId={id} 
+                onClose={() => setSelectedCandidateId(null)} 
+                />
+            )}
 
-            {/* Dialog pour accepter la candidature */}
+            {/* Dialog pour valider les candidatures */}
             {openDialog && (
                 <Dialog open={openDialog} onOpenChange={setOpenDialog}>
                     <DialogContent className="sm:max-w-lg">
                         <DialogHeader>
                             <div className="flex items-center gap-3">
-                            <div className="p-2 bg-blue-100 rounded-full text-[#000080]">
-                                <CheckCircle size={24} />
+                                <div className="p-2 bg-blue-100 rounded-full text-[#000080]">
+                                    <CheckCircle size={24} />
+                                </div>
+                                <DialogTitle className="text-xl font-black">Prise de service</DialogTitle>
                             </div>
-                            <DialogTitle className="text-xl font-black">Félicitations !</DialogTitle>
-                            </div>
-                            <DialogDescription>
-                            Vous sélectionnez le(s) candidat(s) suivant(s) <strong>{selectedApp.map(app => `${app.candidat.user.prenom} ${app.candidat.user.nom}`).join(', ')} </strong> pour la mission.
-                            Précisez les modalités de démarrage ci-dessous.
+                            <DialogDescription className="pt-2">
+                                Vous allez sélectionner <strong>{selectedApp.map(app => `${app.candidat.user.prenom} ${app.candidat.user.nom}`).join(', ')}</strong> pour cette mission.
                             </DialogDescription>
                         </DialogHeader>
 
-                        <div className="space-y-4 py-4 max-h-[50vh] overflow-y-auto no-scrollbar">
+                        <div className="space-y-4 py-2 max-h-[50vh] overflow-y-auto">
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-muted-foreground">Date de début prévue</label>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-slate-600">Date de début</label>
                                     <Input name="start_date" type="date" value={invitationDetails.start_date} onChange={(e) => setInvitationDetails({...invitationDetails, start_date: e.target.value})} />
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-muted-foreground">Heure de début prévue</label>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-slate-600">Heure de début</label>
                                     <Input name="start_time" type="time" value={invitationDetails.start_time} onChange={(e) => setInvitationDetails({...invitationDetails, start_time: e.target.value})} />
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-muted-foreground">Lieu de prise de service</label>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-slate-600">Lieu</label>
                                     <Input name="place" type="text" value={invitationDetails.place} onChange={(e) => setInvitationDetails({...invitationDetails, place: e.target.value})} />
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-muted-foreground">Personne à contacter</label>
-                                    <Input name="contact_person" type="text" placeholder="John Doe - 0145643456" value={invitationDetails.contact_person} onChange={(e) => setInvitationDetails({...invitationDetails, contact_person: e.target.value})} />
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-slate-600">Contact</label>
+                                    <Input name="contact_person" type="text" placeholder="Nom - Téléphone" value={invitationDetails.contact_person} onChange={(e) => setInvitationDetails({...invitationDetails, contact_person: e.target.value})} />
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-muted-foreground">Instructions particulière</label>
-                                <Editor name="onboarding_instructions" value={invitationDetails.onboarding_instructions || ""} className="w-full min-h-[120px] p-4 border rounded-xl focus:ring-2 focus:ring-[#000080]/20 outline-none text-gray-600"  style={{ height: '320px' }} onTextChange={(e: EditorTextChangeEvent) => setInvitationDetails({...invitationDetails, onboarding_instructions: e.htmlValue ?? ""})} />
+                            <div className="space-y-1">
+                                <label className="text-xs font-semibold text-slate-600">Instructions particulières</label>
+                                <Editor name="onboarding_instructions" value={invitationDetails.onboarding_instructions || ""} style={{ height: '180px' }} onTextChange={(e: EditorTextChangeEvent) => setInvitationDetails({...invitationDetails, onboarding_instructions: e.htmlValue ?? ""})} />
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-muted-foreground">Délai de validité de l&apos;offre</label>
+
+                            <div className="space-y-1">
+                                <label className="text-xs font-semibold text-slate-600">Validité de l&apos;offre</label>
                                 <Input name="expiry_date" type="date" value={invitationDetails.expiry_date} onChange={(e) => setInvitationDetails({...invitationDetails, expiry_date: e.target.value})} />
                             </div>
                         </div>
 
-
-                        <DialogFooter className="flex justify-end gap-4">
-                            <Button className="cursor-pointer" onClick={() => setOpenDialog(false)} variant="ghost">Annuler</Button>
-                            <Button className="bg-[#000080] hover:bg-[#000060] font-bold cursor-pointer" onClick={handleSelectApplicants}>
+                        <DialogFooter className="flex justify-end gap-3 pt-4">
+                            <Button onClick={() => setOpenDialog(false)} variant="ghost">Annuler</Button>
+                            <Button className="bg-[#000080] hover:bg-blue-900 font-bold" onClick={handleSelectApplicants}>
                                 Envoyer l&apos;invitation
                             </Button>
-                        </DialogFooter> 
+                        </DialogFooter>
                     </DialogContent>
                 </Dialog>
             )}
         </div>
     );
-
 }
-
-

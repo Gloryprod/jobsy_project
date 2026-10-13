@@ -30,7 +30,10 @@ use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\Entreprise\DashboardController;
 use App\Http\Controllers\Admin\FinalExamQuestionController;
 use App\Http\Controllers\Admin\ExamProjectController;
+use App\Http\Controllers\Candidat\MatchingMissionController;
 use App\Http\Controllers\CertificateVerificationController;
+use App\Http\Controllers\Entreprise\MatchingController;
+use App\Http\Controllers\Entreprise\MissionProposalController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -173,6 +176,8 @@ Route::middleware(['auth:sanctum', 'role:JEUNE', 'access.token'])->group(functio
     Route::get('/candidate/inventory', [BadgeController::class, 'index']);
     Route::patch('/candidate/inventory/{badgeId}/equip', [BadgeController::class, 'toggleEquip']);
 
+    Route::get('/missions/{missionId}/my-match-score', [MatchingMissionController::class, 'getMyMatchScoreForMission']);
+
 });
 
 Route::middleware(['auth:sanctum', 'role:ENTREPRISE', 'access.token'])->group(function() {
@@ -194,6 +199,17 @@ Route::middleware(['auth:sanctum', 'role:ENTREPRISE', 'access.token'])->group(fu
     Route::resource('/missions', EntrepriseMissionController::class);
     Route::get('/index', [DashboardController::class, 'index']);
     Route::get('/transactions-history', [DashboardController::class, 'transactionsHistory']);
+
+    Route::get('/missions/{mission}/suggested-candidates', [MatchingController::class, 'getSuggestedCandidates']);
+    Route::get('/candidates/{candidateId}/full-profile', [MatchingController::class, 'getCandidateProfileForCompany']);
+
+    Route::post('/offers/send-proposal-email', [MissionProposalController::class, 'sendProposalEmail']);
+
+    // Liste des propositions d'une mission
+    Route::get('/missions/{mission}/proposals', [MissionProposalController::class, 'indexForMission']);
+
+    // Configuration de l'onboarding pour une proposition
+    Route::post('/proposals/{proposal}/{application}/onboarding', [MissionProposalController::class, 'storeOnboarding']);
 
 });
 

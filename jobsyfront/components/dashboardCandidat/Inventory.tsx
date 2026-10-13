@@ -167,7 +167,7 @@ export default function CandidateInventoryGamifiedPage() {
   // Extraction corrigée des certifications & formations (depuis 'formations' et 'certificatesInfos')
   const certificationsList = useMemo(() => {
     const platformCourses: Course[] = assets.flatMap(a => a.certificatesInfos || []);
-    const externalFormations: Formation[] = assets.flatMap(a => a.formations || []).concat(profileData?.formations || []);
+    const externalFormations: Formation[] = assets.flatMap(a => a.formations || []);
     
     return {
       platform: Array.from(new Map(platformCourses.map(c => [c.id, c])).values()),

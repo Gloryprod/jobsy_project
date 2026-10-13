@@ -60,7 +60,7 @@ class BadgeController extends Controller
                 ->pluck('course') // Extrait le modèle Course de chaque enrollment
                 ->filter()        // Supprime les éventuelles valeurs nulles
                 ->values()        // Réindexe le tableau
-                ->toArray(),
+                ->toArray(),    
             ];
         });
 

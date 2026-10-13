@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo } from 'react';
@@ -9,20 +8,20 @@ import { ThreeDots } from 'react-loader-spinner';
 import Link from "next/link";
 import { useUser } from '@/context/UserProvider';
 import { getExpirationText } from '@/components/GetExpirationText';
-
+import {MissionMatchBadge} from '@/components/dashboardCandidat/mission/MissionMatchBadge';
 
 export type Entreprise = {
-    id: number;
-    nom_officiel?: string;
-    nom_entreprise: string;
-    date_creation?: Date | null;
-    secteur_activite?: string;
-    localisation?: string;
-    taille?: string;
-    site_web?: string;
-    description?: string;
-    logo?: string;
-}
+  id: number;
+  nom_officiel?: string;
+  nom_entreprise: string;
+  date_creation?: Date | null;
+  secteur_activite?: string;
+  localisation?: string;
+  taille?: string;
+  site_web?: string;
+  description?: string;
+  logo?: string;
+};
 
 export type Mission = {
   id: number;
@@ -40,7 +39,7 @@ export type Mission = {
   type_contrat: 'CDI' | 'CDD' | 'Mission Ponctuelle';
   active: boolean;
   entreprise: Entreprise;
-}
+};
 
 const fetcher = (url: string) => api.get(url).then(res => res.data.data);
 
@@ -52,7 +51,7 @@ export default function MissionsPage() {
   const [appliedMission, setAppliedMission] = useState<Mission | null>(null);
   const { user, loading: authLoading } = useUser();
   
-  const candidatRank = user?.candidat?.rank.rank;
+  const candidatRank = user?.candidat?.rank?.rank;
 
   const filteredMissions = useMemo(() => {
     return missions.filter(mission => {
@@ -90,8 +89,10 @@ export default function MissionsPage() {
     </div>
   );
 
+  const displayedMissions = candidatRank === "E" || candidatRank === "D" ? missionPonctuelles : filteredMissions;
+
   return (
-    <div className="min-h-screen  pb-20">
+    <div className="min-h-screen pb-20">
       <div className="border-b pt-16 pb-12">
         <div className="max-w-7xl mx-auto px-4 text-center space-y-6">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#F0E68C]/20 rounded-full">
@@ -122,21 +123,23 @@ export default function MissionsPage() {
           </div>
 
           {/* Filtres de Contrat */}
-          {candidatRank == "E" || candidatRank == "D" ? '' : <div className="flex flex-wrap gap-2 justify-center mt-6">
-            {['all', 'CDI', 'CDD', 'Mission Ponctuelle'].map((type) => (
-              <button
-                key={type}
-                onClick={() => setSelectedContract(type)}
-                className={`cursor-pointer px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
-                  selectedContract === type 
-                  ? 'bg-[#000080] text-white shadow-lg shadow-blue-900/20' 
-                  : 'bg-white text-slate-400 border border-slate-200 hover:border-[#000080]'
-                }`}
-              >
-                {type === 'all' ? 'Toutes les missions' : type}
-              </button>
-            ))}
-          </div>}
+          {!(candidatRank === "E" || candidatRank === "D") && (
+            <div className="flex flex-wrap gap-2 justify-center mt-6">
+              {['all', 'CDI', 'CDD', 'Mission Ponctuelle'].map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setSelectedContract(type)}
+                  className={`cursor-pointer px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+                    selectedContract === type 
+                    ? 'bg-[#000080] text-white shadow-lg shadow-blue-900/20' 
+                    : 'bg-white text-slate-400 border border-slate-200 hover:border-[#000080]'
+                  }`}
+                >
+                  {type === 'all' ? 'Toutes les missions' : type}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -145,14 +148,13 @@ export default function MissionsPage() {
         <div className="flex items-center gap-2 text-slate-400">
           <Filter size={14} />
           <p className="text-xs font-black uppercase tracking-widest">
-            {candidatRank == "E" || candidatRank == "D" ? missionPonctuelles.length : filteredMissions.length} Missions disponibles
+            {displayedMissions.length} Missions disponibles
           </p>
         </div>
 
         {/* ==================== GRILLE DES MISSIONS ==================== */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {candidatRank == "E" || candidatRank == "D" ? 
-          missionPonctuelles.map((mission) => (
+          {displayedMissions.map((mission) => (
             <div
               key={mission.id}
               onClick={() => setSelectedMission(mission)}
@@ -166,11 +168,16 @@ export default function MissionsPage() {
               )}
 
               <div className="space-y-5">
-                <div className="flex justify-between items-start">
-                  <span className={`px-4 py-1 rounded-full text-[9px] font-black uppercase border ${getContractStyle(mission.type_contrat)}`}>
-                    {mission.type_contrat}
-                  </span>
-                  {mission.urgency === 'premium' && <Star className="w-5 h-5 text-[#F0E68C] fill-[#F0E68C]" />}
+                <div className="flex justify-between items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`px-4 py-1 rounded-full text-[9px] font-black uppercase border ${getContractStyle(mission.type_contrat)}`}>
+                      {mission.type_contrat}
+                    </span>
+                    {mission.urgency === 'premium' && <Star className="w-5 h-5 text-[#F0E68C] fill-[#F0E68C]" />}
+                  </div>
+
+                  {/* Intégration du Badge de Correspondance */}
+                  <MissionMatchBadge missionId={mission.id} />
                 </div>
 
                 <h3 className="text-xl font-black text-slate-800 group-hover:text-[#000080] transition-colors leading-tight">
@@ -179,7 +186,7 @@ export default function MissionsPage() {
 
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-slate-400 text-xs font-bold">
-                    <Building2 size={16} className="text-[#000080]" /> {mission.entreprise.nom_entreprise}
+                    <Building2 size={16} className="text-[#000080]" /> {mission.entreprise?.nom_entreprise || mission.company}
                   </div>
                   <div className="flex items-center gap-2 text-slate-400 text-xs font-bold">
                     <MapPin size={16} className="text-[#000080]" /> {mission.location}
@@ -205,69 +212,12 @@ export default function MissionsPage() {
                   <div className="flex items-center gap-1 text-orange-500 text-[10px] font-black uppercase mb-1">
                     <Clock size={12} /> {getExpirationText(mission.deadline)}
                   </div>
-                  <Link href="#">
-                    <button onClick = {(e) => {e.stopPropagation(); setAppliedMission(mission)}}  className="bg-[#000080] items-center text-[10px] text-[#F0E68C] text-md font-bold px-2 py-2 rounded-lg cursor-pointer">Postuler</button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )) : 
-          filteredMissions.map((mission) => (
-            <div
-              key={mission.id}
-              onClick={() => setSelectedMission(mission)}
-              className="group bg-white border border-slate-100 rounded-[2.5rem] p-7 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col relative overflow-hidden"
-            >
-              {/* Indicateur d'urgence subtil */}
-              {mission.urgency === 'urgent' && (
-                <div className="absolute top-0 right-10 px-4 py-1 bg-red-500 text-white text-[9px] font-black uppercase rounded-b-xl">
-                  Urgent
-                </div>
-              )}
-
-              <div className="space-y-5">
-                <div className="flex justify-between items-start">
-                  <span className={`px-4 py-1 rounded-full text-[9px] font-black uppercase border ${getContractStyle(mission.type_contrat)}`}>
-                    {mission.type_contrat}
-                  </span>
-                  {mission.urgency === 'premium' && <Star className="w-5 h-5 text-[#F0E68C] fill-[#F0E68C]" />}
-                </div>
-
-                <h3 className="text-xl font-black text-slate-800 group-hover:text-[#000080] transition-colors leading-tight">
-                  {mission.title}
-                </h3>
-
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-slate-400 text-xs font-bold">
-                    <Building2 size={16} className="text-[#000080]" /> {mission.company}
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-400 text-xs font-bold">
-                    <MapPin size={16} className="text-[#000080]" /> {mission.location}
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {mission.skills.slice(0, 3).map((skill, i) => (
-                    <span key={i} className="text-[9px] font-black uppercase tracking-tighter px-3 py-1 bg-slate-50 text-slate-500 rounded-lg border border-slate-100">
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Footer de la carte */}
-              <div className="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest leading-none mb-1">Prime</p>
-                  <p className="text-2xl font-black text-[#000080] tracking-tight">{mission.reward.toLocaleString()} <span className="text-sm">F</span></p>
-                </div>
-                <div className="text-right">
-                  <div className="flex items-center gap-1 text-orange-500 text-[10px] font-black uppercase mb-1">
-                    <Clock size={12} /> {getExpirationText(mission.deadline)}
-                  </div>
-                  <Link href="#">
-                    <button onClick = {(e) => {e.stopPropagation(); setAppliedMission(mission)}}  className="bg-[#000080] items-center text-[10px] text-[#F0E68C] text-md font-bold px-2 py-2 rounded-lg cursor-pointer">Postuler</button>
-                  </Link>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setAppliedMission(mission); }}  
+                    className="bg-[#000080] items-center text-[10px] text-[#F0E68C] font-bold px-3 py-2 rounded-lg cursor-pointer hover:bg-[#0000a0] transition-colors"
+                  >
+                    Postuler
+                  </button>
                 </div>
               </div>
             </div>
@@ -275,11 +225,11 @@ export default function MissionsPage() {
         </div>
       </div>
 
-      {/* ==================== MODAL DÉTAILS (STYLE RPG LIGHT) ==================== */}
+      {/* ==================== MODAL DÉTAILS ==================== */}
       {selectedMission && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
           <div 
-            className="bg-white rounded-3xl w-full max-h-[90vh] overflow-y-auto no-scrollbar shadow-2xl relative" 
+            className="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto no-scrollbar shadow-2xl relative" 
             onClick={e => e.stopPropagation()}
           >
             <button 
@@ -290,8 +240,14 @@ export default function MissionsPage() {
             </button>
 
             <div className="p-10 space-y-8">
-              <div className="space-y-2 pr-12">
-                <span className="text-[#000080] font-black text-xs uppercase tracking-[0.3em]">{selectedMission.entreprise.nom_entreprise}</span>
+              <div className="space-y-3 pr-12">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-[#000080] font-black text-xs uppercase tracking-[0.3em]">
+                    {selectedMission.entreprise?.nom_entreprise || selectedMission.company}
+                  </span>
+                  {/* Badge Match IA dans le détail */}
+                  <MissionMatchBadge missionId={selectedMission.id} />
+                </div>
                 <h2 className="text-3xl lg:text-4xl font-black text-slate-800 leading-none">{selectedMission.title}</h2>
               </div>
 
@@ -301,10 +257,10 @@ export default function MissionsPage() {
                   { 
                     label: 'Délai', 
                     val: new Date(selectedMission.deadline).toLocaleDateString('fr-FR', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric'
-                          }), 
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric'
+                    }), 
                     icon: Calendar, 
                     color: 'text-orange-600' 
                   },
@@ -321,7 +277,7 @@ export default function MissionsPage() {
 
               <div className="space-y-4">
                 <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                   <Sword size={16} className="text-[#F0E68C]" /> Objectifs de la mission
+                  <Sword size={16} className="text-[#F0E68C]" /> Objectifs de la mission
                 </h4>
                 <p className="text-slate-600 leading-relaxed font-medium" dangerouslySetInnerHTML={{ __html: selectedMission.description }}/>
               </div>
@@ -342,15 +298,13 @@ export default function MissionsPage() {
         </div>
       )}
 
-      {/* ==================== Modal Candidature (STYLE RPG LIGHT) ==================== */}
+      {/* ==================== Modal Candidature ==================== */}
       {appliedMission && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in zoom-in duration-300">
           <div 
-            className="bg-white rounded-3xl w-full max-w-lg max-h-[90vh] shadow-2xl relative overflow-y-auto no-scrollbar " 
+            className="bg-white rounded-3xl w-full max-w-lg max-h-[90vh] shadow-2xl relative overflow-y-auto no-scrollbar" 
             onClick={e => e.stopPropagation()}
           >
-            {/* Header décoratif style "Alerte IA" */}
-
             <button 
               onClick={() => setAppliedMission(null)} 
               className="absolute top-6 right-6 p-2 bg-slate-50 hover:bg-red-50 hover:text-red-500 rounded-full transition-all text-slate-400 z-10"
@@ -359,7 +313,6 @@ export default function MissionsPage() {
             </button>
 
             <div className="p-8 lg:p-10 space-y-8">
-              {/* En-tête de la mission */}
               <div className="text-center space-y-3">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-[#F0E68C]/20 rounded-2xl mb-2">
                   <Zap className="text-[#8B8000] w-8 h-8" />
@@ -372,7 +325,6 @@ export default function MissionsPage() {
                 </p>
               </div>
 
-              {/* Liste des règles / Consignes */}
               <div className="bg-slate-50 rounded-3xl p-6 space-y-4 border border-slate-100">
                 <div className="flex items-start gap-4">
                   <div className="mt-1 bg-white p-2 rounded-lg shadow-sm">
@@ -405,17 +357,15 @@ export default function MissionsPage() {
                 </div>
               </div>
 
-              {/* Warning / Rappel */}
               <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 rounded-xl border border-blue-100 text-blue-700 text-sm">
                 <Info size={18} className="shrink-0" />
                 <p>Toute sortie du test annulera votre progression actuelle.</p>
               </div>
 
-              {/* Actions */}
               <div className="flex flex-col gap-3">
                 <button 
                   onClick={() => {
-                      window.location.href = `/dashboard/candidats/missions/${appliedMission.id}/application`;
+                    window.location.href = `/dashboard/candidats/missions/${appliedMission.id}/application`;
                   }}
                   className="w-full py-4 bg-[#000080] hover:bg-[#0000a0] text-white font-black text-lg rounded-2xl transition-all shadow-xl shadow-blue-100 active:scale-[0.98] uppercase tracking-widest flex items-center justify-center gap-2"
                 >

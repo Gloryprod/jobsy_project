@@ -138,6 +138,7 @@ export const ActionCell = ({ mission }: { mission: Mission }) => {
             Modifier
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => router.push(`/dashboard/entreprises/missions/${mission.id}/applications`)} className="cursor-pointer"><Eye className="h-4 w-4" />Candidatures</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => router.push(`/dashboard/entreprises/missions/${mission.id}/proposals`)} className="cursor-pointer"><Eye className="h-4 w-4" />Propositions</DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem className="cursor-pointer" onClick={() => handleDeactivate(mission.id)}>{mission.active ? "Désactiver" : "Activer"}</DropdownMenuItem>
           <DropdownMenuItem className="text-red-300 cursor-pointer" onClick={() => handleCloseMission(mission.id)}>Clôturer le recrutement</DropdownMenuItem>

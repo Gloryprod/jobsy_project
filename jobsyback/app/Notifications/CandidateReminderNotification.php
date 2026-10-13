@@ -12,7 +12,7 @@ class CandidateReminderNotification extends Notification
 {
     use Queueable;
 
-    protected $offer;
+    protected MissionOffers $offer;
     
     public function __construct(MissionOffers $offer)
     {

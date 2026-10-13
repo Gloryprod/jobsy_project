@@ -9,6 +9,7 @@ class Application extends Model
     protected $fillable = [
         'candidat_id',
         'mission_id',
+        'source',
         'status',
         'global_score',
         'badge',

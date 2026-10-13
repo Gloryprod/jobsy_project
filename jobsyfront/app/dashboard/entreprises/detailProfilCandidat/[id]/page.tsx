@@ -5,7 +5,7 @@ import {use} from "react";
 import { ThreeDots } from 'react-loader-spinner';
 import PageInfo from "@/components/PageInfo";
 import Avatar from "@/components/Avatar";
-import { Briefcase, GraduationCap, Award, Calendar, MapPin, BrainCircuit, CheckCircle2, Eye, Download } from 'lucide-react';
+import { Briefcase, GraduationCap, Award, Calendar, MapPin, BrainCircuit, CheckCircle2 } from 'lucide-react';
 
 interface Category{
     name : string
