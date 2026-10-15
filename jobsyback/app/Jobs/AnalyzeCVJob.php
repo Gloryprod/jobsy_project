@@ -39,9 +39,10 @@ class AnalyzeCVJob implements ShouldQueue
         // --- ÉTAPE 2 : Si Smalot a renvoyé du vide ou très peu de texte ---
         // (Moins de 100 caractères pour un CV, c'est suspect)
         if (strlen(trim($text)) < 100) {
-            $exePath = 'C:\xpdf\bin64\pdftotext.exe'; // Chemin vers votre nouveau fichier
-            
-            if (file_exists($exePath)) {
+            // Binaire pdftotext (poppler / xpdf) configurable : PDFTOTEXT_PATH (ex. /usr/bin/pdftotext)
+            $exePath = (string) config('services.pdftotext.path');
+
+            if ($exePath !== '' && file_exists($exePath)) {
                 $cmd = '"' . $exePath . '" ' . escapeshellarg($fullPath) . ' -';
                 $text = shell_exec($cmd);
                 Log::info("Extraction via pdftotext.exe effectuée.");
@@ -60,8 +61,13 @@ class AnalyzeCVJob implements ShouldQueue
         $structuredData = $nlpService->parse($cleanText);
 
         if (!empty($structuredData)) {
-            Log::info('CV ANALYZED SUCCESS', ['user' => $this->userId, 'type' => gettype($structuredData), 'data' => $structuredData]);
-
+            // Pas de contenu du CV dans les logs (données personnelles) : uniquement des compteurs
+            Log::info('CV ANALYZED SUCCESS', [
+                'candidat' => $this->userId,
+                'skills' => count($structuredData['Skills'] ?? []),
+                'education' => count($structuredData['Education'] ?? []),
+                'experiences' => count($structuredData['Experiences'] ?? []),
+            ]);
 
             $user = Candidat::find($this->userId);
             if ($user && is_array($structuredData)) {
@@ -78,10 +84,10 @@ class AnalyzeCVJob implements ShouldQueue
                     ]
                 );
 
-                processSkillsFromIA($user, $structuredData['Skills']);
+                processSkillsFromIA($user, $structuredData['Skills'] ?? []);
             }
 
-            Log::info('INFORMATION SAVED', ['user' => $this->userId, 'data' => $structuredData]);
+            Log::info('INFORMATION SAVED', ['candidat' => $this->userId]);
             
         }
     }

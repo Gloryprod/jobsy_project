@@ -11,26 +11,24 @@ use Carbon\Carbon;
 class CourseCatalogueController extends Controller
 {
     public function index(Request $request){
-        $courses = Course::with('modules')->get();
+        // Inscriptions du candidat en une seule requête (au lieu d'une requête par cours)
+        $enrollments = Enrollment::where('candidat_id', $request->user()->candidat->id)
+            ->get()
+            ->keyBy('course_id');
+
+        // Cours actifs, plus ceux (désactivés depuis) que le candidat suit déjà
+        $courses = Course::with('modules')
+            ->where(fn ($q) => $q->where('is_active', true)->orWhereIn('id', $enrollments->keys()))
+            ->get();
 
         $courseInfo = [];
 
         foreach ($courses as $course) {
-            $isEnrolled = false;   
-            
-            $enrollment = Enrollment::where('course_id', $course->id)
-            ->where('candidat_id', $request->user()->candidat->id)
-            ->first(); 
-
-            if ($request->user() && $request->user()->candidat) {
-                if ($enrollment) {
-                    $isEnrolled = true;
-                }
-            }
+            $enrollment = $enrollments->get($course->id);
 
             $courseInfo[] = [
                 'course' => $course,
-                'is_enrolled' => $isEnrolled,
+                'is_enrolled' => $enrollment !== null,
                 'enrollment' => $enrollment
             ];
         }

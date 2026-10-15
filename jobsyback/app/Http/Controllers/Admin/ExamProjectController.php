@@ -131,7 +131,7 @@ class ExamProjectController extends Controller
     public function review(Request $request, int $sessionId): JsonResponse
     {
         $request->validate([
-            'score' => 'required|numeric|min:0|max:100',
+            'score' => 'required|numeric|min:0|max:20', // note sur 20 (écran de correction et affichage candidat)
             'feedback' => 'nullable|string',
         ]);
 
@@ -144,10 +144,8 @@ class ExamProjectController extends Controller
         // Détermination automatique du statut en fonction du score de passage
         $passed = $score >= $project->passing_score;
         $newStatus = $passed ? 'approved' : 'failed';
-        $isBlocked = false;
-        if($newStatus == "failed" && $session->attempts_count <=2){
-            $isBlocked = true;
-        }
+        // Bloqué seulement si l'échec survient lors de la dernière tentative autorisée
+        $isBlocked = $newStatus === 'failed' && $session->isLastAttempt();
 
         $session->update([
             'final_score' => $score,
@@ -176,10 +174,10 @@ class ExamProjectController extends Controller
 
         if ($enrollment) {
             // Caluler et mettre à jour le score global du candidat pour cette formation
-            $enrollment->updateLearnerGlobalScore($passed); 
-        }
+            $enrollment->updateLearnerGlobalScore($passed);
 
-        sendResultEmail($passed, $enrollment->global_score, $session->candidat, $project->course, $enrollment->certificate_hash);
+            sendResultEmail($passed, $enrollment->global_score, $session->candidat, $project->course, $enrollment->certificate_hash);
+        }
 
         return response()->json([
             'message' => 'Soumission évaluée avec succès.',

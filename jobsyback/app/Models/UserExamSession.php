@@ -7,6 +7,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserExamSession extends Model
 {
+    /** Nombre de tentatives autorisées pour un projet pratique (attempts_count = numéro de la tentative en cours, dès 1). */
+    public const MAX_ATTEMPTS = 2;
+
+    /** Période de grâce après le temps imparti (identique au front : EXTRA_TIME_MINUTES). */
+    public const GRACE_MINUTES = 30;
+
     protected $fillable = [
         'candidat_id',
         'exam_project_id',
@@ -29,7 +35,14 @@ class UserExamSession extends Model
         'started_at' => 'datetime',
         'submitted_at' => 'datetime',
         'reviewed_at' => 'datetime',
+        'is_blocked' => 'boolean',
     ];
+
+    /** Dernière tentative autorisée : un échec à ce stade bloque définitivement le projet. */
+    public function isLastAttempt(): bool
+    {
+        return $this->attempts_count >= self::MAX_ATTEMPTS;
+    }
 
     public function candidat(): BelongsTo
     {
