@@ -19,7 +19,14 @@ class RegisterRequest extends FormRequest
             'nom' => 'nullable|string|max:255',
             'prenom' => 'nullable|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6',
+            // Même exigence que le formulaire du front et la réinitialisation (sinon contournable par un appel direct)
+            'password' => [
+                'required', 'string', 'min:8',
+                'regex:/[a-z]/',       // minuscule
+                'regex:/[A-Z]/',       // majuscule
+                'regex:/[0-9]/',       // chiffre
+                'regex:/[^a-zA-Z0-9]/' // caractère spécial
+            ],
             'role' => 'required|in:JEUNE,ENTREPRISE',
             'bio' => 'nullable|string',
             'adresse' => 'nullable|string',
