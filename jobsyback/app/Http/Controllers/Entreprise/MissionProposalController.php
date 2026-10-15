@@ -13,6 +13,7 @@ use App\Models\MissionProposal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Notifications\CandidateSelectedNotification;
@@ -32,12 +33,20 @@ class MissionProposalController extends Controller
         $user = $request->user();
         
         // Récupérer l'entreprise liée à l'utilisateur connecté
-        $entreprise = $user->entreprise ?? $user; 
+        $entreprise = $user->entreprise;
 
         if (!$entreprise) {
             return response()->json([
                 'success' => false,
                 'message' => 'Profil entreprise non trouvé.'
+            ], 403);
+        }
+
+        // La mission doit appartenir à l'entreprise qui envoie la proposition
+        if (!$entreprise->missions()->whereKey($validated['mission_id'])->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Accès non autorisé à cette mission.'
             ], 403);
         }
 
@@ -75,7 +84,7 @@ class MissionProposalController extends Controller
                 'candidat_id'   => $candidat->id,
                 'entreprise_id' => $entreprise->id,
                 'subject'       => $validated['subject'],
-                'message'       => $validated['content'],
+                'message'       => sanitizeHtml($validated['content']),
                 'status'        => 'pending',
                 'sent_at'       => now(),
             ]);
@@ -108,6 +117,8 @@ class MissionProposalController extends Controller
      */
     public function indexForMission(Request $request, Mission $mission): JsonResponse
     {
+        Gate::authorize('manage', $mission);
+
         // 1. Récupération de toutes les propositions pour cette mission avec leurs candidats
         $proposals = MissionProposal::where('mission_id', $mission->id)
             ->with([
@@ -186,23 +197,33 @@ class MissionProposalController extends Controller
             ], 422);
         }
 
-        // Ajout : vérifier que la mission liée appartient bien à l'entreprise connectée
-        if ($application->mission->entreprise_id !== $request->user()->entreprise->id) {
+        // La proposition et la candidature doivent appartenir à l'entreprise connectée et à la même mission / au même candidat
+        $entrepriseId = (int) $request->user()->entreprise->id;
+        if (
+            (int) $application->mission->entreprise_id !== $entrepriseId
+            || (int) $proposal->entreprise_id !== $entrepriseId
+            || (int) $proposal->mission_id !== (int) $application->mission_id
+            || (int) $proposal->candidat_id !== (int) $application->candidat_id
+        ) {
             return apiResponse(null, 'Accès non autorisé à cette candidature.', 'error', 403);
         }
-        
+
+        $offer = MissionOffers::where('application_id', $application->id)->first();
+
+        if ($offer && !$offer->isReplaceable()) {
+            return apiResponse(null, "Une offre est déjà acceptée ou financée pour ce candidat : elle ne peut pas être remplacée.", 'error', 409);
+        }
+
         $application->update(['status' => 'accepted']);
 
         $validated = $request->validated();
         $validated['application_id'] = $application->id;
 
-        $offer = MissionOffers::where('application_id', $application->id)->first();
-
         if($offer){
             $offer->delete();
         }
 
-        $mission_offers = MissionOffers::create($validated); 
+        $mission_offers = MissionOffers::create($validated);
 
         $application->candidat->user->notify(new CandidateSelectedNotification($mission_offers));
 

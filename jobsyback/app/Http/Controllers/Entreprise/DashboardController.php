@@ -42,6 +42,7 @@ class DashboardController extends Controller
                 $query->where('entreprise_id', $entreprise->id);
             })
             ->whereDoesntHave('mission_offers')
+            ->where('status', '!=', 'draft') // un brouillon n'est pas une candidature
             ->with(['candidat.user', 'mission'])
             ->latest() // Les plus récentes en premier
             ->get();
@@ -71,8 +72,12 @@ class DashboardController extends Controller
     {
         $entreprise = $request->user()->entreprise;
 
-        $wallet = $entreprise   ->wallet;
+        $wallet = $entreprise->wallet;
 
+        // Entreprise sans wallet (aucun dépôt encore) : historique vide plutôt qu'une erreur 500
+        if (!$wallet) {
+            return apiResponse([], 'Historique des transactions récupéré', 'success');
+        }
 
         $transactions = $wallet->transactions()
             ->latest()

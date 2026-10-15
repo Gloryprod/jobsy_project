@@ -22,6 +22,41 @@ if (!function_exists('apiResponse')) {
     }
 }
 
+/**
+ * Nettoie le HTML saisi dans les éditeurs riches (PrimeReact/Quill) avant enregistrement.
+ * Garde la mise en forme (paragraphes, gras, listes, titres, liens http/https/mailto)
+ * et supprime scripts, iframes, attributs on*, liens javascript:, styles.
+ */
+function sanitizeHtml(?string $html): ?string
+{
+    if ($html === null || trim($html) === '') {
+        return $html;
+    }
+
+    static $sanitizer = null;
+
+    $sanitizer ??= new \Symfony\Component\HtmlSanitizer\HtmlSanitizer(
+        (new \Symfony\Component\HtmlSanitizer\HtmlSanitizerConfig())
+            ->allowSafeElements()
+            ->allowAttribute('class', '*')          // classes Quill : ql-align-center, ql-indent-1...
+            ->allowAttribute('data-list', 'li')     // listes à puces Quill 2
+            ->allowLinkSchemes(['http', 'https', 'mailto'])
+            ->allowRelativeLinks()
+            ->forceAttribute('a', 'rel', 'noopener noreferrer')
+            ->withMaxInputLength(200000)
+    );
+
+    return $sanitizer->sanitize($html);
+}
+
+/**
+ * Lien vers une page du front (emails, notifications). url() pointerait vers l'API, qui n'a pas ces pages.
+ */
+function frontendUrl(string $path = ''): string
+{
+    return rtrim((string) config('services.frontend_url'), '/') . '/' . ltrim($path, '/');
+}
+
 function deleteFile(?string $path)
 {
     if ($path && Storage::disk('public')->exists($path)) {
@@ -52,7 +87,8 @@ function getCategoryIdFromText(string $text): ?int
         }
     }
 
-    return 11; // À ranger dans "Divers" si aucun match
+    // À ranger dans "Divers" si aucun match (cherchée par nom : l'ID dépend de l'ordre d'insertion)
+    return \App\Models\Category::firstOrCreate(['name' => 'Divers'])->id;
 }
 
 function processSkillsFromIA(Candidat $candidat, array $skillsIA)
@@ -75,7 +111,7 @@ function processSkillsFromIA(Candidat $candidat, array $skillsIA)
 /**
  * Envoie l'email adéquat au candidat (Succès ou Échec)
  */
-function sendResultEmail(bool $isPassed, int $globalScore, Candidat $candidat, Course $course, ?string $certificateHash): void
+function sendResultEmail(bool $isPassed, int|float|null $globalScore, Candidat $candidat, Course $course, ?string $certificateHash): void
 {
     try {
         // Récupération de l'email candidat
@@ -88,11 +124,11 @@ function sendResultEmail(bool $isPassed, int $globalScore, Candidat $candidat, C
 
         if ($isPassed) {
             Mail::to($recipientEmail)->queue(
-                new ExamCertifiedMail($candidat, $course, $certificateHash, $globalScore)
+                new ExamCertifiedMail($candidat, $course, (string) $certificateHash, $globalScore ?? 0)
             );
         } else {
             Mail::to($recipientEmail)->queue(
-                new ExamFailedMail($candidat, $course, $globalScore)
+                new ExamFailedMail($candidat, $course, $globalScore ?? 0)
             );
         }
     } catch (\Throwable $e) {

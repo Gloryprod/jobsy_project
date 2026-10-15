@@ -12,6 +12,7 @@ use App\Notifications\CandidateSelectedNotification;
 use App\Notifications\MissionClosedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Gate;
 use App\Traits\CanBulkDelete;
 
 class MissionController extends Controller
@@ -20,6 +21,17 @@ class MissionController extends Controller
 
     protected function model() {
         return new Mission;
+    }
+
+    // La suppression groupée ne touche que les missions de l'entreprise connectée, sans offre engagée
+    protected function bulkDeleteQuery() {
+        $engaged = Mission::where('entreprise_id', request()->user()->entreprise->id)
+            ->get()
+            ->filter->hasEngagedOffers()
+            ->modelKeys();
+
+        return Mission::where('entreprise_id', request()->user()->entreprise->id)
+            ->whereNotIn('id', $engaged);
     }
 
     public function index(Request $request){
@@ -70,11 +82,15 @@ class MissionController extends Controller
 
     public function show(Mission $mission)
     {
+        Gate::authorize('manage', $mission);
+
         return response()->json($mission);
     }
 
     public function update(MissionRequest $request, Mission $mission)
     {
+        Gate::authorize('manage', $mission);
+
         $validated = $request->validated();
 
         $mission->update($validated);
@@ -84,6 +100,8 @@ class MissionController extends Controller
 
     public function deactivate(Mission $mission)
     {
+        Gate::authorize('manage', $mission);
+
         if ($mission->active) {
             $mission->update([
                 'active' => 0
@@ -111,6 +129,8 @@ class MissionController extends Controller
 
     public function close(Mission $mission)
     {
+        Gate::authorize('manage', $mission);
+
         $mission->update(['closed_at' => now()]);
 
         $pendingApplications = $mission->applications()
@@ -128,6 +148,12 @@ class MissionController extends Controller
 
     public function destroy(Request $request, Mission $mission)
     {
+        Gate::authorize('manage', $mission);
+
+        if ($mission->hasEngagedOffers()) {
+            return apiResponse(null, "Cette mission a une offre acceptée ou des fonds bloqués : terminez ou annulez-la avant de la supprimer.", 'error', 409);
+        }
+
         $mission->delete();
 
         return apiResponse(
@@ -142,9 +168,12 @@ class MissionController extends Controller
             return apiResponse(null, 'Accès non autorisé à cette mission.', 'error', 403);
         }
         
+        // Brouillons exclus : le candidat n'a pas encore postulé (et ses coordonnées ne doivent pas être visibles)
+        // CASE plutôt que FIELD() : FIELD n'existe qu'en MySQL ; les candidatures pas encore notées passent en dernier
         $applications = $mission->applications()
+        ->where('status', '!=', 'draft')
         ->with(['candidat.user', 'candidat.rank', 'assessment'])
-        ->orderByRaw("FIELD(badge, 'EXPERT', 'CONFIRMED', 'JUNIOR', 'REJECTED') ASC")
+        ->orderByRaw("CASE badge WHEN 'EXPERT' THEN 1 WHEN 'CONFIRMED' THEN 2 WHEN 'JUNIOR' THEN 3 WHEN 'REJECTED' THEN 4 ELSE 5 END")
         ->orderBy('global_score', 'desc')
         ->get();
 
@@ -163,13 +192,21 @@ class MissionController extends Controller
         if ($application->mission->entreprise_id !== $request->user()->entreprise->id) {
             return apiResponse(null, 'Accès non autorisé à cette candidature.', 'error', 403);
         }
-        
+
+        if ($application->status === 'draft') {
+            return apiResponse(null, "Ce candidat n'a pas encore finalisé sa candidature.", 'error', 422);
+        }
+
+        $offer = MissionOffers::where('application_id', $application->id)->first();
+
+        if ($offer && !$offer->isReplaceable()) {
+            return apiResponse(null, "Une offre est déjà acceptée ou financée pour ce candidat : elle ne peut pas être remplacée.", 'error', 409);
+        }
+
         $application->update(['status' => 'accepted']);
 
         $validated = $request->validated();
         $validated['application_id'] = $application->id;
-
-        $offer = MissionOffers::where('application_id', $application->id)->first();
 
         if($offer){
             $offer->delete();
@@ -188,6 +225,8 @@ class MissionController extends Controller
     }
 
     public function getConfirmedApplicants(Request $request, Int $id){
+        // 404 si la mission n'appartient pas à l'entreprise connectée
+        $request->user()->entreprise->missions()->findOrFail($id);
 
         $offers = MissionOffers::whereHas('application', function($q) use ($id) {
             $q->where('mission_id', $id);

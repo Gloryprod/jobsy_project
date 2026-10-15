@@ -41,4 +41,21 @@ class Entreprise extends Model
     public function wallet() {
         return $this->hasOne(Wallet::class, 'entreprise_id');
     }
+
+    /**
+     * Divulgation progressive : l'entreprise ne voit les coordonnées et pièces d'un candidat
+     * que s'il a postulé à l'une de ses missions ou accepté l'une de ses propositions.
+     */
+    public function hasRelationshipWith(Candidat $candidat): bool
+    {
+        $applied = Application::where('candidat_id', $candidat->id)
+            ->where('status', '!=', 'draft')
+            ->whereHas('mission', fn ($q) => $q->where('entreprise_id', $this->id))
+            ->exists();
+
+        return $applied || MissionProposal::where('entreprise_id', $this->id)
+            ->where('candidat_id', $candidat->id)
+            ->where('status', 'accepted')
+            ->exists();
+    }
 }

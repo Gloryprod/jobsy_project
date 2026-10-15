@@ -13,10 +13,18 @@ trait CanBulkDelete
             'ids.*' => 'exists:' . $this->model()->getTable() . ',id',
         ]);
 
-        $this->model()->whereIn('id', $request->ids)->delete();
+        $this->bulkDeleteQuery()->whereIn('id', $request->ids)->delete();
 
         return response()->json(['message' => 'Éléments supprimés']);
     }
 
     abstract protected function model();
+
+    /**
+     * Requête de base des éléments supprimables. À surcharger pour limiter au propriétaire.
+     */
+    protected function bulkDeleteQuery()
+    {
+        return $this->model()->newQuery();
+    }
 }
