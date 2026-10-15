@@ -16,7 +16,8 @@ class Transaction extends Model
     ];
 
     protected $casts = [
-        'metadata' => 'array', 
+        'amount' => 'float',
+        'metadata' => 'array',
     ];
 
     public function wallet() {

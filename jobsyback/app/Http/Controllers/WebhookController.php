@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\WalletException;
 use App\Http\Controllers\Controller;
-use App\Models\Entreprise;
-use App\Models\MissionOffers;
+use App\Models\PaymentIntent;
 use App\Models\Transaction;
+use App\Models\Wallet;
 use Illuminate\Http\Request;
 use App\Services\WalletService;
 use App\Services\KkiapayService;
-use App\Models\Wallet;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
@@ -24,166 +24,142 @@ class WebhookController extends Controller
         $this->kkiaPayService = $kkiaPayService;
     }
 
-    public function handleFedaPay(Request $request)
-    {           
-        // 1. Récupérer les données envoyées par FedaPay
-        $event = $request->input('event');
-        $data = $request->input('data');
+    /**
+     * Paiement KkiaPay (financement de mission ou recharge de wallet).
+     * Rien n'est cru sur parole : l'intention est retrouvée par son uuid, la transaction est revérifiée
+     * auprès de KkiaPay (statut ET montant), et une transaction KkiaPay ne peut créditer qu'une seule fois.
+     * Les cas ignorés répondent 200 pour que KkiaPay ne réessaie pas indéfiniment.
+     */
+    public function handleKkiaPay(Request $request)
+    {
+        if ($this->kkiaPayService->hasWebhookSecret() && !$this->kkiaPayService->webhookSecretMatches($request)) {
+            Log::warning('Webhook KkiaPay rejeté : secret invalide.', ['ip' => $request->ip()]);
+            return response()->json(['message' => 'Signature invalide'], 401);
+        }
 
-        // Log pour le debug (Indispensable au début !)
-        Log::info('Webhook FedaPay reçu', ['event' => $event]);
+        $transactionId = (string) $request->input('transactionId', '');
+        $stateData = json_decode((string) $request->input('stateData', ''), true);
+        $intentUuid = is_array($stateData) ? ($stateData['intent'] ?? null) : null;
 
-        // 2. On ne traite que les transactions approuvées
-        if ($event === 'transaction.approved') {
-            
-            // On récupère l'entreprise_id que tu auras envoyé à FedaPay lors du paiement
-            $entrepriseId = $data['custom_metadata']['entreprise_id'] ?? null;
-            $amount = $data['amount'];
-            $reference = $data['reference'];
+        if ($transactionId === '' || !is_string($intentUuid)) {
+            return response()->json(['message' => 'Événement ignoré'], 200);
+        }
 
-            if ($entrepriseId) {
-                $wallet = Wallet::where('entreprise_id', $entrepriseId)->first();
+        $intent = PaymentIntent::where('uuid', $intentUuid)->first();
 
-                if ($wallet) {
-                    // 3. Utiliser notre WalletService pour créditer le compte
-                    $this->walletService->deposit($wallet, $amount, [
-                        'gateway' => 'fedapay',
-                        'transaction_ref' => $reference,
-                        'full_payload' => $data
-                    ]);
+        if (!$intent) {
+            Log::warning("Webhook KkiaPay : intention inconnue", ['transaction' => $transactionId]);
+            return response()->json(['message' => 'Intention inconnue'], 200);
+        }
 
-                    return response()->json(['status' => 'success', 'message' => 'Wallet crédité']);
-                }
+        if ($intent->status === 'paid') {
+            return response()->json(['message' => 'Déjà traité'], 200);
+        }
+
+        $tx = $this->kkiaPayService->fetchTransaction($transactionId);
+
+        // Si KkiaPay renvoie les données attachées au paiement, elles doivent désigner la même intention
+        $apiState = $tx['state'] ?? null;
+        $apiState = is_string($apiState) ? json_decode($apiState, true) : $apiState;
+        $sameIntent = !is_array($apiState) || !isset($apiState['intent']) || $apiState['intent'] === $intent->uuid;
+
+        if (!$tx || ($tx['status'] ?? null) !== 'SUCCESS' || (float) ($tx['amount'] ?? 0) < $intent->amount || !$sameIntent) {
+            Log::warning("Webhook KkiaPay : transaction non confirmée par l'API", [
+                'transaction' => $transactionId,
+                'intent' => $intent->uuid,
+            ]);
+            return response()->json(['message' => 'Transaction non confirmée'], 200);
+        }
+
+        // 1. Crédit du wallet, une seule fois par intention et par transaction KkiaPay
+        $wallet = DB::transaction(function () use ($intent, $transactionId) {
+            $intent = PaymentIntent::whereKey($intent->id)->lockForUpdate()->firstOrFail();
+
+            if ($intent->status === 'paid' || PaymentIntent::where('provider_transaction_id', $transactionId)->exists()) {
+                return null; // rejeu : aucun effet
+            }
+
+            $intent->update([
+                'status' => 'paid',
+                'provider_transaction_id' => $transactionId,
+                'paid_at' => now(),
+            ]);
+
+            $wallet = Wallet::firstOrCreate(
+                ['entreprise_id' => $intent->entreprise_id],
+                ['balance' => 0, 'balance_locked' => 0, 'currency' => 'XOF']
+            );
+
+            $this->walletService->deposit($wallet, $intent->amount, [
+                'gateway' => 'kkiapay',
+                'transaction_id' => $transactionId,
+                'intent' => $intent->uuid,
+                'type' => $intent->purpose,
+            ]);
+
+            return $wallet;
+        });
+
+        // 2. Séquestre pour le candidat. En cas d'échec, le dépôt reste acquis sur le wallet de l'entreprise.
+        if ($wallet && $intent->purpose === PaymentIntent::PURPOSE_MISSION_FUNDING && $intent->missionOffer) {
+            try {
+                $this->walletService->lockFundsForMission($wallet, $intent->missionOffer);
+            } catch (WalletException $e) {
+                Log::error("Webhook KkiaPay : séquestre impossible pour l'intention {$intent->uuid} : " . $e->getMessage());
             }
         }
 
-        return response()->json(['status' => 'ignored'], 200);
+        Log::info("Webhook KkiaPay traité", ['transaction' => $transactionId, 'intent' => $intent->uuid]);
+        return response()->json(['message' => 'Transaction traitée avec succès.'], 200);
     }
 
-    public function handleKkiaPay(Request $request)
+    /**
+     * Recharge de wallet : même traitement, l'intention indique déjà la nature du paiement.
+     */
+    public function depositWebhook(Request $request)
     {
-        $data = $request->all();
-        Log::info('Données Webhook reçues :', $data);
+        return $this->handleKkiaPay($request);
+    }
 
-        $transactionId = $data['transactionId'];
-        
-        // IMPORTANT : KkiaPay envoie les infos personnalisées dans 'stateData' sous forme de STRING JSON
-        $stateData = json_decode($data['stateData'], true);
-        $entrepriseId = $stateData['entreprise_id'] ?? null;
-        $offerId = $stateData['offer_id'] ?? null;
+    /**
+     * Retour de KkiaPay sur un virement Mobile Money.
+     * Ce webhook ne peut pas être revérifié par API : le secret est obligatoire (hors local/tests).
+     */
+    public function handleKkiaPayPayouts(Request $request)
+    {
+        $trusted = $this->kkiaPayService->hasWebhookSecret()
+            ? $this->kkiaPayService->webhookSecretMatches($request)
+            : app()->environment('local', 'testing');
 
-        // 1. Vérification de sécurité
-        // En Sandbox, si l'API de vérification renvoie 404, on peut se fier au flag 'isPaymentSucces' 
-        // SI ET SEULEMENT SI on est en environnement local/testing.
-        $isVerified = $this->kkiaPayService->verifyTransaction($transactionId);
-
-        // Si on est en sandbox, on accepte le succès du webhook directement pour avancer
-        $paymentValid = $isVerified || (config('app.env') !== 'production' && ($data['isPaymentSucces'] ?? false));
-
-        if ($paymentValid && $entrepriseId && $offerId) {
-            return DB::transaction(function () use ($entrepriseId, $offerId, $transactionId, $data) {
-                
-                $wallet = Wallet::where('entreprise_id', $entrepriseId)->first();
-                $offer = MissionOffers::find($offerId);
-
-                if ($wallet && $offer) {
-                    // A. Créditer le wallet (Montant brut reçu)
-                    $this->walletService->deposit($wallet, $data['amount'], [
-                        'transaction_id' => $transactionId,
-                        'type' => 'mission_funding'
-                    ]);
-
-                    // B. Séquestrer l'argent (Bloquer pour le candidat)
-                    $this->walletService->lockFundsForMission($wallet, $data['amount'], $offer);
-
-                    Log::info("Mission {$offerId} activée avec succès.");
-                    return response()->json(['message' => 'Transaction traitée avec succès.'], 200);
-                }
-                
-                return response()->json(['message' => 'Wallet ou Offre introuvable'], 404);
-            });
+        if (!$trusted) {
+            Log::warning('Webhook de virement KkiaPay rejeté : secret absent ou invalide.', ['ip' => $request->ip()]);
+            return response()->json(['message' => 'Signature invalide'], 401);
         }
 
-        return response()->json(['message' => 'Vérification échouée'], 400);
-    }
-
-    public function handleKkiapayPayout(Request $request)
-    {
-        // 1. On log l'événement pour garder une trace en cas de litige
-        Log::info('Kkiapay Webhook Received:', $request->all());
-
-        $eventId = $request->input('transactionId'); // La référence Kkiapay
+        $reference = (string) $request->input('transactionId', '');
         $status = $request->input('status'); // SUCCESSFUL ou FAILED
 
-        // 2. On cherche la transaction correspondante
-        $transaction = Transaction::where('metadata->reference_externe', $eventId)->first();
+        $transaction = $reference === ''
+            ? null
+            : Transaction::where('type', 'withdrawal')->where('metadata->reference_externe', $reference)->first();
 
         if (!$transaction) {
-            return response()->json(['message' => 'Transaction introuvable'], 404);
+            return response()->json(['message' => 'Transaction introuvable'], 200);
         }
 
-        // 3. Si le virement a échoué chez l'opérateur (MTN/Moov)
+        // Si le virement a échoué chez l'opérateur (MTN/Moov) : fonds restitués une seule fois
         if ($status === 'FAILED') {
-            return DB::transaction(function () use ($transaction) {
-                // On remet la transaction en échec
-                $transaction->update(['status' => 'failed']);
-
-                // On rend l'argent au candidat sur son wallet Jobsy
-                $wallet = $transaction->wallet;
-                $wallet->increment('balance', abs($transaction->amount));
-
+            if ($this->walletService->failWithdrawal($transaction, ['processing', 'completed'], ['payout_failed_at' => now()->toIso8601String()])) {
                 Log::warning("Retrait échoué pour {$transaction->id}. Fonds restitués au candidat.");
-                
-                return response()->json(['message' => 'Statut mis à jour et fonds restitués.']);
-            });
+            }
+
+            return response()->json(['message' => 'Statut mis à jour.']);
+        }
+
+        if ($status === 'SUCCESSFUL') {
+            $this->walletService->transitionWithdrawal($transaction, 'processing', 'completed');
         }
 
         return response()->json(['message' => 'Événement traité']);
-    }
-
-    public function depositWebhook(Request $request)
-    {
-        $data = $request->all();
-
-        // 1. Récupérer les données envoyées par KkiaPay
-        $transactionId = $data['transactionId'];
-        
-        // IMPORTANT : KkiaPay envoie les infos personnalisées dans 'stateData' sous forme de STRING JSON
-        $stateData = json_decode($data['stateData'], true);
-        $entrepriseId = $stateData['entreprise_id'] ?? null;
-        $isVerified = $this->kkiaPayService->verifyTransaction($transactionId);
-
-        // Si on est en sandbox, on accepte le succès du webhook directement pour avancer
-        $paymentValid = $isVerified || (config('app.env') !== 'production' && ($data['isPaymentSucces'] ?? false));
-        // Sécurité log
-        Log::info("Webhook KkiaPay reçu pour la transaction : " . $transactionId);
-        Log::info($isVerified ? "Vérification réussie." : "Vérification échouée, mais on continue en mode sandbox.");
-
-        if ($paymentValid && $entrepriseId) {
-            
-            $amount = $data['amount'];
-
-            try {
-                DB::beginTransaction();
-
-                $entreprise = Entreprise::findOrFail($entrepriseId);
-                
-                $wallet = $entreprise->wallet;
-            
-                $this->walletService->deposit($wallet, $amount, [
-                    'type' => 'wallet_topup'
-                ]);
-
-                DB::commit();
-                return response()->json(['message' => 'Compte rechargé avec succès'], 200);
-
-            } catch (\Exception $e) {
-                DB::rollBack();
-                Log::error("Erreur Webhook Wallet : " . $e->getMessage());
-                return response()->json(['error' => 'Server Error'], 500);
-            }
-        }
-
-        return response()->json(['message' => 'Transaction ignorée ou échouée'], 200);
     }
 }

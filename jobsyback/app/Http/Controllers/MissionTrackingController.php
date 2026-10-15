@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\WalletException;
 use App\Mail\ContractSignedMail;
 use App\Models\MissionOffers;
 use App\Services\BadgeEvaluatorService;
 use App\Services\WalletService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 
@@ -56,11 +58,15 @@ class MissionTrackingController extends Controller
             case 'rejected_after_onboarding':
                 if (!$isEntreprise || $offer->status !== 'service_started') abort(403);
                 
-                $offer->update([ 
-                    'status' => 'rejected_after_onboarding',
-                    // 'closed_at' => now(), // On ferme le dossier
-                    // 'rejection_reason' => 'Non retenu après entretien sur place'
-                ]);
+                DB::transaction(function () use ($offer) {
+                    $offer->update([
+                        'status' => 'rejected_after_onboarding',
+                        // 'closed_at' => now(), // On ferme le dossier
+                        // 'rejection_reason' => 'Non retenu après entretien sur place'
+                    ]);
+                    // Mission annulée : si des fonds étaient déjà bloqués, ils redeviennent disponibles pour l'entreprise
+                    $this->walletService->releaseEscrow($offer);
+                });
                 return apiResponse(
                     null,
                     'Mise à jour réussie',
@@ -105,7 +111,8 @@ class MissionTrackingController extends Controller
                     $application->mission->entreprise->user->email
                 ];
                 
-                Mail::to($emails)->send(new ContractSignedMail($application, $pdf->output()));
+                // En file d'attente : la réponse n'attend pas le serveur SMTP
+                Mail::to($emails)->send(new ContractSignedMail($application, $path));
                 
                 return apiResponse(
                     null,
@@ -128,15 +135,25 @@ class MissionTrackingController extends Controller
 
             case 'validated':
                 if (!$isEntreprise || $offer->status !== 'work_finished') abort(403, "Action impossible");
-                // Récupération sécurisée avec valeurs par défaut
+                $request->validate([
+                    'rating' => 'nullable|integer|min:1|max:5',
+                    'recruiter_review' => 'nullable|string|max:2000',
+                ]);
                 $rating = $request->input('rating', 4);
                 $recruiterReview = $request->input('recruiter_review');
-                $offer->update(['status' => 'validated', 'rating' => $rating, 'recruiter_review' => $recruiterReview ?? null, 'validated_at' => now()]);
                 $candidat = $offer->application->candidat;
-                $candidat->increment('score', 250);
-                $this->walletService->processFinalPayment($offer, 0.10); // 10% de commission
-                // Évaluer et débloquer les badges du candidat
-                $badgeEvaluator->evaluateMissionBadges($candidat);
+
+                // Validation, points et paiement réussissent ou échouent ensemble
+                try {
+                    DB::transaction(function () use ($offer, $rating, $recruiterReview, $candidat) {
+                        $offer->update(['status' => 'validated', 'rating' => $rating, 'recruiter_review' => $recruiterReview, 'validated_at' => now()]);
+                        $candidat->increment('score', 250);
+                        $this->walletService->processFinalPayment($offer); // 10% de commission
+                    });
+                } catch (WalletException $e) {
+                    return apiResponse(null, $e->getMessage(), 'error', 422);
+                }
+                // Les badges sont évalués par MissionOffersObserver lors du passage de validated_at
                 return apiResponse(
                     null,
                     'Mission validée et paiement traité avec succès. Le candidat recevra bientôt son paiement net après déduction de la commission Jobsy.',
