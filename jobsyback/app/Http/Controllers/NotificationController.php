@@ -9,7 +9,8 @@ class NotificationController extends Controller
 {
     public function index(Request $request)
     {
-        $notifications = $request->user()->notifications()->latest()->get();
+        // Les 50 plus récentes : la liste complète grossit sans limite
+        $notifications = $request->user()->notifications()->latest()->limit(50)->get();
 
         return apiResponse(
             $notifications,
@@ -21,7 +22,8 @@ class NotificationController extends Controller
 
     public function unread(Request $request)
     {
-        $unreadNotifications = $request->user()->unreadNotifications;
+        // Requête fraîche (pas la relation chargée en mémoire, qui peut être périmée)
+        $unreadNotifications = $request->user()->unreadNotifications()->latest()->limit(50)->get();
 
         return apiResponse(
             $unreadNotifications,
@@ -33,7 +35,8 @@ class NotificationController extends Controller
 
     public function markAsRead(Request $request)
     {
-        $request->user()->unreadNotifications->markAsRead();
+        // Une seule requête UPDATE, quel que soit le nombre de notifications
+        $request->user()->unreadNotifications()->update(['read_at' => now()]);
 
         return apiResponse(
             null,

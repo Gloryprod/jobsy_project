@@ -12,6 +12,44 @@ use Illuminate\Support\Facades\Log;
 class ProposalResponseController extends Controller
 {
     /**
+     * Lien « Accepter » de l'email : page de confirmation, sans effet tant que le candidat n'a pas cliqué.
+     */
+    public function confirmAccept(Request $request, MissionProposal $proposal)
+    {
+        return $this->confirmation($request, $proposal, 'success', 'Accepter cette proposition ?', "Confirmez pour transmettre votre intérêt à l'entreprise.", 'Oui, j\'accepte la proposition');
+    }
+
+    /**
+     * Lien « Décliner » de l'email : page de confirmation, sans effet tant que le candidat n'a pas cliqué.
+     */
+    public function confirmDecline(Request $request, MissionProposal $proposal)
+    {
+        return $this->confirmation($request, $proposal, 'decline', 'Décliner cette proposition ?', "Confirmez pour informer l'entreprise que vous n'êtes pas disponible.", 'Oui, je décline');
+    }
+
+    private function confirmation(Request $request, MissionProposal $proposal, string $type, string $title, string $message, string $label)
+    {
+        if ($proposal->status !== 'pending') {
+            return response()->view('proposals.response_status', [
+                'type' => 'info',
+                'title' => 'Proposition déjà traitée',
+                'message' => 'Vous avez déjà ' . ($proposal->status === 'accepted' ? 'accepté' : 'décliné') . ' cette proposition de mission.',
+                'status' => $proposal->status
+            ]);
+        }
+
+        return response()->view('proposals.response_status', [
+            'type' => $type,
+            'title' => $title,
+            'message' => $message,
+            'proposal' => $proposal->load(['mission', 'entreprise']),
+            // Même URL signée, envoyée en POST par le bouton
+            'confirmAction' => $request->fullUrl(),
+            'confirmLabel' => $label,
+        ]);
+    }
+
+    /**
      * Traite l'acceptation de la proposition par le candidat via lien signé.
      */
     public function accept(Request $request, MissionProposal$proposal)

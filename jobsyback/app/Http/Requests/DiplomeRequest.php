@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
 
 class DiplomeRequest extends FormRequest
 {
@@ -25,7 +26,13 @@ class DiplomeRequest extends FormRequest
     {
         return [
             'id' => 'nullable|exists:diplomes,id',
-            'intitule' => 'required|string|max:255|unique:diplomes,intitule,' . $this->input('id'),
+            // Unique pour ce candidat seulement : deux candidats peuvent avoir la même « Licence en informatique »
+            'intitule' => [
+                'required', 'string', 'max:255',
+                Rule::unique('diplomes', 'intitule')
+                    ->where('candidat_id', $this->user()?->candidat?->id)
+                    ->ignore($this->input('id') ?? $this->route('id')),
+            ],
             'niveau' => 'nullable|string|max:100',
             'etablissement' => 'nullable|string|max:255',
             'pays' => 'nullable|string|max:100',
