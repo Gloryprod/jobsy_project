@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { User, Edit, Save, Phone, Mail, MapPin, CheckCircle, Lightbulb, FileText, GraduationCap, Trash2, BadgeCheck, Trophy, Shield, UserRoundCog } from 'lucide-react';
-import api from '@/lib/api';
+import api, { STORAGE_URL } from '@/lib/api';
 import { useUser } from '@/context/UserProvider';
 import PhoneInput from '@/components/forms/PhoneInput';
 import { toast } from 'react-hot-toast';
@@ -436,7 +436,7 @@ if (error) {
             <div className="mt-2">
               {cv ? (
                 <div className="space-y-4">
-                  <a href={`${process.env.NEXT_PUBLIC_API_URL}/storage/${cv.fichier}`} target="_blank"
+                  <a href={`${STORAGE_URL}/${cv.fichier}`} target="_blank"
                     className="flex items-center justify-between p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl hover:border-[#000080]/30 transition-all group">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-white rounded-lg"><FileText className="text-[#000080]" /></div>
@@ -476,7 +476,7 @@ if (error) {
                     </div>
                     <div>
                       <p className="font-black text-slate-800 text-sm uppercase leading-none mb-1">{d.intitule}</p>
-                      <a href={`${process.env.NEXT_PUBLIC_API_URL}/storage/${d.fichier}`} target="_blank" className="text-[10px] font-bold text-[#000080] flex items-center gap-1">
+                      <a href={`${STORAGE_URL}/${d.fichier}`} target="_blank" className="text-[10px] font-bold text-[#000080] flex items-center gap-1">
                         VOIR <FileText size={10} />
                       </a>
                     </div>
@@ -511,7 +511,7 @@ if (error) {
                     </div>
                     <div>
                       <p className="font-black text-slate-800 text-sm uppercase leading-none mb-1">{d.titre}</p>
-                      <a href={`${process.env.NEXT_PUBLIC_API_URL}/storage/${d.certificat}`} target="_blank" className="text-[10px] font-bold text-[#000080] flex items-center gap-1">
+                      <a href={`${STORAGE_URL}/${d.certificat}`} target="_blank" className="text-[10px] font-bold text-[#000080] flex items-center gap-1">
                         VOIR <FileText size={10} />
                       </a>
                     </div>

@@ -114,19 +114,15 @@ export default function EntreprisesDashboardPage() {
     const handleWalletDeposit = async (amount: string) => {
         try {
             const response = await api.post('/entreprise/wallet/initiate-deposit', { amount: parseInt(amount) });
-            const { public_key, entreprise_id } = response.data.data;
-            console.log(public_key, entreprise_id);
+            const { public_key, intent, sandbox, amount: amountToPay } = response.data.data;
 
             openKkiapayWidget({
-                amount: parseInt(amount),
+                amount: amountToPay,
                 api_key: public_key,
-                sandbox: true, 
-                phone: "97000000",
-                data: JSON.stringify({
-                    entreprise_id: entreprise_id,
-                    type: "wallet_topup" 
-                }), 
-            }); 
+                sandbox: sandbox,
+                // Seul l'identifiant de l'intention transite par le widget ; le webhook retrouve le reste côté serveur
+                data: JSON.stringify({ intent }),
+            });
 
         } catch (err: unknown) {
             toast.error((err as { response?: { data?: { message?: string } } }).response?.data?.message || "Une erreur est survenue lors de l'initiation du dépôt.");

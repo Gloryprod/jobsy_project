@@ -1,5 +1,6 @@
 "use client"
  
+import { STORAGE_URL } from '@/lib/api';
 import { ColumnDef } from "@tanstack/react-table";
 import { ActionCell } from "@/components/dashboardAdmin/entreprises/ActionCell";
 import { Badge } from "@/components/ui/badge";
@@ -49,7 +50,7 @@ export const columns: ColumnDef<Entreprise>[] = [
         accessorKey: "logo",
         header: () => <div className="text-left">Logo</div>,
         cell: ({ row }) => {
-            return <Image src={`${process.env.NEXT_PUBLIC_API_URL}/storage/${row.getValue("logo")}`} alt="Logo de l'entreprise" width={40} height={40} className="w-12 h-12 object-cover rounded-full" unoptimized />;
+            return <Image src={`${STORAGE_URL}/${row.getValue("logo")}`} alt="Logo de l'entreprise" width={40} height={40} className="w-12 h-12 object-cover rounded-full" unoptimized />;
         }
     },
 

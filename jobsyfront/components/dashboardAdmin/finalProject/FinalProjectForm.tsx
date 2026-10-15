@@ -57,7 +57,7 @@ export default function FinalExamProjectForm({ courseId, initialData, onSuccess,
         { name: "Qualité technique et propreté du code", max_points: 10 },
         { name: "Respect des fonctionnalités demandées", max_points: 10 }
       ],
-      passing_score: 70,
+      passing_score: 15, // sur 20
       time_limit_minutes: null,
     },
     values: initialData, // Injection automatique des valeurs à l'édition
@@ -333,8 +333,8 @@ export default function FinalExamProjectForm({ courseId, initialData, onSuccess,
             <input
               {...register("passing_score", { valueAsNumber: true })}
               type="number"
-              min="10"
-              max="100"
+              min="1"
+              max="20"
               className={inputClass}
             />
             <p className="text-[10px] text-slate-400 mt-1">Généralement réglé à 15.</p>

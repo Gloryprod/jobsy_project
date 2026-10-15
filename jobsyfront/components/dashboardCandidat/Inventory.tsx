@@ -5,7 +5,7 @@ import useSWR from 'swr';
 import { Award, ShieldCheck, Zap, Lock, CheckCircle2, Flame, Plus, Minus, RefreshCw, Sparkles,Trophy,GraduationCap,Hexagon as HexIcon,BookOpen,Building2,Calendar,Layers,Code
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import api from '@/lib/api';
+import api, { STORAGE_URL } from '@/lib/api';
 import { useUser } from '@/context/UserProvider';
 import { ThreeDots } from 'react-loader-spinner';
 
@@ -571,7 +571,7 @@ export default function CandidateInventoryGamifiedPage() {
 
                     {diplome.fichier && (
                       <a 
-                        href={`${process.env.NEXT_PUBLIC_STORAGE_URL || ''}/${diplome.fichier}`}
+                        href={`${STORAGE_URL}/${diplome.fichier}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-[11px] font-bold text-[#000080] hover:underline"

@@ -178,7 +178,7 @@
 //             </div>
 
 //             {offer.started_at && (
-//                     <a href={`${process.env.NEXT_PUBLIC_API_URL}/storage/${offer.contract_path}`} 
+//                     <a href={`${STORAGE_URL}/${offer.contract_path}`} 
 //                         target="_blank" 
 //                         className="flex text-green-500 items-center border-b border-[#000080] rounded-xl p-2 gap-2">
 //                         <Download size={18} /> Contrat de travail
@@ -304,7 +304,7 @@ import { Dialog } from 'primereact/dialog';
 import { Rating } from 'primereact/rating';
 import { InputTextarea } from 'primereact/inputtextarea';
 import useSWR, { mutate } from "swr";
-import api from "@/lib/api";
+import api, { STORAGE_URL } from "@/lib/api";
 import { CheckCircle, Download, XCircle, Star, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ThreeDots } from 'react-loader-spinner';
@@ -437,7 +437,7 @@ export default function EnterpriseTrackingPage({ params }: { params: Promise<{ i
         await handleUpdateStatus(selectedOffer.id, 'in_progress', { is_on_time: isOnTime });
         
         // Exécuter le paiement / blocage des fonds
-        await handlePayment(selectedOffer.application.mission.reward, selectedOffer.id, selectedOffer.application.candidat.id, selectedOffer.application.mission.entreprise.wallet.balance);
+        await handlePayment(selectedOffer.application.mission.reward, selectedOffer.id, selectedOffer.application.mission.entreprise.wallet.balance);
         
         setSelectedOffer(null);
         setIsOnTime(null);
@@ -464,30 +464,27 @@ export default function EnterpriseTrackingPage({ params }: { params: Promise<{ i
         setReview('');
     };
 
-    const handlePayment = async (amount: number, offerId: number, candidatId: number, balance: number) => {
+    const handlePayment = async (amount: number, offerId: number, balance: number) => {
         try {
             if (balance < amount) {
+                // Le serveur fixe le montant (récompense de la mission) et crée l'intention de paiement
                 const response = await api.post('/entreprise/payments/initiate-kkiapay', {
-                    amount,
-                    candidat_id: candidatId,
+                    offer_id: offerId,
                 });
 
-                const { public_key, entreprise_id } = response.data;
+                const { public_key, intent, sandbox, amount: amountToPay } = response.data;
 
                 openKkiapayWidget({
-                    amount: amount,
+                    amount: amountToPay,
                     api_key: public_key,
-                    sandbox: true,
-                    phone: "97000000",
-                    data: JSON.stringify({
-                        entreprise_id: entreprise_id,
-                        offer_id: offerId,
-                    }),
+                    sandbox: sandbox,
+                    // Seul l'identifiant de l'intention transite par le widget ; le webhook retrouve le reste côté serveur
+                    data: JSON.stringify({ intent }),
                 });
 
                 toast.loading("Ouverture de la passerelle de paiement...");
             } else {
-                const response = await api.post('/entreprise/payments/lock_funds', { amount, offerId });
+                const response = await api.post('/entreprise/payments/lock_funds', { offerId });
 
                 if (response.data.status === 'success') {
                     toast.success(response.data.message || "Fonds bloqués avec succès depuis votre portefeuille !");
@@ -531,7 +528,7 @@ export default function EnterpriseTrackingPage({ params }: { params: Promise<{ i
                     </div>
 
                     {offer.started_at && (
-                        <a href={`${process.env.NEXT_PUBLIC_API_URL}/storage/${offer.contract_path}`}
+                        <a href={`${STORAGE_URL}/${offer.contract_path}`}
                             target="_blank"
                             rel="noreferrer"
                             className="flex text-green-500 items-center border-b border-[#000080] rounded-xl p-2 gap-2">

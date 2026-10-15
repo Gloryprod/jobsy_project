@@ -10,6 +10,44 @@ import { useLogout } from "@/lib/logout";
 import useOnClickOutside from "@/hooks/useOnClickOutside";
 import Link from "next/link";
 import Drawer from '@mui/material/Drawer';
+import { formatDistanceToNow } from "date-fns";
+import { fr } from "date-fns/locale";
+import { useNotifications, type AppNotification } from "@/hooks/useNotifications";
+
+// Liste des dernières notifications (relances d'offres, propositions acceptées...)
+function NotificationItems({ notifications }: { notifications: AppNotification[] }) {
+    if (notifications.length === 0) {
+        return <p className="px-4 py-6 text-center text-xs text-slate-400">Aucune notification pour le moment.</p>;
+    }
+
+    return (
+        <ul className="divide-y divide-gray-100">
+            {notifications.slice(0, 10).map((n) => {
+                const content = (
+                    <div className="ml-1">
+                        <h3 className={`text-xs text-slate-900 ${n.read_at ? 'font-medium' : 'font-bold'}`}>
+                            {n.data.mission_title || "Nouvelle notification"}
+                        </h3>
+                        <p className="text-xs text-slate-500 leading-relaxed mt-1 line-clamp-2">{n.data.message}</p>
+                        <p className="text-[10px] text-[#000080]/60 font-medium mt-1">
+                            {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: fr })}
+                        </p>
+                    </div>
+                );
+
+                return (
+                    <li key={n.id} className="p-4 flex items-start hover:bg-gray-50 transition">
+                        {n.data.mission_id ? (
+                            <Link href={`/dashboard/entreprises/missions/${n.data.mission_id}/${n.data.type === 'proposal_accepted' ? 'proposals' : 'confirmedApplicants'}`}>
+                                {content}
+                            </Link>
+                        ) : content}
+                    </li>
+                );
+            })}
+        </ul>
+    );
+}
 
 export default function Header() {
     const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
@@ -23,6 +61,7 @@ export default function Header() {
 
     const { user } = useUser();
     const { handleLogout } = useLogout();
+    const { notifications, unreadCount, markAllAsRead } = useNotifications();
 
     // Gestion des clics à l'extérieur pour fermer les menus déroulants
     useOnClickOutside(profileRef, () => setProfileDropdownOpen(false));
@@ -78,31 +117,19 @@ export default function Header() {
                             className="w-10 h-10 flex items-center justify-center rounded-xl text-white cursor-pointer hover:bg-white/10 transition"
                         >
                             <Bell className="w-5 h-5 text-white" />
-                            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+                            {unreadCount > 0 && (
+                                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" aria-label={`${unreadCount} notification(s) non lue(s)`}></span>
+                            )}
                         </button>
-                    
+
                         {notificationDropdownOpen && (
                             <div className="absolute right-0 shadow-2xl bg-white py-4 z-50 rounded-xl w-95 max-h-112.5 overflow-auto mt-2 border border-gray-100">
-                                <div className="flex items-center justify-between px-4 mb-3">
-                                    <p className="text-xs text-[#000080] font-semibold cursor-pointer hover:underline">Tout effacer</p>
-                                    <p className="text-xs text-[#000080] font-semibold cursor-pointer hover:underline">Marquer comme lu</p>
+                                <div className="flex items-center justify-end px-4 mb-3">
+                                    {unreadCount > 0 && (
+                                        <button onClick={markAllAsRead} className="text-xs text-[#000080] font-semibold cursor-pointer hover:underline">Marquer comme lu</button>
+                                    )}
                                 </div>
-                            
-                                <ul className="divide-y divide-gray-100">
-                                    <li className="p-4 flex items-start hover:bg-gray-50 cursor-pointer transition">
-                                        <img src="https://readymadeui.com/profile_2.webp" className="w-10 h-10 rounded-full shrink-0" alt="Avatar" />
-                                        <div className="ml-3">
-                                            <h3 className="text-xs text-slate-900 font-bold">Nouveau message de Yin</h3>
-                                            <p className="text-xs text-slate-500 leading-relaxed mt-1 line-clamp-2">
-                                                Bonjour, j&apos;ai jeté un coup d&apos;œil aux nouveaux profils disponibles...
-                                            </p>
-                                            <p className="text-[10px] text-[#000080]/60 font-medium mt-1">Il y a 10 minutes</p>
-                                        </div>
-                                    </li>
-                                </ul>
-                                <div className="text-center pt-2 border-t border-gray-100">
-                                    <p className="text-xs text-[#000080] font-bold cursor-pointer hover:underline inline-block py-1">Voir toutes les notifications</p>
-                                </div>
+                                <NotificationItems notifications={notifications} />
                             </div>
                         )}
                     </div>
@@ -154,23 +181,21 @@ export default function Header() {
                     <div className="relative" ref={mobileNotificationRef}>
                         <button onClick={() => setMobileNotificationMenuOpen(!mobileNotificationMenuOpen)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 transition cursor-pointer">
                             <Bell className="w-5 h-5 text-white" />
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+                            {unreadCount > 0 && (
+                                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+                            )}
                         </button>
 
                         {mobileNotificationMenuOpen && (
                             <div className="absolute right-0 top-11 shadow-2xl bg-white py-4 z-50 rounded-xl w-72.5 border border-gray-100">
-                                <div className="flex items-center justify-between px-4 mb-2">
-                                    <p className="text-[10px] text-[#000080] font-bold cursor-pointer">Tout effacer</p>
-                                    <p className="text-[10px] text-[#000080] font-bold cursor-pointer">Marquer lu</p>
+                                <div className="flex items-center justify-end px-4 mb-2">
+                                    {unreadCount > 0 && (
+                                        <button onClick={markAllAsRead} className="text-[10px] text-[#000080] font-bold cursor-pointer">Marquer lu</button>
+                                    )}
                                 </div>
-                                <ul className="divide-y divide-gray-100 max-h-60 overflow-y-auto">
-                                    <li className="p-3 flex items-start hover:bg-gray-50 cursor-pointer">
-                                        <div className="ml-2">
-                                            <p className="text-xs text-slate-900 font-medium">Nouveau message reçu</p>
-                                            <p className="text-[11px] text-[#000080] font-medium">Il y a 10 min</p>
-                                        </div>
-                                    </li>
-                                </ul>
+                                <div className="max-h-60 overflow-y-auto">
+                                    <NotificationItems notifications={notifications} />
+                                </div>
                             </div>
                         )}
                     </div>
