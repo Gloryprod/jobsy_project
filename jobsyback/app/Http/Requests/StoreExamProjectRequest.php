@@ -2,10 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\SanitizesHtmlFields;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreExamProjectRequest extends FormRequest
 {
+    use SanitizesHtmlFields;
+
+    protected array $htmlFields = ['context_rich_text'];
+
     public function authorize(): bool
     {
         return true; 
@@ -31,7 +36,7 @@ class StoreExamProjectRequest extends FormRequest
             'evaluation_criteria.*.name' => 'required|string|max:255',
             'evaluation_criteria.*.max_points' => 'required|integer|min:1',
             
-            'passing_score' => 'required|integer|min:10|max:100',
+            'passing_score' => 'required|integer|min:1|max:20', // note de passage sur 20
             'time_limit_minutes' => 'nullable|integer|min:1',
         ];
     }

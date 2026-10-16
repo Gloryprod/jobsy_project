@@ -6,15 +6,17 @@ use Illuminate\Database\Seeder;
 use App\Models\Category;
 use App\Models\CategoryKeyword;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class CategoryAndKeywordSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        // Portable MySQL / SQLite (SET FOREIGN_KEY_CHECKS n'existe qu'en MySQL)
+        Schema::disableForeignKeyConstraints();
         Category::truncate();
         CategoryKeyword::truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        Schema::enableForeignKeyConstraints();
 
         $data = [
             'Informatique & Digital' => [
@@ -59,8 +61,10 @@ class CategoryAndKeywordSeeder extends Seeder
             ],
             'Soft Skills (Savoir-être)' => [
                 'leadership', 'communication', 'equipe', 'autonomie', 'rigueur', 'perseverance', 
-                'creativite', 'resilience', 'organisation', 'ponctualite', 
+                'creativite', 'resilience', 'organisation', 'ponctualite',
             ],
+            // Catégorie de repli des compétences non reconnues (voir getCategoryIdFromText)
+            'Divers' => [],
         ];
 
         foreach ($data as $categoryName => $keywords) {

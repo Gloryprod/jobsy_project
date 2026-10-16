@@ -24,6 +24,9 @@ class Mission extends Model
         'applicants',
         'category',
         'type_contrat',
+        // Validés par MissionRequest mais jamais enregistrés jusqu'ici : le rang minimum n'était pas appliqué
+        'min_rank_required',
+        'test_severity',
         'active',
         'entreprise_id',
         'closed_at'
@@ -40,6 +43,21 @@ class Mission extends Model
 
     public function entreprise() {
         return $this->belongsTo(Entreprise::class, 'entreprise_id');
+    }
+
+    /**
+     * Offre acceptée et pas encore soldée, ou fonds bloqués : la mission ne doit pas être supprimée
+     * (le candidat perdrait sa mission en cours et le séquestre resterait bloqué).
+     */
+    public function hasEngagedOffers(): bool
+    {
+        return MissionOffers::whereHas('application', fn ($q) => $q->where('mission_id', $this->id))
+            ->where(function ($q) {
+                $q->where('payment_status', 'locked')
+                    ->orWhere(fn ($q) => $q->whereNotNull('accepted_at')
+                        ->whereNotIn('status', ['completed', 'rejected_after_onboarding', 'declined']));
+            })
+            ->exists();
     }
 
 }

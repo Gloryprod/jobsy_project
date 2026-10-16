@@ -39,9 +39,11 @@ class MissionsController extends Controller
         );
     }
 
-    public function getMissionOffers(Int $id)
+    public function getMissionOffers(Request $request, Int $id)
     {
-        $offer = MissionOffers::find($id);
+        // Seules les offres adressées au candidat connecté sont visibles
+        $offer = MissionOffers::whereHas('application', fn ($q) => $q->where('candidat_id', $request->user()->candidat->id))
+            ->find($id);
 
         if (!$offer) {
             return apiResponse(null, 'Offre de mission non trouvée', 'error', 404);
@@ -61,8 +63,17 @@ class MissionsController extends Controller
     {
         $offer = MissionOffers::findOrFail($id);
         
-        if ($offer->application->candidat_id !== $request->user()->candidat->id) {
+        if ((int) $offer->application->candidat_id !== (int) $request->user()->candidat->id) {
             return apiResponse(null, 'Accès refusé', 'error', 403);
+        }
+
+        // On ne répond qu'une fois, et pas à une offre expirée
+        if ($offer->accepted_at || $offer->declined_at) {
+            return apiResponse(null, 'Vous avez déjà répondu à cette offre.', 'error', 409);
+        }
+
+        if ($request->status === 'accepted' && $offer->expires_at && $offer->expires_at->isPast()) {
+            return apiResponse(null, 'Cette offre a expiré.', 'error', 410);
         }
 
         if ($request->status === 'accepted') {
@@ -71,7 +82,7 @@ class MissionsController extends Controller
                 'status' => "accepted"
             ]);
         } else {
-            $offer->update(['declined_at' => now()]);
+            $offer->update(['declined_at' => now(), 'status' => 'declined']);
         }
 
         return apiResponse(null, 'Réponse enregistrée', 'success', 200);

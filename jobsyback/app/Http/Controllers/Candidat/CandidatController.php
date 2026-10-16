@@ -9,6 +9,7 @@ use App\Http\Requests\ConcoursRequest;
 use App\Http\Requests\ContactRequest;
 use App\Http\Requests\CvRequest;
 use App\Http\Requests\DiplomeRequest;
+use App\Http\Requests\FormationRequest;
 use App\Http\Requests\ProfileInfoRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -83,54 +84,44 @@ class CandidatController extends Controller
     {
         
         $candidat = $request->user()->candidat;
-        
-        $path = $request->file('fichier')->store('diplomes', 'public');
 
         $data = $request->only([
             'intitule',
+            'niveau',
+            'etablissement',
+            'pays',
+            'annee_obtention',
         ]);
 
+        // Fichier optionnel, déjà validé par DiplomeRequest (pdf, jpg, png, 2 Mo)
         if ($request->hasFile('fichier')) {
-            $data['fichier'] = $path;
+            $data['fichier'] = $request->file('fichier')->store('diplomes', 'public');
         }
-       
-        $candidat->diplomes()->create($data);
-        $message = 'Diplôme ajouté avec succès';
-        $status = 201;
 
-        return apiResponse(
-            $message,
-            'success',
-            $status
-        );
+        $candidat->diplomes()->create($data);
+
+        return apiResponse(null, 'Diplôme ajouté avec succès', 'success', 201);
     }
 
-    public function createFormation(Request $request)
+    public function createFormation(FormationRequest $request)
     {
         $candidat = $request->user()->candidat;
-        
-        $path = $request->file('certificat')->store('certificats', 'public');
 
         $data = $request->only([
             'titre',
             'organisme',
         ]);
 
+        // Fichier optionnel, déjà validé par FormationRequest (pdf, jpg, png, 2 Mo)
         if ($request->hasFile('certificat')) {
-            $data['certificat'] = $path;
+            $data['certificat'] = $request->file('certificat')->store('certificats', 'public');
         }
 
         $data['en_cours'] = false;
-       
-        $candidat->formations()->create($data);
-        $message = 'Formation ajoutée avec succès';
-        $status = 201;
 
-        return apiResponse(
-            $message,
-            'success',
-            $status
-        );    
+        $candidat->formations()->create($data);
+
+        return apiResponse(null, 'Formation ajoutée avec succès', 'success', 201);
     }
 
     public function saveCv(CvRequest $request)
@@ -138,10 +129,12 @@ class CandidatController extends Controller
 
         $candidat = $request->user()->candidat;
 
-        // if ($candidat->cv) {
-        //     Storage::disk('public')->delete($candidat->cv->fichier);
-        //     $candidat->cv()->delete();
-        // }
+        // Un seul CV par candidat : l'ancien est remplacé. Sinon la relation hasOne renvoyait un CV arbitraire
+        // (souvent l'ancien) et les fichiers personnels s'accumulaient sur le disque public.
+        foreach (\App\Models\Cv::where('candidat_id', $candidat->id)->get() as $oldCv) {
+            deleteFile($oldCv->fichier);
+            $oldCv->delete();
+        }
 
         $path = $request->file('fichier')->store('cvs', 'public');
 
@@ -260,6 +253,11 @@ class CandidatController extends Controller
         return apiResponse(null, 'Communauté supprimée avec succès', 'success', 200);
     }
 
+    /**
+     * Profil d'un candidat vu par une entreprise (route role:ENTREPRISE).
+     * Compétences et parcours toujours visibles ; coordonnées, adresse et date de naissance
+     * seulement si le candidat a postulé chez elle ou accepté une de ses propositions.
+     */
     public function showProfile(Request $request, $id){
         $candidat = Candidat::with(['rank', 'skills.category', 'user', 'cv_datas'])->find($id);
 
@@ -267,8 +265,22 @@ class CandidatController extends Controller
             return apiResponse(null, 'Candidat non trouvé', 'error', 404);
         }
 
-       return apiResponse($candidat, 'Candidat récupéré avec succès', 'success', 200);
-    }   
+        $canSeeContact = $request->user()->entreprise?->hasRelationshipWith($candidat) ?? false;
+
+        // Analyse brute du CV : jamais exposée (peut contenir coordonnées et données personnelles)
+        $candidat->cv_datas?->makeHidden(['raw_ai_data']);
+        $candidat->user->makeHidden(['email_verified_at', 'est_actif', 'role']);
+
+        if (!$canSeeContact) {
+            $candidat->makeHidden(['adresse', 'date_naissance']);
+            $candidat->user->makeHidden(['email', 'telephone']);
+        }
+
+        $data = $candidat->toArray();
+        $data['contact_visible'] = $canSeeContact;
+
+       return apiResponse($data, 'Candidat récupéré avec succès', 'success', 200);
+    }
     
     public function updatePassword(Request $request) {
         $request->validate([

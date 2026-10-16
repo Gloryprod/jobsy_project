@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\Candidat;
 
+use App\Exceptions\WalletException;
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
+use App\Services\WalletService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class WalletController extends Controller
 {
@@ -63,58 +64,39 @@ class WalletController extends Controller
         ]);
     }
 
-    public function withdrawalRequest(Request $request)
+    public function withdrawalRequest(Request $request, WalletService $walletService)
     {
         $request->validate([
-            'amount' => 'required|numeric', 
-            'payment_method' => 'required|string',   
-            'phone_number' => 'required|string', 
+            'amount' => 'required|integer|min:100',
+            'payment_method' => 'required|string|max:50',
+            // Numéro Mobile Money : chiffres uniquement, indicatif optionnel
+            'phone_number' => ['required', 'string', 'regex:/^\+?[0-9]{8,15}$/'],
+        ], [
+            'amount.min' => 'Le montant minimum de retrait est de 100 FCFA.',
+            'phone_number.regex' => 'Numéro de téléphone invalide (chiffres uniquement, indicatif optionnel).',
         ]);
 
-        $candidat = $request->user()->candidat;
-        $wallet = $candidat->wallet;
+        $wallet = $request->user()->candidat->wallet;
 
-        if ($wallet->balance < $request->amount) {
+        if (!$wallet) {
             return response()->json([
                 'message' => 'Ton coffre ne contient pas assez d\'or pour ce retrait.'
             ], 400);
         }
 
-        if ($request->amount <= 0) {
-            return response()->json([
-                'message' => 'Le montant du retrait doit être positif.'
-            ], 400);
-        }
-
         try {
-            return DB::transaction(function () use ($wallet, $request) {
-                
-                // 3. Débit immédiat du solde (L'argent est "réservé")
-                $wallet->decrement('balance', $request->amount);
-
-                // 4. Création de la transaction de retrait
-                $transaction = Transaction::create([
-                    'wallet_id' => $wallet->id,
-                    'amount'    => -$request->amount, // Toujours négatif pour un retrait
-                    'type'      => 'withdrawal', 
-                    'status'    => 'pending',    
-                    'reference' => 'WDL-' . strtoupper(uniqid()),
-                    'metadata'  => [
-                        'method' => $request->payment_method,
-                        'phone'  => $request->phone_number,
-                        'description' => "Retrait vers " . $request->payment_method
-                    ]
-                ]);
-
-                return response()->json([
-                    'message' => 'Demande de retrait enregistrée ! Les mages de Jobsy traitent ta demande de retrait.',
-                    'balance' => $wallet->balance
-                ], 201);    
-            });
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Une erreur est survenue lors du retrait.'
-            ], 500);
+            $walletService->requestWithdrawal($wallet, (int) $request->amount, [
+                'method' => $request->payment_method,
+                'phone'  => $request->phone_number,
+                'description' => "Retrait vers " . $request->payment_method
+            ]);
+        } catch (WalletException $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
         }
+
+        return response()->json([
+            'message' => 'Demande de retrait enregistrée ! Les mages de Jobsy traitent ta demande de retrait.',
+            'balance' => $wallet->fresh()->balance
+        ], 201);
     }
 }

@@ -2,11 +2,16 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\SanitizesHtmlFields;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class MissionRequest extends FormRequest
 {
+    use SanitizesHtmlFields;
+
+    protected array $htmlFields = ['description'];
+
     /**
      * Determine if the user is authorized to make this request.
      */

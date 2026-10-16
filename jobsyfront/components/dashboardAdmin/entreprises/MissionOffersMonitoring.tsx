@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { Badge } from "@/components/ui/badge"; // Ou ton composant Badge perso
 import { 
   Timer, CheckCircle2, XCircle, 

@@ -8,7 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class MissionClosedNotification extends Notification
+class MissionClosedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
     protected Mission $mission;
@@ -42,7 +42,7 @@ class MissionClosedNotification extends Notification
             ->line("Nous vous informons que le processus de recrutement pour la mission **\"{$this->mission->title}\"** est désormais clôturé.")
             ->line("Malgré la qualité de votre profil, celui-ci n'a pas été retenu pour cette mission spécifique.")
             ->line("L'entreprise a terminé sa sélection parmi l'ensemble des candidatures reçues.")
-            ->action('Voir d\'autres opportunités', url('/dashboard/missions/explorer'))
+            ->action('Voir d\'autres opportunités', frontendUrl('/dashboard/candidats/missions'))
             ->line("Nous vous encourageons vivement à continuer de postuler à d'autres offres correspondant à vos compétences.")
             ->salutation("L'équipe de recrutement.");
     }

@@ -21,6 +21,7 @@ export function useLogout() {
         if (result.isConfirmed) {
     
             try {
+                // L'API révoque les tokens et efface les cookies httpOnly (poste partagé, cybercafé...)
                 await api.post("/logout");
 
                 Swal.fire({

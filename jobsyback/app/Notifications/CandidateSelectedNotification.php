@@ -41,7 +41,7 @@ class CandidateSelectedNotification extends Notification implements ShouldQueue
             ->line("Nous avons le plaisir de vous informer que vous avez été retenu pour la mission : " . $this->offer->application->mission->title)
             ->line("Date de début : " . $this->offer->start_date->format('d/m/Y') . " à " . $this->offer->start_time)            
             ->line("Lieu : " . $this->offer->place)
-            ->action('Confirmer ma participation', url('/dashboard/candidats/missions/offers/' . $this->offer->id))
+            ->action('Confirmer ma participation', frontendUrl('/dashboard/candidats/missions/offers/' . $this->offer->id))
             ->line('Veuillez confirmer votre disponibilité avant le ' . $this->offer->expires_at->format('d/m/Y H:i'))
             ->line('Merci de votre confiance !');
     }

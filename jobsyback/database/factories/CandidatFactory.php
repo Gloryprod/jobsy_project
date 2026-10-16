@@ -22,7 +22,7 @@ class CandidatFactory extends Factory
             'niveau_etude' => 'Licence',
             'disponibilite' => 'Immédiate',
             'score' => 0,
-            'rank_id' => 3, // adaptez à l'ID réel de votre rang "B" en base
+            'rank_id' => fn () => \App\Models\Rank::where('rank', 'B')->value('id'), // rangs semés par RankSeeder
         ];
     }
 }

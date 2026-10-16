@@ -7,6 +7,7 @@ use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\PasswordResetRequest;
 use App\Services\AuthServices;
+use App\Support\AuthCookies;
 use Illuminate\Auth\Events\Registered;     
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;  
@@ -60,54 +61,45 @@ class AuthController extends Controller
 
         $user->tokens()->delete();
 
-        $accessToken = $user->createToken('jobsy-access-token');
-        $accessToken->accessToken->update([
-            'type' => 'access',
-            'expires_at' => now()->addMinutes(30),
-        ]);
+        // Access token (30 min) + refresh token (14 jours)
+        $tokens = $this->authService->issueTokens($user);
 
-        // 🔄 Refresh token (long)
-        $refreshToken = $user->createToken('jobsy-refresh-token');
-        $refreshToken->accessToken->update([
-            'type' => 'refresh',
-            'expires_at' => now()->addDays(14), 
-        ]);
-
-
+        // Les tokens ne sont transmis qu'en cookies httpOnly : jamais dans le corps, jamais lisibles par JavaScript
         return apiResponse(
             [
-                'accessToken' => $accessToken->plainTextToken,
-                'refreshToken' => $refreshToken->plainTextToken,
                 'user' => $user
             ],
             'Connexion réussie'
-        );
+        )
+            ->withCookie(AuthCookies::access($tokens['access']))
+            ->withCookie(AuthCookies::refresh($tokens['refresh']));
     }
-    
+
     public function logout(Request $request)
     {
         $request->user()?->tokens()?->delete();
 
-        return apiResponse(
+        $response = apiResponse(
             null,
             'Déconnexion réussie'
         );
+
+        foreach (AuthCookies::forget() as $cookie) {
+            $response->withCookie($cookie);
+        }
+
+        return $response;
     }
  
     public function forgotPassword(Request $request){
         $request->validate(['email' => 'required|email']);
 
-        $status = Password::sendResetLink($request->only('email'));
+        Password::sendResetLink($request->only('email'));
 
-        return $status === Password::RESET_LINK_SENT
-        ? apiResponse(
+        // Même réponse que le compte existe ou non : sinon ce formulaire permet de tester quels emails sont inscrits
+        return apiResponse(
             null,
-            'Lien de réinitialisation envoyé par email.'
-        )
-        : apiResponse(
-            null,
-            'Impossible d’envoyer le lien.',
-            400
+            'Si un compte est associé à cette adresse, un lien de réinitialisation vient d’être envoyé par email.'
         );
     }
 

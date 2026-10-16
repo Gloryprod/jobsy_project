@@ -227,14 +227,14 @@
 //                                     {/* Boutons d'action rapides */}
 //                                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
 //                                         <button 
-//                                             onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL}/storage/${diplome.fichier}`, '_blank')}
+//                                             onClick={() => window.open(`${STORAGE_URL}/${diplome.fichier}`, '_blank')}
 //                                             className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
 //                                             title="Voir le document"
 //                                         >
 //                                             <Eye size={18} />
 //                                         </button>
 //                                         <a 
-//                                             href={`${process.env.NEXT_PUBLIC_API_URL}/storage/${diplome.fichier}`}
+//                                             href={`${STORAGE_URL}/${diplome.fichier}`}
 //                                             target="_blank"
 //                                             download 
 //                                             className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
@@ -371,8 +371,9 @@
 'use client';
 
 import React, { use } from 'react';
-import api from "@/lib/api";
+import api, { STORAGE_URL } from "@/lib/api";
 import useSWR from "swr";
+import { toast } from 'react-hot-toast';
 import { ThreeDots } from 'react-loader-spinner';
 import PageInfo from "@/components/PageInfo";
 import Avatar from "@/components/Avatar";
@@ -465,7 +466,22 @@ const fetcher = (url: string) => api.get(url).then(res => res.data.data);
 
 export default function DetailProfil({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { data, isLoading, error } = useSWR<Candidat>(`/infoProfileCandidat/${id}`, fetcher);
+  const { data, isLoading, error, mutate } = useSWR<Candidat>(`/infoProfileCandidat/${id}`, fetcher);
+  const [validating, setValidating] = React.useState(false);
+
+  // Validation du profil : l'API applique le rang déduit du dernier diplôme du CV
+  const handleValidate = async () => {
+    setValidating(true);
+    try {
+      const response = await api.post(`/infoProfileCandidat/${id}/validate`);
+      await mutate(response.data.data, { revalidate: false });
+      toast.success(response.data.message || 'Profil validé');
+    } catch {
+      toast.error("Impossible de valider ce profil pour le moment.");
+    } finally {
+      setValidating(false);
+    }
+  };
   const pageLink = `/dashboard/admin/detailProfilCandidat/${id}`;
 
   if (isLoading) {
@@ -580,9 +596,13 @@ export default function DetailProfil({ params }: { params: Promise<{ id: string 
 
         {/* Actions */}
         <div className="flex items-center gap-2.5 shrink-0">
-        {!data?.is_validate && data?.rank.rank !== "E" && (
-            <button className="px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-[#F0E68C] text-[#000080] hover:bg-[#ece27c] transition-colors border border-[#d4ca6a]">
-            Valider
+        {!data?.is_validate && (
+            <button
+              onClick={handleValidate}
+              disabled={validating}
+              className="px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-[#F0E68C] text-[#000080] hover:bg-[#ece27c] transition-colors border border-[#d4ca6a] disabled:opacity-60"
+            >
+            {validating ? 'Validation…' : 'Valider'}
             </button>
         )}
         
@@ -736,14 +756,14 @@ export default function DetailProfil({ params }: { params: Promise<{ id: string 
                         {/* Actions Rapides */}
                         <div className="flex items-center gap-1">
                           <button 
-                            onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL}/storage/${diplome.fichier}`, '_blank')}
+                            onClick={() => window.open(`${STORAGE_URL}/${diplome.fichier}`, '_blank')}
                             className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
                             title="Voir le document"
                           >
                             <Eye size={16} />
                           </button>
                           <a 
-                            href={`${process.env.NEXT_PUBLIC_API_URL}/storage/${diplome.fichier}`}
+                            href={`${STORAGE_URL}/${diplome.fichier}`}
                             target="_blank"
                             download 
                             className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors"

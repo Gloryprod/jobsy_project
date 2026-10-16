@@ -1,4 +1,5 @@
 'use client'
+import SafeHtml from '@/components/SafeHtml';
 import api from "@/lib/api";
 import useSWR from "swr";
 import { use } from "react";
@@ -190,9 +191,9 @@ export default function ModulesPage({ params }: { params: Promise<{ id: string }
                                     </div>
 
                                     {/* Description : line-clamp-3 limite à 3 lignes pour un affichage uniforme */}
-                                    <div 
+                                    <SafeHtml
                                         className="text-sm leading-relaxed text-foreground/90 prose prose-sm max-w-none line-clamp-3"
-                                        dangerouslySetInnerHTML={{ __html: module.description }} 
+                                        html={module.description}
                                     />
                                 </div>
 

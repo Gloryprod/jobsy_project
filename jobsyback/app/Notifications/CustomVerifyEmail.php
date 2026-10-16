@@ -12,12 +12,13 @@ class CustomVerifyEmail extends VerifyEmail
     /**
      * Get the verification URL for the given notifiable.
      */
+    /**
+     * Lien signé vers l'API (la signature couvre l'hôte : il ne doit pas être réécrit),
+     * qui valide l'email puis redirige vers la page /email-verified du front.
+     */
     protected function verificationUrl($notifiable)
     {
-        // URL backend (pour le lien signé)
-        $backendUrl = config('APP_URL'); // ex: http://localhost:8000
-
-        $signedUrl = URL::temporarySignedRoute(
+        return URL::temporarySignedRoute(
             'verification.verify',
             now()->addMinutes(60),
             [
@@ -25,13 +26,6 @@ class CustomVerifyEmail extends VerifyEmail
                 'hash' => sha1($notifiable->getEmailForVerification())
             ]
         );
-
-        // Remplacer seulement le domaine backend par le frontend
-        $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
-        $parsedBackend = parse_url($backendUrl, PHP_URL_HOST);
-        $parsedFrontend = parse_url($frontendUrl, PHP_URL_HOST);
-
-        return str_replace($parsedBackend, $parsedFrontend, $signedUrl);
     }
 
 

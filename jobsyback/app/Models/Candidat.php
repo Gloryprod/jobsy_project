@@ -25,6 +25,10 @@ class Candidat extends Model
         'rank_id'
     ];
 
+    protected $casts = [
+        'is_validate' => 'boolean',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');

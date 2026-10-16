@@ -3,15 +3,17 @@
 namespace App\Http\Controllers\Candidat;
 
 use App\Http\Controllers\Controller;
+use App\Services\RankService;
 use Illuminate\Http\Request;
 use App\Models\CvDatas;
 use App\Models\Rank;
 
 class ProfileController extends Controller
 {
-    public function setProfileElements(Request $request){
+    public function setProfileElements(Request $request, RankService $rankService){
         $candidat = $request->user()->candidat;
 
+        // Profil pas encore validé par un admin : rang de départ E
         if (!$candidat->is_validate) {
 
             $rankInfo = Rank::where('rank', "E")->first();
@@ -23,7 +25,7 @@ class ProfileController extends Controller
                         'score' => $rankInfo->points
                     ]);
                 }
-                
+
                 return apiResponse(
                     $candidat->with('rank', 'skills')->find($candidat->id),
                     'Profil mis à jour avec le rang' ,
@@ -32,9 +34,7 @@ class ProfileController extends Controller
             }
         }
 
-        $cv_data = CvDatas::where('candidat_id', $candidat->id)->first();
-
-        if (!$cv_data) {
+        if (!CvDatas::where('candidat_id', $candidat->id)->exists()) {
             return apiResponse(
                 $candidat->id,
                 'Données de CV non trouvées, veuillez réessayer le téléchargement de votre CV.',
@@ -43,47 +43,14 @@ class ProfileController extends Controller
             );
         }
 
-        $diplomes = $cv_data->raw_ai_data['Education'] ?? [];
+        // Profil validé : rang déduit du dernier diplôme du CV (uniquement à la hausse)
+        $rankService->applyCvRank($candidat);
 
-        // return apiResponse(
-        //     $diplomes,
-        //     'Profil mis à jour avec le rang ' ,
-        //     'success'
-        // );
+        return apiResponse(
+            $candidat->with('rank', 'skills')->find($candidat->id),
+            'Profil mis à jour avec le rang ' ,
+            'success'
+        );
+    }
 
-        $dernierDiplome = collect($diplomes)->sortByDesc(function ($item) {
-            preg_match('/\d{4}$/', trim($item['Duration']), $matches);
-            
-            return isset($matches[0]) ? (int)$matches[0] : 0;
-        })->first();
-
-        if ($dernierDiplome) {
-            $diplomaTitle = strtolower($dernierDiplome['Degree']);
-            
-            $rankCode = identifyRankCode($diplomaTitle);
-
-            $rankInfo = Rank::where('rank', $rankCode)->first();
-
-            if ($rankInfo) {
-                if(!$candidat->rank){
-                    $candidat->update([
-                        'rank_id' => $rankInfo->id,
-                        'niveau_etude' => $dernierDiplome['Degree'],
-                        'domaine_competence' => $cv_data->raw_ai_data['Title'] ?? null,
-                        'score' => $rankInfo->points
-                    ]);
-                }
-                
-                return apiResponse(
-                    $candidat->with('rank', 'skills')->find($candidat->id),
-                    'Profil mis à jour avec le rang ' ,
-                    'success'
-                );
-            }
-        }
-
-        return apiResponse(null, 'Impossible d\'identifier le rang.', 'error', 400);
-
-    }   
-    
 }

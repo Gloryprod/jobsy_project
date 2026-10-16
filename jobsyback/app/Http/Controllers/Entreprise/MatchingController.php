@@ -7,6 +7,7 @@ use App\Models\Candidat;
 use App\Models\Mission;
 use App\Services\MatchingService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class MatchingController extends Controller
 {
@@ -23,6 +24,8 @@ class MatchingController extends Controller
      */
     public function getSuggestedCandidates(Request $request, Mission $mission)
     {
+        Gate::authorize('manage', $mission);
+
         // 1. Définition du score minimal (50 par défaut, ou dynamique via URL ?min_score=60)
         $minScore = (int) $request->query('min_score', 50);
 
@@ -62,7 +65,7 @@ class MatchingController extends Controller
      * GET /api/entreprise/candidates/{candidateId}/full-profile
      * Consultation détaillée du profil candidat par l'entreprise recruteuse.
      */
-    public function getCandidateProfileForCompany(Int $candidateId)
+    public function getCandidateProfileForCompany(Request $request, Int $candidateId)
     {
         $candidate = Candidat::with([
             'user',
@@ -71,6 +74,12 @@ class MatchingController extends Controller
             'enrollments',
             'equippedBadges',
         ])->findOrFail($candidateId);
+
+        // Scans de diplômes et certificats (pièces personnelles) : seulement après candidature ou proposition acceptée
+        if (!($request->user()->entreprise?->hasRelationshipWith($candidate) ?? false)) {
+            $candidate->diplomes->each->makeHidden(['fichier']);
+            $candidate->formations->each->makeHidden(['certificat']);
+        }
 
         // Cumul propre des compétences
         $allSkills = $candidate->skills
@@ -83,7 +92,7 @@ class MatchingController extends Controller
             'candidate' => [
                 'id'                => $candidate->id,
                 'full_name'         => $candidate->user->nom . " " . $candidate->user->prenom,
-                'title'             => $candidate->domaine_competence || "Apprenti Junior Jobsy",
+                'title'             => $candidate->domaine_competence ?: "Apprenti Junior Jobsy",
                 'all_skills'        => $allSkills,
                 'declared_skills'   => $candidate->skills ?? [],
                 'equipped_badges'   => $candidate->equippedBadges,
@@ -95,9 +104,10 @@ class MatchingController extends Controller
                 ->whereNotNull('certificate_hash')
                 ->where('certificate_hash', '!=', '')
                 ->get()
-                ->pluck('course', 'certificate_hash') // Extrait le modèle Course de chaque enrollment
-                ->filter()        // Supprime les éventuelles valeurs nulles
-                ->values()        // Réindexe le tableau
+                ->filter(fn ($enrollment) => $enrollment->course)
+                // Cours suivi + hash du certificat, pour le lien de vérification publique (/verify/{hash})
+                ->map(fn ($enrollment) => $enrollment->course->toArray() + ['certificate_hash' => $enrollment->certificate_hash])
+                ->values()
                 ->toArray(),
             ]
         ]);

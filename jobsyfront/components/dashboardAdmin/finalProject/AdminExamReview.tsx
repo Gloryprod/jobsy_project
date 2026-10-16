@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { CheckCircle2, XCircle, FileText, ExternalLink, Award, MessageSquare } from "lucide-react";
 import api from "@/lib/api";
+import { safeHttpUrl } from "@/lib/utils";
 import { toast } from "react-hot-toast";
 
 interface InputSchemaField {
@@ -107,9 +108,12 @@ export default function AdminExamReview({ project, session, onSuccess }: AdminEx
 
                 {!value ? (
                   <p className="text-xs text-slate-400 italic">Aucune réponse fournie</p>
+                ) : (field.type === "url" || field.type === "file") && !safeHttpUrl(value) ? (
+                  // Lien non http(s) (ex. javascript:) : affiché comme texte, jamais cliquable
+                  <p className="text-xs text-red-600 break-all">Lien refusé (format non autorisé) : {String(value)}</p>
                 ) : field.type === "url" || field.type === "file" ? (
                   <a
-                    href={value}
+                    href={safeHttpUrl(value) ?? undefined}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:underline bg-white px-3 py-1.5 rounded-lg border border-slate-200"

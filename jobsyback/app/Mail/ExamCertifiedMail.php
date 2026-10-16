@@ -20,12 +20,12 @@ class ExamCertifiedMail extends Mailable implements ShouldQueue
     public string $certificateHash;
     public int $globalScore;
 
-    public function __construct(Candidat $candidat, Course $course, string $certificateHash, int $globalScore)
+    public function __construct(Candidat $candidat, Course $course, string $certificateHash, int|float $globalScore)
     {
         $this->candidat = $candidat;
         $this->course = $course;
         $this->certificateHash = $certificateHash;
-        $this->globalScore = $globalScore;
+        $this->globalScore = (int) round($globalScore);
     }
 
     public function envelope(): Envelope
@@ -45,43 +45,8 @@ class ExamCertifiedMail extends Mailable implements ShouldQueue
                 'rewardXp'     => $this->course->reward_xp ?? 0,
                 'certHash'     => $this->certificateHash,
                 'score'        => $this->globalScore,
-                'certUrl'      => config('app.url') . "/certificates/" . $this->certificateHash,
-            ]
-        );
-    }
-}
-
-class ExamFailedMail extends Mailable implements ShouldQueue
-{
-    use Queueable, SerializesModels;
-
-    public Candidat $candidat;
-    public Course $course;
-    public int $globalScore;
-
-    public function __construct(Candidat $candidat, Course $course, int $globalScore)
-    {
-        $this->candidat = $candidat;
-        $this->course = $course;
-        $this->globalScore = $globalScore;
-    }
-
-    public function envelope(): Envelope
-    {
-        return new Envelope(
-            subject: "Résultat de votre évaluation : " . $this->course->title,
-        );
-    }
-
-    public function content(): Content
-    {
-        return new Content(
-            markdown: 'emails.exam.failed',
-            with: [
-                'candidatName' => $this->candidat->user->prenom ?? 'Candidat',
-                'courseTitle'  => $this->course->title,
-                'score'        => $this->globalScore,
-                'retryUrl'     => config('app.url') . "/dashboard/candidats/formations/" . $this->course->id . "/workspace",
+                // Page publique de vérification côté front (app/verify/[hash])
+                'certUrl'      => rtrim(config('services.frontend_url'), '/') . "/verify/" . $this->certificateHash,
             ]
         );
     }

@@ -1,5 +1,6 @@
 'use client';
 
+import SafeHtml from '@/components/SafeHtml';
 import React, { useState, useMemo } from 'react';
 import { Sword, MapPin, Clock, Wallet, Search, Star, Zap, Building2, Calendar, Briefcase, X, Target, Filter, ArrowRight, Info, BrainCircuit } from 'lucide-react';
 import useSWR from "swr";
@@ -279,7 +280,7 @@ export default function MissionsPage() {
                 <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
                   <Sword size={16} className="text-[#F0E68C]" /> Objectifs de la mission
                 </h4>
-                <p className="text-slate-600 leading-relaxed font-medium" dangerouslySetInnerHTML={{ __html: selectedMission.description }}/>
+                <SafeHtml as="p" className="text-slate-600 leading-relaxed font-medium" html={selectedMission.description} />
               </div>
 
               <div className="p-8 bg-[#000080] rounded-4xl text-white flex items-center justify-between shadow-xl shadow-blue-900/30">

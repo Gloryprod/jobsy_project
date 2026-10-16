@@ -13,7 +13,7 @@ class CVParserService
 
     public function __construct()
     {
-        $this->apiKey = config('services.nlp.key');
+        $this->apiKey = (string) config('services.nlp.key');
         $this->apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
         $this->content = 'You are an expert recruitment assistant specializing in data extraction. Your task is to parse the provided text and extract specific professional information into a structured JSON format.
 
@@ -89,7 +89,9 @@ class CVParserService
             // Récupération du contenu JSON généré
             $content = $data['choices'][0]['message']['content'] ?? '{}';
 
-            return json_decode($content, true);
+            $decoded = json_decode($content, true);
+
+            return is_array($decoded) ? $decoded : [];
 
         } catch (\Exception $e) {
             Log::error("Échec Groq : " . $e->getMessage());

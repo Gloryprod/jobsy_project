@@ -8,7 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class CandidateReminderNotification extends Notification
+class CandidateReminderNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -41,7 +41,7 @@ class CandidateReminderNotification extends Notification
             ->greeting("Bonjour {$notifiable->prenom},")
             ->line("Ceci est un rappel pour la mission chez **{$this->offer->application->mission->company}**.")
             ->line("Il ne vous reste que **{$hoursLeft} heures** pour confirmer ou décliner l'offre avant qu'elle n'expire.")
-            ->action('Répondre maintenant', url('/dashboard/offers/' . $this->offer->id))
+            ->action('Répondre maintenant', frontendUrl('/dashboard/candidats/missions/offers/' . $this->offer->id))
             ->line("Si vous n'êtes pas disponible, merci de décliner l'offre.");
     }
 

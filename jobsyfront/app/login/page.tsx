@@ -50,10 +50,8 @@ export default function LoginPage() {
     setLoading(true);
 
     try { 
+      // L'API pose les tokens en cookies httpOnly : rien à stocker côté navigateur
       const response = await api.post("/login", formValues);
-
-      localStorage.setItem("accessToken", response.data.data.accessToken);
-      localStorage.setItem("refreshToken", response.data.data.refreshToken);
 
       const user = response.data.data.user;
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Course;
 use App\Models\Enrollment;
+use App\Models\Lesson;
 use App\Models\LessonProgress;
 use App\Models\Module;
 use App\Models\ModuleResult;
@@ -144,8 +145,7 @@ class CourseWorkspaceController extends Controller
                 // B. Première tentative échouée -> Vérification du délai des 24h
                 else {
                     $updatedAt = $finalExamScore->updated_at;
-                    // $liberationDate = $updatedAt->copy()->addHours(24);
-                    $liberationDate = "2026-08-03 16:35:00";
+                    $liberationDate = $updatedAt->copy()->addHours(24);
                     $now = Carbon::now();
 
                     $diffInSeconds = $now->diffInSeconds($liberationDate, false);
@@ -262,6 +262,18 @@ class CourseWorkspaceController extends Controller
 
         $candidatId = $request->user()->candidat->id;
 
+        // La leçon doit appartenir à la formation, et le candidat y être inscrit
+        $lessonInCourse = Lesson::whereKey($request->lesson_id)
+            ->whereHas('module', fn ($q) => $q->where('course_id', $request->course_id))
+            ->exists();
+
+        if (!$lessonInCourse || !$this->enrollmentFor($candidatId, (int) $request->course_id)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Leçon introuvable dans vos formations.'
+            ], 403);
+        }
+
         // 1. Enregistrer la progression si pas déjà fait
         LessonProgress::firstOrCreate([
             'candidat_id' => $candidatId,
@@ -304,11 +316,13 @@ class CourseWorkspaceController extends Controller
         // 2. Récupérer le module avec ses questions de quiz
         $module = Module::with('quiz_questions')->findOrFail($moduleId);
 
-        if (!$module) {
+        // Le module doit appartenir à la formation envoyée, à laquelle le candidat est inscrit (kit reçu en mode logistique)
+        $enrollment = $this->enrollmentFor($candidatId, (int) $courseId);
+        if ((int) $module->course_id !== (int) $courseId || !$enrollment || $enrollment->status === 'waiting_kit') {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Module introuvable.'
-            ], 404);
+                'message' => 'Module introuvable dans vos formations.'
+            ], 403);
         }
 
         $questions = $module->quiz_questions;
@@ -330,20 +344,21 @@ class CourseWorkspaceController extends Controller
             $totalPoints += $question->points;
             
             // On récupère ce que le candidat a coché (tableau vide s'il n'a rien coché)
-            $submitted = isset($userAnswers[$question->id]) ? $userAnswers[$question->id] : [];
-            
+            $submitted = array_values(array_filter((array) ($userAnswers[$question->id] ?? []), 'is_string'));
+
             // Nos bonnes réponses (déjà converties en tableau PHP grâce au $casts)
-            $actualCorrect = $question->correct_answers ?? []; 
+            $actualCorrect = $question->correct_answers ?? [];
 
             // Tri des tableaux pour ignorer l'ordre des clics lors de la comparaison
             sort($submitted);
             sort($actualCorrect);
 
             $totalCorrect = count($actualCorrect);
+            $questionPoints = 0;
 
             if($totalCorrect == 1 && count($submitted) == 1 && $submitted[0] === $actualCorrect[0]) {
                 // Cas du choix unique : 1 point si la réponse est juste
-                $earnedPoints += $question->points;
+                $questionPoints = $question->points;
             } else if ($totalCorrect > 1) {
                 // Cas du choix multiple : on attribue les points au prorata des bonnes réponses cochées
                 $goodSelections = count(array_intersect($submitted, $actualCorrect));
@@ -351,11 +366,13 @@ class CourseWorkspaceController extends Controller
 
                 // Calcul du score net pour éviter le spam de cases
                 $netScore = max(0, $goodSelections - $badSelections);
-                $earnedPoints += ($netScore / $totalCorrect) * $question->points;
+                $questionPoints = ($netScore / $totalCorrect) * $question->points;
             }
-            
-            // Vérification de la réussite complète de la question pour le feedback
-            $isCorrect = ($earnedPoints === $question->points);
+
+            $earnedPoints += $questionPoints;
+
+            // Réussite complète de cette question (et non du cumul)
+            $isCorrect = abs($questionPoints - $question->points) < 0.001;
 
             // On prépare un petit tableau de correction (utile pour l'affichage de l'historique)
             $corrections[$question->id] = [
@@ -382,23 +399,18 @@ class CourseWorkspaceController extends Controller
 
         // 5. Si le QCM est validé, on déclenche la mise à jour de la progression globale
         if ($isPassed) {
-            $enrollment = Enrollment::where('course_id', $courseId)
-                ->where('candidat_id', $candidatId)
-                ->first();
-
-            if ($enrollment) {
-                // Ici tu appelles ta méthode existante qui recalcule le % global de la formation
-                $enrollment->updateProgress(); 
-            }
+            // Ici tu appelles ta méthode existante qui recalcule le % global de la formation
+            $enrollment->updateProgress();
         }
 
         // 6. Réponse standardisée pour Next.js
+        // Les bonnes réponses ne sont révélées qu'une fois le quiz réussi (sinon : soumettre à vide, lire, resoumettre)
         return response()->json([
             'status' => 'success',
             'data' => [
                 'is_passed'   => $isPassed,
                 'score'       => round($scorePercentage, 2),
-                'corrections' => $corrections,
+                'corrections' => $isPassed ? $corrections : [],
                 'message'     => $isPassed 
                     ? 'Félicitations ! Vous avez validé ce module avec succès.' 
                     : 'Score insuffisant (minimum 80%). Prenez le temps de relire le cours et réessayez !'
@@ -409,13 +421,9 @@ class CourseWorkspaceController extends Controller
     public function showFinalExamQuestions(Int $courseId, Request $request){
         $course = Course::findOrFail($courseId);
 
-        if (!$course) {
-            return apiResponse(
-                null,
-                'Cours introuvable.',
-                'error',
-                404
-            );
+        // Examen final réservé aux inscrits ayant terminé tous les modules
+        if (!$this->hasCompletedCourse($request->user()->candidat->id, $courseId)) {
+            return apiResponse(null, 'Terminez tous les modules de la formation avant l\'examen final.', 'error', 403);
         }
 
         $questions = FinalExamQuestion::where('course_id', $courseId)->get();
@@ -469,22 +477,32 @@ class CourseWorkspaceController extends Controller
     }
 
     public function submitFinalExam(Request $request, Int $courseId){
-        $candidat = $request->user()->candidat; 
+        $request->validate([
+            'answers' => 'nullable|array',
+            'answers.*' => 'array',
+            'answers.*.*' => 'string',
+        ]);
+
+        $candidat = $request->user()->candidat;
 
         $course = Course::findOrFail($courseId);
 
-        if (!$course) {
-            return apiResponse(
-                null,
-                'Cours introuvable.',
-                'error',
-                404
-            );
+        // Examen final réservé aux inscrits ayant terminé tous les modules
+        if (!$this->hasCompletedCourse($candidat->id, $courseId)) {
+            return apiResponse(null, 'Terminez tous les modules de la formation avant l\'examen final.', 'error', 403);
         }
 
         $lastResult = FinalExamResults::where('candidat_id', $candidat->id)
                                   ->where('course_id', $courseId)
                                   ->first();
+
+        // Déjà réussi : repasser l'examen pourrait faire perdre la certification
+        if ($lastResult && $lastResult->is_passed) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Vous avez déjà réussi cet examen.',
+            ], 409);
+        }
 
         if ($lastResult && !$lastResult->is_passed) {
             $updatedAt = $lastResult->updated_at;
@@ -650,5 +668,20 @@ class CourseWorkspaceController extends Controller
 
         }
 
+    }
+
+    private function enrollmentFor(int $candidatId, int $courseId): ?Enrollment
+    {
+        return Enrollment::where('course_id', $courseId)
+            ->where('candidat_id', $candidatId)
+            ->first();
+    }
+
+    /**
+     * Inscrit et tous les modules terminés (progression recalculée à l'ouverture de l'espace de formation).
+     */
+    private function hasCompletedCourse(int $candidatId, int $courseId): bool
+    {
+        return (int) ($this->enrollmentFor($candidatId, $courseId)?->progress_percentage ?? 0) >= 100;
     }
 }

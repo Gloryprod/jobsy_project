@@ -1,8 +1,10 @@
 "use client";
 
+import SafeHtml from '@/components/SafeHtml';
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Clock, Send, CheckCircle2, AlertTriangle, FileText, Link as LinkIcon, Upload, Eye, Save, PlayCircle, Lock, RefreshCw } from "lucide-react";
 import api from "@/lib/api";
+import { safeHttpUrl } from "@/lib/utils";
 import { toast } from "react-hot-toast";
 
 interface InputSchemaField {
@@ -791,9 +793,9 @@ export default function FinalExamProjectPlay({
         <div className="flex items-center gap-2 text-xs font-black text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">
           <FileText className="w-4 h-4 text-[#000080]" /> Énoncé & Directives du Projet
         </div>
-        <div
+        <SafeHtml
           className="prose prose-slate max-w-none text-xs text-slate-600 leading-relaxed font-medium space-y-4"
-          dangerouslySetInnerHTML={{ __html: project.context_rich_text }}
+          html={project.context_rich_text}
         />
       </div>
 
@@ -846,7 +848,7 @@ export default function FinalExamProjectPlay({
                           <span className="text-xs font-bold text-green-800">Fichier enregistré avec succès</span>
                         </div>
                         <a
-                          href={answers[field.key]}
+                          href={safeHttpUrl(answers[field.key]) ?? undefined}
                           target="_blank"
                           rel="noreferrer"
                           className="text-[10px] font-black uppercase text-[#000080] hover:underline"

@@ -4,8 +4,6 @@ namespace App\Services;
 
 use App\Models\Mission;
 use App\Models\Candidat;
-use FontLib\Table\Type\name;
-use Illuminate\Support\Facades\Log;
 
 class MatchingService
 {
@@ -50,14 +48,6 @@ class MatchingService
         // 5. Calcul du pourcentage exact d'adéquation
         $ratio = $matchedSkills->count() / $requiredSkills->count();
         $finalScore = (int) round($ratio * 100);
-
-        // dd($requiredSkills, $candidateSkills, $matchedSkills, $missingSkills, $finalScore);
-
-        Log::info('RequiredSkill ', ['requiredSkills' => $requiredSkills]);
-        Log::info('CandidatSkill : ', ['candidateSkills' => $candidateSkills]);
-        Log::info('matchedSkills : ', ['matchedSkills' => $matchedSkills]);
-        Log::info('missingSkills : ', ['missingSkills' => $missingSkills]);
-        Log::info('Score Final Candidat #' . $candidat->id, ['total' => $finalScore]);
 
         return [
             'match_score' => $finalScore,
