@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminWalletController;
 use App\Http\Controllers\Admin\ApplicantController;
 use App\Http\Controllers\Admin\CompanyController;
@@ -30,6 +31,7 @@ use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\Entreprise\DashboardController;
 use App\Http\Controllers\Admin\FinalExamQuestionController;
 use App\Http\Controllers\Admin\ExamProjectController;
+use App\Http\Controllers\Candidat\CandidatProposalController;
 use App\Http\Controllers\Candidat\MatchingMissionController;
 use App\Http\Controllers\CertificateVerificationController;
 use App\Http\Controllers\Entreprise\MatchingController;
@@ -177,6 +179,7 @@ Route::middleware(['auth:sanctum', 'role:JEUNE', 'access.token'])->group(functio
     Route::patch('/candidate/inventory/{badgeId}/equip', [BadgeController::class, 'toggleEquip']);
 
     Route::get('/missions/{missionId}/my-match-score', [MatchingMissionController::class, 'getMyMatchScoreForMission']);
+    Route::get('/candidat/proposals', [CandidatProposalController::class, 'index']);
 
 });
 
@@ -254,5 +257,7 @@ Route::middleware(['auth:sanctum', 'role:ADMIN', 'access.token'])->group(functio
     // Évaluation et notation d'une soumission
     Route::post('exam-submissions/{sessionId}/review', [ExamProjectController::class, 'review']);
 
-    
-});
+    //Dashboard Admin
+    Route::get('/dashboard/stats', [AdminDashboardController::class, 'stats']);
+
+}); 

@@ -248,7 +248,7 @@ export default function MissionTrackingPage() {
     // États pour la recherche et la pagination
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 1;
+    const itemsPerPage = 10 ;
 
     // 1. Logique de Recherche
     const filteredData = offers?.filter(item =>

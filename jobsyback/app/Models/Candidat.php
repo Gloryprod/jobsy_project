@@ -22,7 +22,10 @@ class Candidat extends Model
         'niveau_experience',
         'niveau_etude',
         'disponibilite',
-        'rank_id'
+        'rank_id',
+        'vitality',
+        'streak_count',
+        'last_activity_at',
     ];
 
     public function user()

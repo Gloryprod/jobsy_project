@@ -14,10 +14,10 @@ class ProposalResponseController extends Controller
     /**
      * Traite l'acceptation de la proposition par le candidat via lien signé.
      */
-    public function accept(Request $request, MissionProposal$proposal)
+    public function accept(Request $request, MissionProposal $proposal)
     {
         // 1. Vérification de la validité de la signature de l'URL
-        if (! $request->hasValidSignature()) {
+        if (!$request->hasValidSignature()) {
             return response()->view('proposals.response_status', [
                 'type' => 'error',
                 'title' => 'Lien expiré ou invalide',
@@ -94,7 +94,7 @@ class ProposalResponseController extends Controller
     /**
      * Traite le refus de la proposition par le candidat via lien signé.
      */
-    public function decline(Request $request, MissionProposal$proposal)
+    public function decline(Request $request, MissionProposal $proposal)
     {
         if (! $request->hasValidSignature()) {
             return response()->view('proposals.response_status', [
