@@ -1,5 +1,6 @@
 "use client";
 
+import SafeHtml from '@/components/SafeHtml';
 import React, { useState, use } from "react";
 import useSWR from "swr";
 import { FileText, Settings, Award, Edit3, Trash2, Plus, AlertCircle, ArrowLeft, Clock, Check } from "lucide-react";
@@ -200,16 +201,16 @@ export default function ManageExamProject({ params, onBack }: { params: Promise<
                   {project.domain.replace("_", " ")}
                 </span>
                 <span className="bg-green-50 text-green-700 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">
-                  Seuil de réussite: {project.passing_score}%
+                  Seuil de réussite: {project.passing_score} / 20
                 </span>
               </div>
 
               {/* Énoncé / Sujet */}
               <div className="space-y-2">
                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider">Mise en contexte / Énoncé</h3>
-                <div 
+                <SafeHtml
                   className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap font-medium bg-slate-50/50 p-4 rounded-2xl border border-slate-100"
-                  dangerouslySetInnerHTML={{ __html: project.context_rich_text }}
+                  html={project.context_rich_text}
                 />
               </div>
 

@@ -1,5 +1,6 @@
 'use client';
 
+import SafeHtml from '@/components/SafeHtml';
 import React, { useState } from 'react';
 import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import PageInfo from '@/components/PageInfo';
@@ -247,9 +248,9 @@ export default function AdminCourses() {
                         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                             À propos de la formation
                         </h4>
-                        <div 
+                        <SafeHtml
                             className="text-sm leading-relaxed text-foreground/90 prose prose-sm max-w-none"
-                            dangerouslySetInnerHTML={{ __html: selectedCourse.description }} 
+                            html={selectedCourse.description}
                         />
                     </div>
 

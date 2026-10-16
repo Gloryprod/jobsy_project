@@ -1,5 +1,6 @@
 "use client"
 
+import SafeHtml from '@/components/SafeHtml';
 import { useState } from "react"
 import { Mission } from "@/app/dashboard/entreprises/missions/list/columns" 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -88,7 +89,7 @@ export const ActionCell = ({ mission }: { mission: Mission }) => {
             
             <div className="space-y-2 border-t pt-4 ">
               <p className="text-sm font-medium text-muted-foreground">Description</p>
-              <p dangerouslySetInnerHTML={{ __html: mission.description }} />
+              <SafeHtml as="p" html={mission.description} />
               {/* <p className="text-sm leading-relaxed">{mission.description}</p> */}
             </div>
 

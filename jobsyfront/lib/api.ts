@@ -1,114 +1,80 @@
-import axios from "axios";
+import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 
+// Racine du back Laravel (.env.local : NEXT_PUBLIC_API_URL=https://api.jobsy.bj), sans /api :
+// c'est la convention du reste du front (`${NEXT_PUBLIC_API_URL}/storage/...`). Un /api final est toléré.
+export const API_ROOT = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/+$/, "").replace(/\/api$/, "");
+export const API_URL = `${API_ROOT}/api`;
+// Fichiers publics (logos, CV, diplômes, contrats, leçons) servis par Laravel sous /storage
+export const STORAGE_URL = `${API_ROOT}/storage`;
+
+/**
+ * Authentification par cookies httpOnly posés par l'API (access_token, refresh_token) :
+ * le front ne lit ni ne stocke jamais les tokens, un script injecté ne peut donc pas les voler.
+ * withCredentials envoie les cookies ; X-Requested-With est exigé par l'API pour les accepter (protection CSRF).
+ */
 const api = axios.create({
-  baseURL: "http://localhost:8000/api",
+  baseURL: API_URL,
+  withCredentials: true,
   headers: {
-    Accept: "application/json",                               
+    Accept: "application/json",
     'X-Requested-With': 'XMLHttpRequest',
     'Content-Type': 'application/json'
   },
 });
 
-api.interceptors.request.use(
-  (config) => {
-    const accessToken = localStorage.getItem("accessToken");
+// Anciennes versions : tokens stockés en localStorage. On les efface, ils ne servent plus.
+if (typeof window !== "undefined") {
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+}
 
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
-    }
+// Une 401 sur ces routes est une vraie réponse (mauvais mot de passe...), pas une session expirée
+const NO_REFRESH_PATHS = ["/login", "/register", "/refresh", "/forgot-password", "/reset-password", "/logout"];
 
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+type RetriableRequest = InternalAxiosRequestConfig & { _retry?: boolean };
 
+let refreshPromise: Promise<void> | null = null;
 
-let isRefreshing = false;
-let failedQueue: any[] = [];
+// Un seul appel /refresh à la fois : les requêtes en échec simultanées attendent le même renouvellement
+const refreshSession = () => {
+  refreshPromise ??= axios
+    .post(`${API_URL}/refresh`, {}, {
+      withCredentials: true,
+      headers: { Accept: "application/json", 'X-Requested-With': 'XMLHttpRequest' },
+    })
+    .then(() => undefined)
+    .finally(() => {
+      refreshPromise = null;
+    });
 
-const processQueue = (error: any, token: string | null = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
-  });
-
-  failedQueue = [];
+  return refreshPromise;
 };
 
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+  async (error: AxiosError) => {
+    const originalRequest = error.config as RetriableRequest | undefined;
+    const path = originalRequest?.url ?? "";
 
-    // ⛔ Si non autorisé
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // ⛔ Session expirée : on renouvelle via le cookie refresh_token puis on rejoue la requête
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !NO_REFRESH_PATHS.some((p) => path.startsWith(p))
+    ) {
       originalRequest._retry = true;
 
-      // Si un refresh est déjà en cours, on met en attente
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({
-            resolve: (token: string) => {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-              resolve(api(originalRequest));
-            },
-            reject,
-          });
-        });
-      }
-
-      isRefreshing = true;
-
       try {
-        const refreshToken = localStorage.getItem("refreshToken");
-        console.log("Tentative de refresh avec :", refreshToken); // LOG 1
-
-        if (!refreshToken) {
-          throw new Error("Refresh token manquant");
-        }
-
-        // 🔄 Appel API refresh
-        const response = await axios.post(
-          "http://localhost:8000/api/refresh",
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${refreshToken}`,
-            },
-          }
-        );
-        console.log("Réponse du serveur au refresh :", response.data); // LOG 2
-
-        const newAccessToken = response.data.data.access_token;
-
-        // 💾 Sauvegarde du nouveau token
-        localStorage.setItem("accessToken", newAccessToken);
-
-        api.defaults.headers.common.Authorization =
-          `Bearer ${newAccessToken}`;
-
-        processQueue(null, newAccessToken);
-
-        // 🔁 Rejouer la requête originale
-        originalRequest.headers.Authorization =
-          `Bearer ${newAccessToken}`;
-
+        await refreshSession();
         return api(originalRequest);
       } catch (refreshError) {
-        processQueue(refreshError, null);
-
         // 🚪 Logout forcé
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-
-        window.location.href = "/login";
+        if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+          window.location.href = "/login";
+        }
 
         return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
       }
     }
 

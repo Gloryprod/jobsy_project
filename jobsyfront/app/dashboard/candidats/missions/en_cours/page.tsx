@@ -7,7 +7,7 @@ import { Tag } from 'primereact/tag';
 import { Button } from 'primereact/button';
 import { ProgressBar } from 'primereact/progressbar';
 import useSWR, { mutate } from "swr";
-import api from "@/lib/api";
+import api, { STORAGE_URL } from "@/lib/api";
 import { ThreeDots } from 'react-loader-spinner';
 import { 
     MapPin, Building2, ChevronDown, ChevronUp, 
@@ -123,7 +123,7 @@ export default function MissionTrackingPage() {
                     </div>
 
                     {offer.started_at && (
-                            <a href={`${process.env.NEXT_PUBLIC_API_URL}/storage/${offer.contract_path}`} 
+                            <a href={`${STORAGE_URL}/${offer.contract_path}`} 
                                 target="_blank" 
                                 className="flex text-green-500 items-center border-b border-[#000080] rounded-xl p-2 gap-2">
                                 <Download size={18} /> Contrat de travail

@@ -27,7 +27,7 @@ class EntrepriseController extends Controller
 
     public function update(EntrepriseRequest $request, $id)
     {
-        $entreprise = Entreprise::findOrFail($id);
+        $entreprise = $this->ownEntreprise($request, $id);
 
         $data = $request->validated();
 
@@ -51,7 +51,7 @@ class EntrepriseController extends Controller
 
     public function updateContact(ContactEntrepriseRequest $request, $id)
     {
-        $entreprise = Entreprise::findOrFail($id);
+        $entreprise = $this->ownEntreprise($request, $id);
 
         $data = $request->validated();
 
@@ -75,6 +75,18 @@ class EntrepriseController extends Controller
             200
         );
 
+    }
+
+    /**
+     * L'{id} de l'URL doit être celui de l'entreprise connectée.
+     */
+    private function ownEntreprise(Request $request, $id): Entreprise
+    {
+        $entreprise = $request->user()->entreprise;
+
+        abort_unless($entreprise && (int) $entreprise->id === (int) $id, 403, 'Accès non autorisé à cette entreprise.');
+
+        return $entreprise;
     }
 
     public function updatePassword(Request $request) {

@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    name: Back (Laravel) — tests et audit
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: jobsyback
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_sqlite, sqlite3, intl, gd, zip, fileinfo
+          coverage: none
+
+      - name: Dépendances
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Vulnérabilités connues des dépendances
+        run: composer audit
+
+      - name: Clé d'application de test
+        run: echo "APP_KEY=base64:$(openssl rand -base64 32)" >> "$GITHUB_ENV"
+
+      - name: Tests (SQLite en mémoire, voir phpunit.xml)
+        run: vendor/bin/phpunit
+
+  frontend:
+    name: Front (Next.js) — types, build et audit
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: jobsyfront
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: jobsyfront/package-lock.json
+
+      - name: Dépendances
+        run: npm ci
+
+      - name: Vérification des types
+        run: npx tsc --noEmit
+
+      - name: Build de production
+        run: npm run build
+
+      # Bloquant sur les vulnérabilités critiques uniquement (restent des avis non corrigés en amont : quill, kkiapay)
+      - name: Vulnérabilités connues des dépendances
+        run: npm audit --omit=dev --audit-level=critical

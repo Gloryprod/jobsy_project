@@ -1,5 +1,6 @@
 'use client';
 
+import SafeHtml from '@/components/SafeHtml';
 import React, { useState, useMemo } from 'react';
 import { 
   Search, 
@@ -401,9 +402,7 @@ export default function FormationCatalogue() {
                     {course.title}
                   </h3>
 
-                  <p className="text-slate-500 text-xs sm:text-sm line-clamp-3 mb-4 font-normal leading-relaxed" dangerouslySetInnerHTML={{ __html: course.description }}>
-                    {/* {course.description || "Aucune description disponible pour cette formation."} */}
-                  </p>
+                  <SafeHtml as="p" className="text-slate-500 text-xs sm:text-sm line-clamp-3 mb-4 font-normal leading-relaxed" html={course.description} />
 
                   {/* Notification de Statut Détaillée quand inscrit */}
                   {isEnrolled && (

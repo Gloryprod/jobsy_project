@@ -1,5 +1,6 @@
 "use client";
 
+import SafeHtml from '@/components/SafeHtml';
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { 
@@ -87,7 +88,7 @@ export default function MissionConfirmationPage() {
             <h3 className="flex items-center gap-2 text-[#000080] font-black text-sm uppercase mb-3">
               <Info size={16} /> Instructions d&apos;intégration
             </h3>
-            <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: offer.onboarding_instructions?.replace(/\n/g, '<br />') || "Aucune instruction particulière spécifiée." }} />
+            <SafeHtml as="p" className="text-slate-600 text-sm leading-relaxed whitespace-pre-line" html={offer.onboarding_instructions?.replace(/\n/g, '<br />') || "Aucune instruction particulière spécifiée."} />
           </div>
 
           {/* ACTIONS */}

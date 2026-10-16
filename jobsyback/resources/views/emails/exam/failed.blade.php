@@ -1,19 +1,19 @@
 @component('mail::message')
-# Bonjour {{ $candidat->user->prenom }},
+# Bonjour {{ $candidatName }},
 
-Vos résultats pour la formation **{{ $course->title }}** sont désormais disponibles.
+Vos résultats pour la formation **{{ $courseTitle }}** sont désormais disponibles.
 
 Malheureusement, votre score actuel ne vous permet pas de valider cette certification pour le moment.
 
 @component('mail::panel')
 **Vos résultats :**
-* **Score obtenu :** {{ $enrollment->global_score }} points
+* **Score obtenu :** {{ $score }} / 100
 * **Statut :** Non validé
 @endcomponent
 
 Ne vous découragez pas ! L'apprentissage est un processus continu. Prenez le temps de revoir les modules de la formation et tentez à nouveau votre chance.
 
-@component('mail::button', ['url' => config('app.url') . '/courses/' . $course->id, 'color' => 'subtle'])
+@component('mail::button', ['url' => $retryUrl, 'color' => 'subtle'])
 Revoir la formation
 @endcomponent
 

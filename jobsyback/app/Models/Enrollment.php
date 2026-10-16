@@ -7,6 +7,9 @@ use Carbon\Carbon;
 
 class Enrollment extends Model
 {
+    /** Statuts que le recalcul de progression ne doit pas modifier. */
+    public const TERMINAL_STATUSES = ['certified', 'failed', 'pending_review'];
+
     protected $fillable = [
         'candidat_id',
         'course_id',
@@ -59,13 +62,14 @@ class Enrollment extends Model
             ->count();
 
         // 3. COMPTER LES QUIZ (QCM)
-        // Sur Jobsy, chaque module a 1 Quiz. Donc le total de quiz = le nombre de modules.
-        $totalQuiz = $moduleIds->count();
+        // Seuls les modules qui ont des questions ont un quiz (sinon la progression ne pouvait jamais atteindre 100 %)
+        $quizModuleIds = QuizQuestion::whereIn('module_id', $moduleIds)->distinct()->pluck('module_id');
+        $totalQuiz = $quizModuleIds->count();
 
         // Nombre de quiz validés (avec is_passed = true)
         $completedQuiz = ModuleResult::where('candidat_id', $this->candidat_id)
-            ->whereIn('module_id', $moduleIds)
-            ->where('is_passed', true)  
+            ->whereIn('module_id', $quizModuleIds)
+            ->where('is_passed', true)
             ->count();
 
         // 4. CALCUL FINAL DU POURCENTAGE
@@ -82,10 +86,15 @@ class Enrollment extends Model
 
         // 5. Sauvegarde dans la colonne de ta table enrollments
         // Assure-toi que le nom de ta colonne correspond bien (ex: progress_percentage ou progress)
-        $this->update([
-            'progress_percentage' => $progressPercentage,
-            'status' => $progressPercentage == 100 ? 'evaluation_ready' : 'learning'
-        ]); 
+        // Un statut terminal (certifié, échoué, en correction) n'est jamais écrasé par la progression :
+        // sinon un certificat devenait « invalide » sur la page publique dès qu'une leçon était revue
+        $data = ['progress_percentage' => $progressPercentage];
+
+        if (!in_array($this->status, self::TERMINAL_STATUSES, true)) {
+            $data['status'] = $progressPercentage == 100 ? 'evaluation_ready' : 'learning';
+        }
+
+        $this->update($data);
 
         return $progressPercentage;
     }

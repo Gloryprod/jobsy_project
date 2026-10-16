@@ -3,7 +3,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { CheckCircle2, PlayCircle, FileText, ArrowRight, HelpCircle, Award, ExternalLink, Download, Lock, Loader2 } from "lucide-react";
-import api from "@/lib/api";
+import api, { STORAGE_URL } from "@/lib/api";
 
 interface Question {
   id: number;
@@ -245,7 +245,7 @@ export default function LearningPage({capsuleCurrent, allCapsulesOrdered, course
                     <div className="space-y-4 animate-fadeIn">
                       <div className="aspect-video w-full bg-slate-950 rounded-2xl overflow-hidden shadow-md border border-slate-900">
                         <video 
-                          src={`${process.env.NEXT_PUBLIC_API_URL}/storage/${currentCapsule.video_url}`} 
+                          src={`${STORAGE_URL}/${currentCapsule.video_url}`} 
                           controls 
                           controlsList="nodownload"
                           className="w-full h-full object-contain"
@@ -276,7 +276,7 @@ export default function LearningPage({capsuleCurrent, allCapsulesOrdered, course
                         
                         <div className="flex items-center gap-2">
                           <a 
-                            href={`${process.env.NEXT_PUBLIC_API_URL}/storage/${currentCapsule.pdf_url}`} 
+                            href={`${STORAGE_URL}/${currentCapsule.pdf_url}`} 
                             target="_blank" 
                             className="flex items-center gap-1.5 py-1.5 px-3 bg-white border border-slate-200 text-slate-600 hover:text-slate-900 rounded-lg text-[11px] font-bold transition-all shadow-xs"
                           >
@@ -285,7 +285,7 @@ export default function LearningPage({capsuleCurrent, allCapsulesOrdered, course
                           </a>
 
                           <a 
-                            href={`${process.env.NEXT_PUBLIC_API_URL}/storage/${currentCapsule.pdf_url}`} 
+                            href={`${STORAGE_URL}/${currentCapsule.pdf_url}`} 
                             download
                             className="flex items-center gap-1.5 py-1.5 px-3 bg-[#000080] hover:bg-[#000080]/90 text-white rounded-lg text-[11px] font-black uppercase tracking-wider transition-all shadow-xs"
                           >
@@ -297,7 +297,7 @@ export default function LearningPage({capsuleCurrent, allCapsulesOrdered, course
 
                       <div className="flex-1 min-h-140 w-full bg-slate-100 rounded-2xl overflow-hidden border border-slate-200 shadow-xs relative">
                         <iframe 
-                          src={`${process.env.NEXT_PUBLIC_API_URL}/storage/${currentCapsule.pdf_url}#toolbar=1`}
+                          src={`${STORAGE_URL}/${currentCapsule.pdf_url}#toolbar=1`}
                           className="w-full h-full border-none rounded-2xl"
                           title={currentCapsule.title}
                         />
@@ -325,8 +325,9 @@ export default function LearningPage({capsuleCurrent, allCapsulesOrdered, course
                               <div 
                                 key={question.id} 
                                 className={`space-y-3 border-b border-slate-100 pb-5 last:border-0 last:pb-0 p-4 rounded-xl transition-all ${
-                                  qcmFinished 
-                                    ? isQuestionCorrect 
+                                  // Corrections renvoyées par l'API seulement si le quiz est réussi
+                                  qcmFinished && feedback
+                                    ? isQuestionCorrect
                                       ? "bg-green-50/30 border border-green-200" 
                                       : "bg-red-50/30 border border-red-200"
                                     : ""

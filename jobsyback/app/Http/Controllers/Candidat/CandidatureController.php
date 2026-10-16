@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Candidat;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ApplicationRequest;
+use App\Jobs\ScoreApplicationJob;
+use App\Models\Rank;
 use App\Models\Application;
 use App\Models\ApplicationAssessments;
 use App\Models\Candidat;
@@ -17,29 +19,41 @@ class CandidatureController extends Controller
 {
 
     public function apply_job(ApplicationRequest $request, Int $candidat_id, Int $mission_id, ApplicationAIService $aiService){
-        $mission = Mission::find($mission_id);
-        $candidat = Candidat::find($candidat_id);
+        $candidat = $request->user()->candidat;
 
-        if (!$mission || !$candidat) {
-            return apiResponse(
-                "Mission ou candidat introuvable !",
-                'error',
-                404
-            );
+        // On ne postule que pour soi-même
+        if (!$candidat || (int) $candidat->id !== $candidat_id) {
+            return apiResponse(null, 'Action non autorisée.', 'error', 403);
         }
 
-        $application = $mission->applications()->updateOrCreate(
-           [ 'candidat_id' => $candidat_id],
+        $mission = Mission::where('active', true)->whereNull('closed_at')->find($mission_id);
+
+        if (!$mission) {
+            return apiResponse(null, "Mission introuvable ou fermée.", 'error', 404);
+        }
+
+        // Rang minimum exigé par l'entreprise (E par défaut : ouvert à tous)
+        $requiredPoints = Rank::where('rank', $mission->min_rank_required ?: 'E')->value('points');
+        if ($requiredPoints !== null && (int) ($candidat->rank?->points ?? 0) < (int) $requiredPoints) {
+            return apiResponse(null, "Cette mission est réservée aux profils de rang {$mission->min_rank_required} ou supérieur.", 'error', 403);
+        }
+
+        $application = $mission->applications()->firstOrCreate(
+           [ 'candidat_id' => $candidat->id],
            [ 'status' => 'draft'],
         );
+
+        // Une candidature déjà soumise ne peut pas être recommencée (sinon la note IA pourrait être retentée à volonté)
+        if ($application->status !== 'draft') {
+            return apiResponse(null, "Vous avez déjà postulé à cette mission.", 'error', 409);
+        }
 
         $assessment = $application->assessment()->firstOrCreate([]);
 
         if (!$assessment->step_1_data) {
-            $motivationQuestionsJson = $aiService->generateMotivationQuestions($candidat, $mission);
-            
+            // Questions validées (ou questions de secours si l'IA est indisponible)
             $assessment->update([
-                'step_1_data' => json_decode($motivationQuestionsJson, true)
+                'step_1_data' => $aiService->generateMotivationQuestions($candidat, $mission)
             ]);
         }
 
@@ -59,22 +73,21 @@ class CandidatureController extends Controller
 
         $request->validate([
             'responses' => 'required|array',
+            'responses.*' => 'nullable|string|max:5000',
         ]);
 
-        Log::info($applicationId);
+        $application = $request->user()->candidat->applications()->find($applicationId);
 
-        $application = Application::find($applicationId);
+        if (!$application || !$application->assessment) {
+            return apiResponse(null, "Candidature introuvable !", 'error', 404);
+        }
 
-        if (!$application) {
-            return apiResponse(
-                "Candidature introuvable !",
-                'error',
-                404
-            );
+        // L'étape 1 n'est notée qu'une fois : après soumission, la candidature quitte l'état « draft »
+        if ($application->status !== 'draft') {
+            return apiResponse(null, "Cette étape a déjà été soumise.", 'error', 409);
         }
 
         $assessment = $application->assessment;
-        Log::info("Assessment " . $assessment);
         $candidat = $application->candidat;
 
         $step1Data = $assessment->step_1_data;
@@ -85,21 +98,15 @@ class CandidatureController extends Controller
             'step_1_data' => $step1Data
         ]);
 
-        if ($candidat->rank->rank === 'E' || $candidat->rank->rank === 'D') {
-
-            $analysis = json_decode($aiService->analyzeSimpleApplication($application));
+        // Profils opérationnels (rangs E/D) : l'entretien s'arrête à la motivation, notée en arrière-plan
+        if (in_array($candidat->rank?->rank, ['E', 'D'], true)) {
 
             $application->update([
-                'global_score' => $analysis->score,
-                'badge' => $analysis->badge,
-                'ai_summary' => $analysis->summary,
                 'status' => 'pending',
                 'completed_at' => now(),
             ]);
 
-            $assessment->update([
-                'ai_feedback_details' => $analysis->details
-            ]);
+            ScoreApplicationJob::dispatch($application->id, ScoreApplicationJob::SIMPLE);
 
             return apiResponse(
                 $application,
@@ -107,63 +114,51 @@ class CandidatureController extends Controller
                 'success',
                 200
             );
-            
+
         }
 
-        try {
-
-            if($application->mission->type_contrat === 'Mission Ponctuelle') {
-                $analysis = json_decode($aiService->analyzeSimpleApplication($application));
-
-                $application->update([
-                    'global_score' => $analysis->score,
-                    'badge' => $analysis->badge,
-                    'ai_summary' => $analysis->summary,
-                    'status' => 'pending',
-                    'completed_at' => now(),
-                ]);
-
-                $assessment->update([
-                    'ai_feedback_details' => $analysis->details
-                ]);
-            }
-
-
-            $questionsStep2 = $aiService->generateTechnicalQuestions($application);
-            
-            $assessment->update([
-                'step_2_data' => json_decode($questionsStep2, true)
+        // Mission ponctuelle : candidature déjà recevable après la motivation (note provisoire),
+        // la note complète remplacera celle-ci une fois l'étape technique répondue
+        if($application->mission->type_contrat === 'Mission Ponctuelle') {
+            $application->update([
+                'status' => 'pending',
+                'completed_at' => now(),
             ]);
 
-            return apiResponse(
-                [
-                    'next_questions' => $assessment->step_2_data['questions']
-                ],
-                "Étape 2 générée avec succès !",
-                'success',
-                200
-            );
-
-        } catch (\Exception $e) {
-            return apiResponse(
-                "Erreur génération étape 2",
-                'error',
-                500
-            );
+            ScoreApplicationJob::dispatch($application->id, ScoreApplicationJob::SIMPLE);
         }
 
-        
+        // Questions de l'étape 2 : nécessaires immédiatement (questions de secours si l'IA est indisponible)
+        $assessment->update([
+            'step_2_data' => $aiService->generateTechnicalQuestions($application->fresh(['mission', 'candidat.rank', 'assessment']))
+        ]);
+
+        return apiResponse(
+            [
+                'next_questions' => $assessment->step_2_data['questions']
+            ],
+            "Étape 2 générée avec succès !",
+            'success',
+            200
+        );
     }
 
-    public function finalize_assessment(Request $request, Int $applicationId, ApplicationAIService $aiService) {
-        $application = Application::find($applicationId);
+    public function finalize_assessment(Request $request, Int $applicationId) {
+        $request->validate([
+            'responses' => 'required|array',
+            'responses.*' => 'nullable|string|max:5000',
+        ]);
 
-        if (!$application) {
-            return apiResponse(
-                "Candidature introuvable !",
-                'error',
-                404
-            );
+        $application = $request->user()->candidat->applications()->find($applicationId);
+
+        if (!$application || !$application->assessment) {
+            return apiResponse(null, "Candidature introuvable !", 'error', 404);
+        }
+
+        // L'étape 2 doit avoir été générée et n'est notée qu'une seule fois
+        $step2 = $application->assessment->step_2_data;
+        if (empty($step2['questions']) || isset($step2['responses'])) {
+            return apiResponse(null, "Cette étape a déjà été soumise ou n'est pas disponible.", 'error', 409);
         }
 
         $assessment = $application->assessment;
@@ -175,19 +170,13 @@ class CandidatureController extends Controller
             'step_2_data' => $step2Data,
         ]);
 
-        $analysis = json_decode($aiService->analyzeFullApplication($application));
-
         $application->update([
-            'global_score' => $analysis->score,
-            'badge' => $analysis->badge,
-            'ai_summary' => $analysis->summary,
             'status' => 'pending',
             'completed_at' => now(),
         ]);
 
-        $assessment->update([
-            'ai_feedback_details' => $analysis->details
-        ]);
+        // Notation complète en arrière-plan (le front affiche la confirmation sans attendre la note)
+        ScoreApplicationJob::dispatch($application->id, ScoreApplicationJob::FULL);
 
         return apiResponse(
             $application,
@@ -197,7 +186,10 @@ class CandidatureController extends Controller
         );
     }
 
-    public function getApplications(Candidat $candidat) {
+    public function getApplications(Request $request, Candidat $candidat) {
+        if ((int) $request->user()->candidat?->id !== (int) $candidat->id) {
+            return apiResponse(null, 'Action non autorisée.', 'error', 403);
+        }
 
         $applications = $candidat->applications()
         ->with(['mission', 'assessment', 'mission_offers'])

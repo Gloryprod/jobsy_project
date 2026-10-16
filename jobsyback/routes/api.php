@@ -47,7 +47,7 @@ Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->midd
 Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:5,1');
 Route::post('logout', [AuthController::class, 'logout'])->middleware(['auth:sanctum', 'access.token']);
 Route::post('/webhooks/kkiapay', [WebhookController::class, 'handleKkiaPay']);
-Route::post('/webhooks/kkiapay/payouts', [WebhookController::class, 'handleKkiaPayPayouts']);
+Route::post('/webhooks/kkiapay/payouts', [WebhookController::class, 'handleKkiaPayPayouts'])->middleware('throttle:60,1');
 Route::post('/webhooks/kkiapay/deposits', [WebhookController::class, 'depositWebhook']);
 Route::get('/public_missions', [PublicMissionController::class, 'index']);
 Route::get('/certificates/verify/{hash}', [CertificateVerificationController::class, 'verify']);
@@ -56,7 +56,7 @@ Route::get('/courses/{courseId}/{hash}/certificate/download', [CertificateVerifi
 Route::post('/email/verification-notification', function (Request $request) {
     $request->user()->sendEmailVerificationNotification();
     return response()->json(['message' => 'Email de vérification envoyé']);
-})->middleware(['auth:sanctum'])->name('verification.send');
+})->middleware(['auth:sanctum', 'throttle:3,1'])->name('verification.send');
 
 Route::get('/auth/verify-email/{id}/{hash}', function ($id, $hash, Request $request) {
     $user = User::find($id);
@@ -74,31 +74,34 @@ Route::get('/auth/verify-email/{id}/{hash}', function ($id, $hash, Request $requ
         $user->markEmailAsVerified();
     }
 
-    return redirect(env('FRONTEND_URL') . '/email-verified');
+    // config() et non env() : env() renvoie null une fois la configuration mise en cache
+    return redirect(frontendUrl('/email-verified'));
 })->middleware('signed')->name('verification.verify');
 
 
 Route::post('/auth/resend-verification', function (Request $request) {
+    $request->validate(['email' => 'required|email']);
+
     $user = User::where('email', $request->email)->first();
 
-    if (!$user) {
-        return response()->json(['message' => 'User not found.'], 404);
+    if ($user && !$user->hasVerifiedEmail()) {
+        $user->sendEmailVerificationNotification();
     }
 
-    if ($user->hasVerifiedEmail()) {
-        return response()->json(['message' => 'Email already verified.'], 400);
-    }
-
-    $user->sendEmailVerificationNotification();
-    return response()->json(['message' => 'Verification link resent!']);
-});
+    // Même réponse dans tous les cas : ce formulaire ne doit pas révéler quels emails sont inscrits
+    return response()->json(['message' => 'Si un compte non vérifié correspond à cette adresse, un nouveau lien vient d\'être envoyé.']);
+})->middleware('throttle:3,1');
 
 Route::middleware(['auth:sanctum', 'access.token'])->get('/user', [AuthController::class, 'userProfile']);
 
 Route::middleware(['auth:sanctum' , 'access.token'])->group(function() {
     Route::get('/getFilterData', [GeneralController::class, 'getFilterData']);
-    Route::get('/filter', [GeneralController::class, 'filter']);
     Route::post('/mission-offers/{id}/update-status', [MissionTrackingController::class, 'updateStatus']);
+
+    // Notifications de l'utilisateur connecté, quel que soit son rôle (candidat, entreprise, admin)
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/notifications/unread', [NotificationController::class, 'unread']);
+    Route::patch('/notifications/mark-as-read', [NotificationController::class, 'markAsRead']);
 });
 
 Route::middleware(['auth:sanctum', 'role:JEUNE', 'access.token'])->group(function() {
@@ -108,9 +111,9 @@ Route::middleware(['auth:sanctum', 'role:JEUNE', 'access.token'])->group(functio
 
     Route::post('/update/info', [CandidatController::class, 'updateInfo']);
     Route::post('/update/contact', [CandidatController::class, 'updateContact']);
-    Route::post('/candidat/diplome', [CandidatController::class, 'createDiplome']);
-    Route::post('/candidat/formation', [CandidatController::class, 'createFormation']);
-    Route::post('/candidat/cv', [CandidatController::class, 'saveCv']);
+    Route::post('/candidat/diplome', [CandidatController::class, 'createDiplome'])->middleware('throttle:uploads');
+    Route::post('/candidat/formation', [CandidatController::class, 'createFormation'])->middleware('throttle:uploads');
+    Route::post('/candidat/cv', [CandidatController::class, 'saveCv'])->middleware(['throttle:ai', 'throttle:uploads']);
     Route::post('/candidat/concours', [CandidatController::class, 'saveConcours']);
     Route::post('/candidat/communaute', [CandidatController::class, 'saveCommunaute']);
 
@@ -127,9 +130,9 @@ Route::middleware(['auth:sanctum', 'role:JEUNE', 'access.token'])->group(functio
 
     Route::get('/liste_missions', [CandidatMissionController::class, 'index']); 
     Route::get('/show/{id}', [CandidatMissionController::class, 'show']); 
-    Route::post('/start_application/{candidat_id}/{mission_id}', [CandidatureController::class, 'apply_job']);
-    Route::post('/applications/{applicationId}/submit-step-one', [CandidatureController::class, 'submit_step_one']);
-    Route::post('/applications/{applicationId}/finalize', [CandidatureController::class, 'finalize_assessment']);
+    Route::post('/start_application/{candidat_id}/{mission_id}', [CandidatureController::class, 'apply_job'])->middleware('throttle:ai');
+    Route::post('/applications/{applicationId}/submit-step-one', [CandidatureController::class, 'submit_step_one'])->middleware('throttle:ai');
+    Route::post('/applications/{applicationId}/finalize', [CandidatureController::class, 'finalize_assessment'])->middleware('throttle:ai');
     Route::get('/missions/{candidat}/myapplications', [CandidatureController::class, 'getApplications']);
 
     Route::post('/candidat/update/password', [CandidatController::class, 'updatePassword']);
@@ -145,7 +148,7 @@ Route::middleware(['auth:sanctum', 'role:JEUNE', 'access.token'])->group(functio
     Route::get('/candidat/wallet', [WalletController::class, 'getWalletData']);
     Route::post('/candidat/withdraw', [WalletController::class, 'withdrawalRequest']);
 
-    Route::resource('/open/courses', CourseCatalogueController::class);
+    Route::resource('/open/courses', CourseCatalogueController::class)->only(['index']);
     Route::get('/get_modules/{course}', [CourseCatalogueController::class, 'getModules']);  
     Route::post('/candidat/formations/{id}/enroll', [CourseCatalogueController::class, 'enroll']);
     Route::get('/getCourse/{id}', [CourseWorkspaceController::class, 'getCourse']);
@@ -171,7 +174,7 @@ Route::middleware(['auth:sanctum', 'role:JEUNE', 'access.token'])->group(functio
     // Suivi de l'état de soumission de l'étudiant
     Route::get('/exam-submissions/project/{courseId}', [ExamSubmissionController::class, 'getStudentSubmission']);
 
-    Route::post('/upload-temp-file', [ExamSubmissionController::class, 'uploadTempFile']);
+    Route::post('/upload-temp-file', [ExamSubmissionController::class, 'uploadTempFile'])->middleware('throttle:uploads');
 
     Route::get('/courses/my-learnings', [CourseCatalogueController::class, 'myLearnings']);
 
@@ -185,7 +188,7 @@ Route::middleware(['auth:sanctum', 'role:JEUNE', 'access.token'])->group(functio
 
 Route::middleware(['auth:sanctum', 'role:ENTREPRISE', 'access.token'])->group(function() {
     Route::get('/entreprise/contact', [EntrepriseController::class, 'index']);
-    Route::post('/entreprise/infos/{id}', [EntrepriseController::class, 'update']);
+    Route::post('/entreprise/infos/{id}', [EntrepriseController::class, 'update'])->middleware('throttle:uploads');
     Route::post('/entreprise/contact/{id}', [EntrepriseController::class, 'updateContact']);
     Route::get('/showProfileCandidat/{id}', [CandidatController::class, 'showProfile']);
     Route::post('/missions/bulk-delete', [EntrepriseMissionController::class, 'bulkDelete']);
@@ -199,7 +202,7 @@ Route::middleware(['auth:sanctum', 'role:ENTREPRISE', 'access.token'])->group(fu
     Route::post('/entreprise/payments/initiate-kkiapay', [PaymentController::class, 'initiateKkiaPay']);
     Route::post('/entreprise/payments/lock_funds', [PaymentController::class, 'lockFunds']);
     Route::post('/entreprise/wallet/initiate-deposit', [PaymentController::class, 'initiateDeposit']);
-    Route::resource('/missions', EntrepriseMissionController::class);
+    Route::resource('/missions', EntrepriseMissionController::class)->except(['create', 'edit']);
     Route::get('/index', [DashboardController::class, 'index']);
     Route::get('/transactions-history', [DashboardController::class, 'transactionsHistory']);
 
@@ -217,16 +220,19 @@ Route::middleware(['auth:sanctum', 'role:ENTREPRISE', 'access.token'])->group(fu
 });
 
 Route::middleware(['auth:sanctum', 'role:ADMIN', 'access.token'])->group(function() {
+    // Annuaire complet des candidats (avec contacts) : réservé aux admins
+    Route::get('/filter', [GeneralController::class, 'filter']);
     Route::get('/infoProfileCandidat/{id}', [ApplicantController::class, 'showProfile']);
+    Route::post('/infoProfileCandidat/{id}/validate', [ApplicantController::class, 'validateProfile']);
     Route::get('/entreprises', [CompanyController::class, 'index']);
     Route::get('/entreprises/{id}/missions', [CompanyController::class, 'getMissionsEntreprise']);  
     Route::get('/candidats/withdrawals', [AdminWalletController::class, 'getApplicantsPendingWithdrawals']);  
     Route::post('/candidats/updateWithdrawalStatus/{id}', [AdminWalletController::class, 'updateWithdrawalStatus']);  
-    Route::resource('/courses', CourseController::class);
+    Route::resource('/courses', CourseController::class)->except(['create', 'edit']);
     Route::get('/getModules/{course}', [CourseController::class, 'getModules']);  
     Route::post('/storeModule', [CourseController::class, 'storeModule']);  
     Route::post('/editModule/{module}', [CourseController::class, 'editModule']);  
-    Route::resource('/modules', ModuleController::class);
+    Route::resource('/modules', ModuleController::class)->only(['show', 'destroy']);
 
     Route::get('final-exam-questions/{courseId}', [FinalExamQuestionController::class, 'index']);
     Route::get('getQuestions/{question}', [FinalExamQuestionController::class, 'show']);

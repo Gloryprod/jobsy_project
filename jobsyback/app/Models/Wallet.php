@@ -15,6 +15,12 @@ class Wallet extends Model
         "is_admin"
     ];
 
+    protected $casts = [
+        'balance' => 'float',
+        'balance_locked' => 'float',
+        'is_admin' => 'boolean',
+    ];
+
     public function transactions() {
         return $this->hasMany(Transaction::class);
     }

@@ -2,10 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\SanitizesHtmlFields;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ModuleRequest extends FormRequest
 {
+    use SanitizesHtmlFields;
+
+    protected array $htmlFields = ['description'];
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -31,7 +36,24 @@ class ModuleRequest extends FormRequest
             'lessons' => 'nullable|array',
             'lessons.*.title' => 'required|string',
             'lessons.*.type' => 'required|in:video,text,pdf,quiz_check',
-            'lessons.*.content' => 'required', // Peut être un string ou un fichier
+            // Texte, chemin déjà stocké, ou fichier. Un fichier n'est accepté que dans le format de la leçon :
+            // un HTML/SVG servi depuis /storage s'exécuterait sur le domaine de l'API, à côté des cookies de session.
+            'lessons.*.content' => [
+                'required',
+                function ($attribute, $value, $fail) {
+                    if (!$value instanceof \Illuminate\Http\UploadedFile) {
+                        return;
+                    }
+
+                    $index = explode('.', $attribute)[1] ?? null;
+                    $type = $this->input("lessons.{$index}.type");
+                    $allowed = ['pdf' => ['pdf'], 'video' => ['mp4', 'webm', 'mov', 'qt']][$type] ?? [];
+
+                    if (!in_array(strtolower((string) $value->guessExtension()), $allowed, true)) {
+                        $fail("Fichier refusé pour une leçon de type « {$type} » (formats acceptés : " . (implode(', ', $allowed) ?: 'aucun fichier') . ").");
+                    }
+                },
+            ],
             'lessons.*.duration_minutes' => 'required|integer',
             'lessons.*.order' => [
                 'required',

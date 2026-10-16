@@ -5,6 +5,7 @@ import IntroStep from "@/components/dashboardCandidat/application/IntroStep";
 import api from "@/lib/api";
 import useSWR from "swr";
 import {use} from "react";
+import { toast } from 'react-hot-toast';
 import { useUser } from '@/context/UserProvider';
 import { ThreeDots } from 'react-loader-spinner';
 import MotivationStep from "@/components/dashboardCandidat/application/MotivationStep";
@@ -77,8 +78,10 @@ export default function ApplicationPage({ params }: { params: Promise<{ id: stri
             setQuestions(response.data.data.questions);
             setApplication(response.data.data.application)
             setStep(1);
-        } catch (error) {
-            console.log("Erreur lors du démarrage de la candidature:", error);
+        } catch (error: unknown) {
+            // Ex. : rang insuffisant pour la mission, candidature déjà envoyée, mission fermée
+            const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+            toast.error(message || "Impossible de démarrer la candidature pour le moment.");
         }
     }
 

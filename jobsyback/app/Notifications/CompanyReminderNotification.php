@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class CompanyReminderNotification extends Notification
+class CompanyReminderNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -27,7 +27,8 @@ class CompanyReminderNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        // database : visible dans la cloche de l'espace entreprise
+        return ['mail', 'database'];
     }
 
     /**
@@ -42,7 +43,7 @@ class CompanyReminderNotification extends Notification
             ->line("Vous pouvez maintenant choisir de :")
             ->line("1. Clôturer le recrutement avec les candidats ayant accepté.")
             ->line("2. Sélectionner de nouveaux candidats parmi la liste d'attente.")
-            ->action('Gérer mes candidatures', url('/admin/missions/' . $this->mission->id))
+            ->action('Gérer mes candidatures', frontendUrl('/dashboard/entreprises/missions/' . $this->mission->id . '/confirmedApplicants'))
             ->salutation("L'équipe Recrutement");
     }
 
@@ -54,7 +55,11 @@ class CompanyReminderNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            //
+            'type' => 'offers_expired',
+            'mission_id' => $this->mission->id,
+            'mission_title' => $this->mission->title,
+            'pending_count' => $this->pendingCount,
+            'message' => "{$this->pendingCount} candidat(s) n'ont pas répondu à temps pour « {$this->mission->title} ».",
         ];
     }
 }

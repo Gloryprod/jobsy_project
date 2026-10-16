@@ -112,4 +112,16 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Cookies d'authentification (App\Support\AuthCookies)
+    |--------------------------------------------------------------------------
+    |
+    | strict (défaut) : front et API sur le même site (app.jobsy.bj / api.jobsy.bj).
+    | none : front sur un autre domaine (HTTPS obligatoire).
+    |
+    */
+
+    'cookie_same_site' => env('AUTH_COOKIE_SAMESITE', 'strict'),
+
 ];

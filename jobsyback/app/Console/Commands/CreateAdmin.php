@@ -35,7 +35,8 @@ class CreateAdmin extends Command
             'prenom' => 'Admin',
             'email' => $email,
             'password' => Hash::make($password),
-            'role' => 'admin',
+            'role' => 'ADMIN', // doit correspondre à RoleMiddleware (role:ADMIN)
+            'email_verified_at' => now(),
         ]);
 
         $this->info('Administrateur créé avec succès !');

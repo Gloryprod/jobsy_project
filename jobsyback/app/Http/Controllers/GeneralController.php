@@ -16,6 +16,7 @@ class GeneralController extends Controller
                 'categories' => Category::all(['id', 'name', 'color']),
                 'ranks' => Rank::orderBy('points', 'desc')->get(['id', 'rank', 'label', 'code_hexa']),
             ],
+            'Données de filtrage récupérées',
             'success',
             200
         );
@@ -44,6 +45,6 @@ class GeneralController extends Controller
         // On charge les relations et on pagine
         $results = $query->with(['skills.category', 'rank', 'user'])->paginate(15);
 
-        return apiResponse($results, 'success', 200);
+        return apiResponse($results, 'Candidats récupérés', 'success', 200);
     }
 }

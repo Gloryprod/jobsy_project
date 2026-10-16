@@ -9,7 +9,7 @@ class CustomResetPasswordNotification extends ResetPassword
 {
     public function toMail($notifiable)
     {
-        $frontendUrl = config('app.frontend_url');
+        $frontendUrl = rtrim(frontendUrl(), '/');
 
         $resetUrl = $frontendUrl . '/reset-password?token='
             . $this->token

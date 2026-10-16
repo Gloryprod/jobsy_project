@@ -1,19 +1,19 @@
 @component('mail::message')
-# Félicitations {{ $candidat->user->prenom }} ! 🎉
+# Félicitations {{ $candidatName }} ! 🎉
 
-Vous avez brillamment réussi l'évaluation pour la formation **{{ $course->title }}** !
+Vous avez brillamment réussi l'évaluation pour la formation **{{ $courseTitle }}** !
 
 @component('mail::panel')
 **Récapitulatif de vos performances :**
-* **Score global :** {{ $enrollment->global_score }} points
-* **Points XP gagnés :** +{{ $course->reward_xp }} XP
+* **Score global :** {{ $score }} / 100
+* **Points XP gagnés :** +{{ $rewardXp }} XP
 * **Statut :** Certifié
 @endcomponent
 
-Vos nouvelles compétences ont été automatiquement ajoutées à votre profil **Jobsy** pour maximiser votre visibilité auprès des recuteurs.
+Vos nouvelles compétences ont été automatiquement ajoutées à votre profil **Jobsy** pour maximiser votre visibilité auprès des recruteurs.
 
-@if($enrollment->certificate_hash)
-@component('mail::button', ['url' => config('app.url') . '/certificates/' . $enrollment->certificate_hash, 'color' => 'primary'])
+@if($certHash)
+@component('mail::button', ['url' => $certUrl, 'color' => 'primary'])
 Voir mon certificat
 @endcomponent
 @endif

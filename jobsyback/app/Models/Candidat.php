@@ -28,6 +28,10 @@ class Candidat extends Model
         'last_activity_at',
     ];
 
+    protected $casts = [
+        'is_validate' => 'boolean',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');

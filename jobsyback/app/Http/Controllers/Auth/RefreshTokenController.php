@@ -3,16 +3,19 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\AuthServices;
+use App\Support\AuthCookies;
 use Illuminate\Http\Request;
 use Laravel\Sanctum\PersonalAccessToken;
 
 class RefreshTokenController extends Controller
 {
-    public function refresh(Request $request)
+    public function refresh(Request $request, AuthServices $authService)
     {
-        $bearerToken = $request->bearerToken();
+        // Cookie httpOnly en priorité (front), en-tête Bearer pour les autres clients
+        $plainTextToken = $request->cookie(AuthCookies::REFRESH) ?: $request->bearerToken();
 
-        if (! $bearerToken) {
+        if (! $plainTextToken) {
             return apiResponse(
                 null,
                 'Refresh token manquant',
@@ -21,7 +24,7 @@ class RefreshTokenController extends Controller
             );
         }
 
-        $refreshToken = PersonalAccessToken::findToken($bearerToken);
+        $refreshToken = PersonalAccessToken::findToken($plainTextToken);
 
         if (
             ! $refreshToken ||
@@ -38,21 +41,18 @@ class RefreshTokenController extends Controller
 
         $user = $refreshToken->tokenable;
 
-        // ❌ Supprimer les anciens access tokens
+        // ❌ Supprimer les anciens access tokens, et le refresh token utilisé (rotation : il ne sert qu'une fois)
         $user->tokens()->where('type', 'access')->delete();
+        $refreshToken->delete();
 
-        // ✅ Créer un nouveau access token
-        $newAccessToken = $user->createToken('jobsy-access-token');
-        $newAccessToken->accessToken->update([
-            'type' => 'access',
-            'expires_at' => now()->addMinutes(30),
-        ]);
+        // ✅ Créer un nouveau couple de tokens
+        $tokens = $authService->issueTokens($user);
 
         return apiResponse(
-            [
-                'access_token' => $newAccessToken->plainTextToken
-            ],
+            null,
             'Token rafraîchi avec succès'
-        );
+        )
+            ->withCookie(AuthCookies::access($tokens['access']))
+            ->withCookie(AuthCookies::refresh($tokens['refresh']));
     }
 }

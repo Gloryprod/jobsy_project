@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { useUser } from '@/context/UserProvider';
 import { ThreeDots } from 'react-loader-spinner';
 import useSWR, { mutate } from 'swr';
-import api from '@/lib/api';
+import api, { STORAGE_URL } from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import PhoneInput from '@/components/forms/PhoneInput';
 import PageInfo from '@/components/PageInfo';
@@ -180,7 +180,7 @@ export default function Profile() {
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div className="flex items-center gap-4">
                             <div className="relative group w-20 h-20 rounded-full border-2 border-gray-100 overflow-hidden bg-gray-50">
-                                <Image src={`${process.env.NEXT_PUBLIC_API_URL}/storage/${logo}` || 'avatar.png'} alt="Logo" fill className="object-cover" unoptimized />
+                                <Image src={`${STORAGE_URL}/${logo}` || 'avatar.png'} alt="Logo" fill className="object-cover" unoptimized />
                                 <label className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white">
                                     <Camera size={20} />
                                     <span className="text-[10px] mt-1">Modifier</span>

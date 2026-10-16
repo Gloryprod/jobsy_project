@@ -39,8 +39,19 @@
             </div>
         @endif
 
+        @if(isset($confirmAction))
+            {{-- Confirmation explicite : les antivirus et filtres de messagerie ouvrent les liens des emails (GET) ;
+                 seul ce clic (POST protégé par CSRF) enregistre la réponse du candidat. --}}
+            <form method="POST" action="{{ $confirmAction }}" class="mb-4">
+                @csrf
+                <button type="submit" class="w-full {{ $type === 'decline' ? 'bg-slate-700 hover:bg-slate-800' : 'bg-emerald-600 hover:bg-emerald-700' }} text-white font-semibold text-sm px-6 py-3 rounded-xl transition-colors">
+                    {{ $confirmLabel }}
+                </button>
+            </form>
+        @endif
+
         <div class="pt-2">
-            <a href="/" class="inline-block bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm px-6 py-2.5 rounded-xl transition-colors">
+            <a href="{{ frontendUrl() }}" class="inline-block bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm px-6 py-2.5 rounded-xl transition-colors">
                 Retourner sur Jobsy
             </a>
         </div>

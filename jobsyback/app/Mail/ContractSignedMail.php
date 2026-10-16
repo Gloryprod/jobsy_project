@@ -10,19 +10,26 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class ContractSignedMail extends Mailable
+/**
+ * Contrat de mission envoyé au candidat et à l'entreprise.
+ * En file d'attente : le PDF est relu depuis le disque (on ne sérialise pas de binaire dans le job).
+ */
+class ContractSignedMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
+    public $application;
+    public string $contractPath;
+
     /**
      * Create a new message instance.
+     *
+     * @param string $contractPath chemin du PDF sur le disque « public » (ex. contrats/contrat_12.pdf)
      */
-    public $application;
-    public $pdfContent;
-    public function __construct($application, $pdfContent)
+    public function __construct($application, string $contractPath)
     {
         $this->application = $application;
-        $this->pdfContent = $pdfContent;
+        $this->contractPath = $contractPath;
     }
 
     /**
@@ -44,10 +51,6 @@ class ContractSignedMail extends Mailable
             view: 'emails.contrat',
             with: [
                 'poste' => $this->application->mission->title,
-                // 'entreprise' => $this->application->entreprise->nom_entreprise,
-                // 'salaire' => $this->application->job->salaire,
-                // 'date_debut' => $this->application->job->date_debut,
-                // Ajoute ici toutes les infos de la mission dont tu as besoin
             ],
         );
     }
@@ -60,7 +63,8 @@ class ContractSignedMail extends Mailable
     public function attachments(): array
     {
         return [
-            Attachment::fromData(fn () => $this->pdfContent, 'Contrat_Jobsy.pdf')
+            Attachment::fromStorageDisk('public', $this->contractPath)
+                ->as('Contrat_Jobsy.pdf')
                 ->withMime('application/pdf'),
         ];
     }
