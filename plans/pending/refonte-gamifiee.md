@@ -175,12 +175,37 @@ Ordre retenu : 0 → 1 → 2a → 2b → 2c → 3a → 3b → 4a → 4b → B1 �
 6. Une révision ratée peut être refaite une fois sans dépenser de nouveaux jetons.
 7. Les jetons n'expirent pas et ne se transfèrent pas entre comptes.
 
+## Barème des jetons proposé (17/10/2026, à valider par Gloria)
+
+Trois principes guident ce barème :
+- **Une seule révision par retour.** La vitalité ne baisse qu'après 14 jours d'absence et une révision réussie la remet à 100.
+- **La révision est gratuite pour un jeune actif.** Une mission validée ou deux formations terminées rapportent de quoi en payer une.
+- **De petits montants ronds**, faciles à payer en Mobile Money.
+
+| Élément | Proposition | Pourquoi |
+|---|---|---|
+| Coût d'une révision | **10 jetons** | Une révision réussie remet la vitalité à 100. Une révision ratée peut être refaite une fois sans payer |
+| Bienvenue (profil complété, CV analysé) | **+10 jetons**, une seule fois | La première révision est offerte |
+| Mission validée par la guilde | **+10 jetons** (en plus des 250 XP existants) | Une mission réelle paie une révision |
+| Formation terminée | **+5 jetons** | Deux formations paient une révision |
+| Pack Éclaireur | **10 jetons = 200 FCFA** (20 FCFA le jeton) | Une révision |
+| Pack Aventurier | **30 jetons = 500 FCFA** (environ 16,7 FCFA le jeton, −17 %) | Trois révisions |
+| Pack Champion | **70 jetons = 1 000 FCFA** (environ 14,3 FCFA le jeton, −29 %) | Pour les absences répétées |
+
+Ce que le barème évite volontairement :
+- **Gagner des jetons en se connectant ou en postulant.** On pourrait les accumuler sans rien accomplir, et ça encouragerait les candidatures en masse.
+- **Un abonnement.** Le paiement reste ponctuel.
+
+Garde-fou à l'achat : avant de payer, le Système affiche le solde. Si le jeune a déjà de quoi faire une révision, il le dit au lieu de pousser à acheter.
+
+Repères à confirmer :
+- 200 FCFA représentent environ 0,4 % du SMIG de 52 000 FCFA par mois (montant en vigueur depuis 2023 selon WageIndicator, à vérifier dans le décret).
+- Les frais KkiaPay sur Mobile Money seraient d'environ 1,5 à 2,2 % (estimation non officielle, à vérifier dans le contrat marchand). Il faut aussi vérifier le montant minimum d'un paiement KkiaPay, et s'il existe des frais fixes qui rendraient le pack à 200 FCFA peu rentable.
+
 ## Zones floues (à préciser au moment du lot concerné)
 
-- **Prix et barème des jetons** (lots J1 et J2), à fixer avec Gloria :
-  - le prix d'un pack en FCFA ;
-  - le coût d'une révision ;
-  - le nombre de jetons gagnés par mission validée et par formation terminée.
+- **Validation du barème des jetons** (lots J1 et J2) : la proposition ci-dessus est à valider par Gloria.
+- **Prix des formations de base** (lot C1) : c'est la principale source de revenu prévue. Ces prix sont à fixer à part.
 - **Conditions de vente des jetons** (lot J2) : il faut des conditions générales de vente et une règle de remboursement avant de vendre quoi que ce soit. C'est à faire relire par une personne compétente au Bénin.
 - **Contenu des formations de base** (lot C1) : il est écrit par l'équipe. Le lot J3 ne peut pas sortir sans au moins une formation de base et ses questions.
 - Les **statistiques de la fenêtre de statut** (lot 4a) : quelles données réelles alimentent la fiabilité, la réputation et le savoir ? Il existe peut-être des avis d'entreprises ; à vérifier dans l'API.
