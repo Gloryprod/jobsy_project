@@ -41,8 +41,12 @@ const COULEURS_STATUT: Record<TonStatut, string> = {
 };
 
 /** Statut écrit en toutes lettres : la couleur n'est jamais la seule information. */
-export function PastilleStatut({ ton, children }: { ton: TonStatut; children: ReactNode }) {
-  return <span className={cn("inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-xs font-bold", COULEURS_STATUT[ton])}>{children}</span>;
+export function PastilleStatut({ ton, children, className }: { ton: TonStatut; children: ReactNode; className?: string }) {
+  return (
+    <span className={cn("inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-xs font-bold", COULEURS_STATUT[ton], className)}>
+      {children}
+    </span>
+  );
 }
 
 /** Message d'erreur d'une section, avec un bouton pour recharger. */
