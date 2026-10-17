@@ -43,6 +43,37 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* ---------- Le Système : thème de la refonte gamifiée (plans/pending/refonte-gamifiee.md) ---------- */
+@theme {
+  --color-systeme-nuit: #060B26;
+  --color-systeme-panneau: #0A1236;
+  --color-systeme-lueur: #56D8FF;
+  --color-systeme-texte: #E2F7FF;
+  --color-systeme-attenue: #93B6CC;
+  --color-systeme-or: #F0E68C;
+  --color-systeme-alerte: #FF8A96;
+
+  /* Couleurs de rang : mêmes valeurs que ranks.code_hexa (RankSeeder), utilisées si l'API n'en fournit pas */
+  --color-rang-s: #7C3AED;
+  --color-rang-a: #DC2626;
+  --color-rang-b: #2563EB;
+  --color-rang-c: #16A34A;
+  --color-rang-d: #CA8A04;
+  --color-rang-e: #6B7280;
+
+  --animate-systeme-balayage: systeme-balayage 1.1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.15s 1 both;
+
+  @keyframes systeme-balayage {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(100%); }
+  }
+}
+
+@theme inline {
+  --font-systeme: var(--font-tektur), "Bahnschrift", "Segoe UI", system-ui, sans-serif;
+  --font-lisible: var(--font-atkinson), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -119,6 +150,37 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@layer components {
+  /* Fenêtre du Système : panneau sombre, trait lumineux et coins marqués. data-ton="recompense" ou "alerte" change le trait. */
+  .systeme-fenetre {
+    --systeme-trait: var(--color-systeme-lueur);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--systeme-trait);
+    border-radius: 4px;
+    background: linear-gradient(180deg, var(--color-systeme-panneau), var(--color-systeme-nuit));
+    color: var(--color-systeme-texte);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--systeme-trait) 10%, transparent),
+      0 0 28px color-mix(in srgb, var(--systeme-trait) 28%, transparent),
+      inset 0 0 24px color-mix(in srgb, var(--systeme-trait) 6%, transparent);
+  }
+  .systeme-fenetre[data-ton="recompense"] { --systeme-trait: var(--color-systeme-or); }
+  .systeme-fenetre[data-ton="alerte"] { --systeme-trait: var(--color-systeme-alerte); }
+  .systeme-fenetre::before,
+  .systeme-fenetre::after {
+    content: "";
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-color: var(--systeme-trait);
+    border-style: solid;
+    pointer-events: none;
+  }
+  .systeme-fenetre::before { top: 5px; left: 5px; border-width: 2px 0 0 2px; }
+  .systeme-fenetre::after { bottom: 5px; right: 5px; border-width: 0 2px 2px 0; }
 }
 
 @layer utilities {
