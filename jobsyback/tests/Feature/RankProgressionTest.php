@@ -124,4 +124,20 @@ class RankProgressionTest extends TestCase
         $this->assertSame(400, (int) $candidat->score);
         $this->assertSame('D', $candidat->rank->rank);
     }
+
+    public function test_la_migration_de_rattrapage_remet_les_rangs_existants_a_niveau(): void
+    {
+        $debutant = $this->candidat('E', 350);      // a déjà assez d'XP pour D
+        $avance = $this->candidat('D', 900);        // a déjà assez d'XP pour C
+        $diplome = $this->candidat('B', 900);       // rang de diplôme supérieur à son score : conservé
+        $nouveau = $this->candidat('E', 0);
+
+        (require database_path('migrations/2026_10_17_100000_sync_candidate_ranks_with_score.php'))->up();
+
+        $this->assertSame('D', $debutant->fresh()->rank->rank);
+        $this->assertSame('C', $avance->fresh()->rank->rank);
+        $this->assertSame('B', $diplome->fresh()->rank->rank);
+        $this->assertSame('E', $nouveau->fresh()->rank->rank);
+        Notification::assertNothingSent();
+    }
 }
