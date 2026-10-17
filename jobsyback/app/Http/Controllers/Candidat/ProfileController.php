@@ -47,38 +47,29 @@ class ProfileController extends Controller
             'last_activity_at' => $now,
         ]);
 
-        // Profil pas encore validé par un admin : rang de départ E
+        // Profil pas encore validé par un admin : le rang du diplôme attend la validation
         if (!$candidat->is_validate) {
+            if (!$candidat->rank) {
+                // Sans rang : celui que l'XP atteint (E au minimum). L'XP déjà gagnée n'est jamais remise à zéro.
+                $rangDeDepart = $rankService->rankFromScore((int) $candidat->score) ?? Rank::where('rank', 'E')->first();
 
-            $rankInfo = Rank::where('rank', "E")->first();
-
-            if ($rankInfo) {
-                if(!$candidat->rank){
-                    $candidat->update([
-                        'rank_id' => $rankInfo->id,
-                        'score' => $rankInfo->points
-                    ]);
+                if ($rangDeDepart) {
+                    $candidat->update(['rank_id' => $rangDeDepart->id]);
                 }
-
-                return apiResponse(
-                    $candidat->with('rank', 'skills')->find($candidat->id),
-                    'Profil mis à jour avec le rang' ,
-                    'success'
-                );
             }
-        }
 
-        if (!CvDatas::where('candidat_id', $candidat->id)->exists()) {
             return apiResponse(
-                $candidat->id,
-                'Données de CV non trouvées, veuillez réessayer le téléchargement de votre CV.',
-                'error',
-                404
+                $candidat->with('rank', 'skills')->find($candidat->id),
+                'Profil mis à jour avec le rang',
+                'success'
             );
         }
 
-        // Profil validé : rang déduit du dernier diplôme du CV (uniquement à la hausse)
-        $rankService->applyCvRank($candidat);
+        // Profil validé : rang déduit du dernier diplôme du CV (uniquement à la hausse). Sans analyse de CV
+        // (CV pas encore lu ou analyse en échec), le profil garde son rang au lieu de bloquer le tableau de bord.
+        if (CvDatas::where('candidat_id', $candidat->id)->exists()) {
+            $rankService->applyCvRank($candidat);
+        }
 
         return apiResponse(
             $candidat->with('rank', 'skills')->find($candidat->id),
