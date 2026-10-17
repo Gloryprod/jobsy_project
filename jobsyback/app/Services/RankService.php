@@ -5,12 +5,49 @@ namespace App\Services;
 use App\Models\Candidat;
 use App\Models\CvDatas;
 use App\Models\Rank;
+use App\Notifications\RankPromotedNotification;
 
 /**
- * Rang d'un candidat déduit de son dernier diplôme (données CV extraites par l'IA).
+ * Rang d'un candidat : le diplôme du CV fixe le rang de départ, puis l'expérience réelle (score)
+ * le fait monter dès qu'elle atteint le seuil d'un rang supérieur. Le rang ne descend jamais.
  */
 class RankService
 {
+    /**
+     * Rang le plus élevé dont le seuil (ranks.points) est atteint par ce score.
+     */
+    public function rankFromScore(int $score): ?Rank
+    {
+        return Rank::where('points', '<=', max(0, $score))->orderByDesc('points')->first();
+    }
+
+    /**
+     * À appeler après chaque gain d'XP (mission validée, formation certifiée).
+     * Monte le candidat au rang que son score atteint, sans jamais le faire descendre
+     * (un rang obtenu par diplôme reste acquis), et le prévient par une notification.
+     *
+     * @return bool true si le candidat a changé de rang
+     */
+    public function syncRankWithScore(Candidat $candidat): bool
+    {
+        $cible = $this->rankFromScore((int) $candidat->score);
+        $actuel = $candidat->rank()->first();
+
+        if (!$cible || ($actuel && $cible->points <= $actuel->points)) {
+            return false;
+        }
+
+        $candidat->update(['rank_id' => $cible->id]);
+        $candidat->setRelation('rank', $cible);
+
+        // Envoyée après la validation de la transaction en cours, s'il y en a une
+        $candidat->user?->notify(
+            (new RankPromotedNotification($actuel?->rank, $cible->rank, (int) $candidat->score))->afterCommit()
+        );
+
+        return true;
+    }
+
     /**
      * Rang correspondant au diplôme le plus récent du CV, ou null si le CV n'a pas encore été analysé.
      *
