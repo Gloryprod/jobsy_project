@@ -145,6 +145,50 @@ Un lot n'est terminé qu'une fois fusionné, déployé par Vercel et vérifié s
 
 Ordre retenu : 0 → 1 → 2a → 2b → 2c → 3a → 3b → 4a → 4b → B1 → 4c → 5 → J1 → J2 → J3 → J4 → 6a → 6b → 7 → 8. Les lots 2, 3, 5, 6 et 7 ne dépendent que du lot 0. Ils peuvent changer d'ordre si une priorité change. Le lot B2 du premier plan (« vitalité sans punition ») est remplacé par J3.
 
+## Lot 1 : le QG candidat (plan détaillé du 17/10/2026)
+
+**Objectif.** La page `/dashboard/candidats` montre d'un coup d'œil trois choses : le statut (rang, progression vers le rang suivant), la prochaine action (quêtes du jour) et le suivi (candidatures, formations, propositions).
+
+**Données.** Uniquement des routes d'API existantes, sans nouvelle route :
+
+| Route | Ce qu'elle fournit |
+|---|---|
+| `GET /candidat/profile-elements` | rang (`rank`, `code_hexa`, `points`), `score`, `vitality`, `streak_count`, `domaine_competence`, `skills` |
+| `GET /missions/{candidat}/myapplications` | candidatures, avec la mission et l'offre (`mission_offers`) |
+| `GET /courses/my-learnings` | inscriptions aux formations, avec la formation |
+| `GET /candidat/proposals` | propositions des entreprises. La base n'a **pas de date limite** pour elles, donc pas de compte à rebours |
+
+**Quêtes du jour** : 3 au plus, dans cet ordre de priorité.
+1. **Offre à confirmer.** Candidature acceptée, offre sans réponse, délai non dépassé. Lien vers `/dashboard/candidats/missions/offers/{id}`, avec un compte à rebours sur `expires_at`.
+2. **Examen prêt.** Formation au statut `evaluation_ready`. Lien vers l'espace de formation.
+3. **Candidature à finaliser.** Brouillon dont la date limite de la mission n'est pas dépassée.
+4. **Formation en cours.** Continuer, avec sa progression et l'XP de récompense.
+5. **Profil sans compétences.** Déposer ou mettre à jour le CV.
+6. **Sinon.** Explorer les missions.
+
+**Corrections incluses.**
+- La barre d'XP montre la vraie progression vers le rang suivant (`lib/progression.ts`).
+- Plus de vitalité à 85 ni de série à 3 inventées : sans donnée, la ligne ne s'affiche pas.
+- Liens réparés : les anciens liens `/dashboard/candidats/courses…` menaient à une page inexistante. Ils deviennent `/dashboard/candidats/formations/{id}/workspace` et `/dashboard/candidats/formations`.
+- Les missions validées comptent les statuts `validated` et `completed`, puisque l'XP est accordée à `validated`.
+- États prévus pour le chargement (squelette), l'erreur (bouton « Réessayer ») et l'absence de données (avec une action).
+
+**Fichiers.**
+- `app/dashboard/candidats/page.tsx`
+- `components/dashboardCandidat/qg/` : `QGCandidat`, `FenetreStatut`, `QuetesDuJour`, `JournalQuetes`, `Donjons`, `Invitations`, `CarteRealite`, `types`, `quetes` (calcul des quêtes)
+
+**Vérification.**
+- `tsc`, ESLint sur les fichiers du lot, puis `npm run build`.
+- API locale (SQLite) avec un compte de test dont les données déclenchent chaque quête, plus un compte neuf sans données.
+- Captures à 375 px, à 1280 px, et avec animations réduites.
+- Aucun débordement, aucune erreur dans la console.
+- Chaque lien mène à une route qui existe.
+
+**Critères d'acceptation.**
+- Rang, progression et première quête sont visibles en haut de page sur téléphone et dans le premier écran sur ordinateur.
+- Aucune valeur inventée.
+- Aucun lien cassé.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -221,10 +265,18 @@ Repères à confirmer :
 
 - D4 (lot 0) : pas de « niveau » séparé à l'intérieur d'un rang pour l'instant. La barre de progression vers le rang suivant joue ce rôle, et un seul axe de progression est plus facile à comprendre (critère 1). Cette décision est facile à revoir au lot 4a si le test avec les jeunes le demande.
 - D5 (lot 0) : les nouvelles polices (`font-systeme`, `font-lisible`) ne servent qu'aux écrans refondus. La police de base du site (Geist) ne change pas avant que tous les écrans soient passés au kit.
+- D6 (lot 1) : le QG est un nouveau composant (`components/dashboardCandidat/qg/`). `DashboardHome.tsx` n'est plus affiché, mais il n'est ni modifié ni supprimé. Gloria travaille dessus, ce qui évite les conflits, et sa suppression reste sa décision.
+- D7 (lot 1) : l'en-tête et la navigation candidat ne changent pas encore. Renommer « Missions » en « Portails » avant que l'écran des missions soit refait créerait une incohérence. Chaque intitulé changera avec son lot, et la navigation sera refaite au lot 8.
+- D8 (lot 1) : les quêtes du jour sont calculées côté front, à partir des routes existantes, par une fonction pure (`components/dashboardCandidat/qg/quetes.ts`). Une route d'API dédiée ne se justifiera que si les règles deviennent trop lourdes pour le navigateur.
 
 ## Avancement
 
 | Lot | Statut | PR | Vérification |
 |---|---|---|---|
 | Plan | Validé le 17/10/2026 | — | — |
-| 0 | Prêt pour la PR | — | Types et build verts, captures du catalogue `/systeme` à 375 px et 1280 px |
+| 0 | Branche `design/lot-0-fondations` poussée, PR à ouvrir | — | Types et build verts, captures du catalogue `/systeme` à 375 px et 1280 px |
+| 1 | Prêt sur `design/lot-1-qg` | — | Types, lint et build verts. API locale (SQLite) avec deux comptes : un compte actif qui déclenche chaque quête, un compte neuf. Captures à 375 px, à 1280 px et avec animations réduites : aucun débordement, aucune erreur dans la console, aucun lien cassé |
+
+Constats sur l'API faits pendant le lot 1, à corriger côté back :
+- `GET /candidat/proposals` renvoie `mission.budget`, mais la colonne s'appelle `reward`. Le montant d'une proposition est donc toujours vide.
+- `Enrollment` déclare `enrolled_at` dans `$fillable`, mais cette colonne n'existe pas dans la table `enrollments`.

@@ -5,4 +5,4 @@ export { BarreProgression } from "./BarreProgression";
 export { LignesValeurs, type LigneValeur } from "./LignesValeurs";
 export { BoutonSysteme, LienSysteme } from "./BoutonSysteme";
 export { MessageSysteme } from "./MessageSysteme";
-export { Echeance, formaterEcheance } from "./Echeance";
+export { Echeance, formaterEcheance, useMaintenant } from "./Echeance";

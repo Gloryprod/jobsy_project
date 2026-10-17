@@ -13,13 +13,19 @@ const instantNavigateur = () => Math.floor(Date.now() / PAS_MS);
 // Côté serveur, pas d'heure : le texte n'est calculé que dans le navigateur, dans le bon fuseau
 const instantServeur = () => null;
 
+/** Heure du navigateur en millisecondes (précise à 10 secondes près), ou null pendant le rendu serveur. */
+export function useMaintenant(): number | null {
+  const instant = useSyncExternalStore(abonnerHorloge, instantNavigateur, instantServeur);
+  return instant === null ? null : instant * PAS_MS;
+}
+
 /**
  * « Avant 18 h 00, dans 5 h 12 » : uniquement pour un délai réel venant de l'API (expires_at…).
  */
 export function Echeance({ date, className }: { date: string | Date; className?: string }) {
-  const instant = useSyncExternalStore(abonnerHorloge, instantNavigateur, instantServeur);
+  const maintenant = useMaintenant();
   const cible = new Date(date);
-  const texte = instant === null || Number.isNaN(cible.getTime()) ? null : formaterEcheance(cible, new Date(instant * PAS_MS));
+  const texte = maintenant === null || Number.isNaN(cible.getTime()) ? null : formaterEcheance(cible, new Date(maintenant));
 
   // L'espace est réservé avant le calcul pour que la mise en page ne saute pas
   return <span className={className}>{texte ?? <>&nbsp;</>}</span>;
