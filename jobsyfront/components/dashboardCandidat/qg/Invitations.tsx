@@ -36,7 +36,7 @@ export function Invitations({ propositions, erreur, reessayer }: Props) {
         <ul className="grid gap-3">
           {triees.slice(0, NOMBRE_AFFICHE).map((proposition) => {
             const statut = STATUTS[proposition.status] ?? { libelle: proposition.status, ton: "neutre" as TonStatut };
-            const budget = formaterFcfa(proposition.mission?.budget);
+            const montant = formaterFcfa(proposition.mission?.reward);
             const recue = formaterDateCourte(proposition.sent_at);
             return (
               <li key={proposition.id} className="grid gap-1.5 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0">
@@ -46,7 +46,7 @@ export function Invitations({ propositions, erreur, reessayer }: Props) {
                 </div>
                 <p className="text-sm text-slate-700">
                   {proposition.mission?.title}
-                  {budget ? `, ${budget}` : ""}
+                  {montant ? `, ${montant}` : ""}
                 </p>
                 {recue && <p className="text-xs text-slate-500">Reçue le {recue}</p>}
                 {proposition.status === "pending" && (

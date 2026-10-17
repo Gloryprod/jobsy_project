@@ -58,6 +58,7 @@ export type Proposition = {
   subject: string;
   message: string;
   sent_at?: string | null;
-  mission: { id: number | null; title: string; budget?: number | string | null; location?: string | null };
+  /** reward : montant de la mission (corrigé dans l'API, la réponse renvoyait « budget », toujours vide) */
+  mission: { id: number | null; title: string; reward?: number | string | null; location?: string | null };
   entreprise: { nom_entreprise: string; logo?: string | null };
 };

@@ -277,6 +277,6 @@ Repères à confirmer :
 | 0 | Branche `design/lot-0-fondations` poussée, PR à ouvrir | — | Types et build verts, captures du catalogue `/systeme` à 375 px et 1280 px |
 | 1 | Prêt sur `design/lot-1-qg` | — | Types, lint et build verts. API locale (SQLite) avec deux comptes : un compte actif qui déclenche chaque quête, un compte neuf. Captures à 375 px, à 1280 px et avec animations réduites : aucun débordement, aucune erreur dans la console, aucun lien cassé |
 
-Constats sur l'API faits pendant le lot 1, à corriger côté back :
-- `GET /candidat/proposals` renvoie `mission.budget`, mais la colonne s'appelle `reward`. Le montant d'une proposition est donc toujours vide.
-- `Enrollment` déclare `enrolled_at` dans `$fillable`, mais cette colonne n'existe pas dans la table `enrollments`.
+Constats sur l'API faits pendant le lot 1, corrigés sur la branche `fix/api-propositions-inscriptions` (PR séparée, indépendante de la refonte) :
+- `GET /candidat/proposals` renvoyait `mission.budget`, une colonne qui n'existe pas : le montant était toujours vide. La réponse donne maintenant `mission.reward`, et le QG lit ce champ.
+- `Enrollment` déclarait `enrolled_at` dans `$fillable`, une colonne absente de la table. Le champ est retiré, et un test vérifie désormais, pour tous les modèles, que chaque attribut de `$fillable` existe en base.
