@@ -60,4 +60,13 @@ class Mission extends Model
             ->exists();
     }
 
+    /**
+     * La date limite est une date sans heure : la mission accepte des candidatures jusqu'à la fin de ce jour.
+     * Sans date limite, la mission reste ouverte tant qu'elle est active et non clôturée.
+     */
+    public function isPastDeadline(): bool
+    {
+        return $this->deadline !== null && now()->greaterThan($this->deadline->copy()->endOfDay());
+    }
+
 }
