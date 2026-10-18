@@ -124,7 +124,7 @@ Un lot n'est terminé qu'une fois fusionné, déployé par Vercel et vérifié s
 | 0 | **Fondations du Système** : jetons (couleurs, typos, mouvement) dans `app/globals.css`, polices dans `app/layout.tsx`, kit `components/systeme/`, calcul de progression `lib/progression.ts`, catalogue interne `/systeme` (non indexé), plan versionné dans `plans/` | M | Décisions 1, 6 et 8 |
 | 1 | **Le QG candidat** : réécriture de `DashboardHome.tsx` avec le kit, suppression des valeurs inventées et du code commenté, en-tête et navigation candidat | M | Lot 0, accord de Gloria (décision 5) |
 | 2a | **Portails** : liste des missions, détail, verrou de rang | M | Lot 0 |
-| 2b | **Épreuve d'entrée** : les 5 étapes de candidature | S | 2a |
+| 2b | **Épreuve d'entrée** : les 5 étapes de candidature. À corriger au passage : aux étapes 1 et 2, la page n'affiche pas les erreurs de l'API, qui partent seulement dans la console. Le candidat ne voit donc pas, par exemple, le refus d'un brouillon envoyé après la date limite | S | 2a |
 | 2c | **Invitations de guilde et journal de quêtes** : propositions, offres confirmées | M | 2a |
 | 3a | **Donjons** : catalogue et carte des modules | M | Lot 0 |
 | 3b | **Combat et boss** : leçons, quiz, examen final, projet, certification | M | 3a |
@@ -188,6 +188,55 @@ Ordre retenu : 0 → 1 → 2a → 2b → 2c → 3a → 3b → 4a → 4b → B1 �
 - Rang, progression et première quête sont visibles en haut de page sur téléphone et dans le premier écran sur ordinateur.
 - Aucune valeur inventée.
 - Aucun lien cassé.
+
+## Lot 2a : les Portails (plan détaillé du 17/10/2026)
+
+**Objectif.** Sur `/dashboard/candidats/missions`, le candidat voit en un coup d'œil :
+- les missions ouvertes à son rang ;
+- celles qui lui sont encore fermées, et ce qui lui manque pour les ouvrir ;
+- celles où il a déjà postulé.
+
+Il peut lire le détail et entrer dans l'épreuve d'entrée (la candidature) sans quitter la liste.
+
+**Données.** Uniquement des routes existantes :
+
+| Source | Ce qu'elle fournit |
+|---|---|
+| `GET /liste_missions` | missions actives et non clôturées, avec l'entreprise, `min_rank_required`, `reward`, `deadline`, `type_contrat`, `skills` |
+| `GET /missions/{candidat}/myapplications` | candidatures, partagées avec le QG |
+| Utilisateur connecté (`/user`) | rang et score du candidat |
+
+**Règles d'affichage.**
+- **Verrou de rang.** Une mission est verrouillée si le seuil de son rang minimum dépasse celui du rang du candidat. C'est la même règle que l'API (`CandidatureController`). Le verrou dit le rang requis, le rang actuel et l'XP qui manque. Depuis le lot B1, ce manque est réel.
+- **Règle de Gloria conservée.** Aux rangs E et D, seules les missions ponctuelles sont proposées. Un message le dit (« les CDI et CDD s'ouvrent à partir du rang C ») au lieu de les cacher sans explication.
+- **Missions passées.** Une mission dont la date limite est passée (fin de journée) n'est pas affichée.
+- **Déjà postulé.** Une mission où le candidat a déjà postulé affiche son statut et l'action utile (finaliser, voir l'offre), et non « Postuler ».
+- **Ordre.** D'abord les portails ouverts, puis ceux où le candidat a déjà postulé, puis les portails verrouillés.
+
+**Corrections incluses.**
+- La recherche ne marchait pas aux rangs E et D.
+- Le montant s'affichait brut, par exemple « 45000.00 F ».
+- La fenêtre de détail n'avait pas de bouton pour postuler, ne se fermait ni avec Échap ni en cliquant à côté, et le focus clavier n'y restait pas.
+- La navigation vers la candidature rechargeait toute la page (`window.location`).
+- Le texte annonçait « des centaines de quêtes », un chiffre inventé.
+
+**Fichiers.**
+- `app/dashboard/candidats/missions/page.tsx`, qui garde l'export du type `Mission` utilisé par la page publique `app/missions`.
+- `components/dashboardCandidat/portails/` : `PortailsMissions`, `CartePortail`, `DetailPortail`, `regles` et `types`.
+
+**Vérification.** Même méthode qu'au lot 1, avec l'API locale et des missions supplémentaires :
+- des rangs minimums de E à B ;
+- des CDI et des CDD ;
+- une mission dont la date limite est passée ;
+- des candidatures existantes.
+
+On contrôle en plus le détail au clavier (ouverture, Échap, retour du focus).
+
+**Critères d'acceptation.**
+- Un portail verrouillé ne propose jamais « Postuler ».
+- Le montant est en FCFA lisibles.
+- La recherche fonctionne à tous les rangs.
+- Le détail est utilisable entièrement au clavier.
 
 ## Décisions prises le 17/10/2026
 
@@ -268,6 +317,12 @@ Repères à confirmer :
 - D6 (lot 1) : le QG est un nouveau composant (`components/dashboardCandidat/qg/`). `DashboardHome.tsx` n'est plus affiché, mais il n'est ni modifié ni supprimé. Gloria travaille dessus, ce qui évite les conflits, et sa suppression reste sa décision.
 - D7 (lot 1) : l'en-tête et la navigation candidat ne changent pas encore. Renommer « Missions » en « Portails » avant que l'écran des missions soit refait créerait une incohérence. Chaque intitulé changera avec son lot, et la navigation sera refaite au lot 8.
 - D8 (lot 1) : les quêtes du jour sont calculées côté front, à partir des routes existantes, par une fonction pure (`components/dashboardCandidat/qg/quetes.ts`). Une route d'API dédiée ne se justifiera que si les règles deviennent trop lourdes pour le navigateur.
+- D9 (lot 2a) : la navigation garde « Missions », un mot clair pour un nouvel utilisateur (couche réalité). « Portail » n'apparaît que dans les fenêtres du Système. Cette décision complète D7.
+- D10 (lot 2a) : le badge de correspondance IA (`MissionMatchBadge`) ne s'affiche que dans le détail d'une mission. Il fait un appel d'API par mission, et sur la liste cela faisait autant d'appels que de cartes, ce qui coûte cher en 3G.
+- D11 (lot 2a) : une mission dont la date limite est passée n'est plus affichée dans la liste. Le porteur a décidé le 18/10/2026 que l'API la refuse aussi (branche `fix/api-candidature-date-limite`) :
+  - plus de candidature démarrée ni de brouillon envoyé après la fin du jour limite ;
+  - une candidature reçue à temps peut toujours compléter son étape technique.
+- D12 (lot B1) : en plus du rang qui monte à chaque gain d'XP, une migration de rattrapage met à niveau, une seule fois, les candidats qui avaient déjà assez de score. En complément, le profil d'un candidat validé se charge même sans analyse de CV. Il répondait 404, ce qui mettait tout le tableau de bord en erreur.
 
 ## Avancement
 
@@ -276,6 +331,10 @@ Repères à confirmer :
 | Plan | Validé le 17/10/2026 | — | — |
 | 0 | Branche `design/lot-0-fondations` poussée, PR à ouvrir | — | Types et build verts, captures du catalogue `/systeme` à 375 px et 1280 px |
 | 1 | Prêt sur `design/lot-1-qg` | — | Types, lint et build verts. API locale (SQLite) avec deux comptes : un compte actif qui déclenche chaque quête, un compte neuf. Captures à 375 px, à 1280 px et avec animations réduites : aucun débordement, aucune erreur dans la console, aucun lien cassé |
+| B1 | Prêt sur `feat/api-rang-par-xp` (back seul, depuis `main`) | — | 8 tests ajoutés (`RankProgressionTest` et `ProfileRankTest`), qui échouent sans le changement. Suite complète : 97 tests |
+| Date limite | Prêt sur `fix/api-candidature-date-limite` (back seul, depuis `main`) | — | 5 tests ajoutés (`ApplicationDeadlineTest`) : les 3 cas de refus échouent sans la règle. `MissionFactory` corrigée (sa date figée au 31/10/2026 aurait fait échouer les tests à partir de novembre). Suite complète : 94 tests |
+| API réunie | Les 3 branches d'API fusionnées localement, à titre de vérification | — | 105 tests, aucun conflit |
+| 2a | Prêt sur `design/lot-2a-portails` (après le lot 1) | — | Types, lint et build verts. Règles testées sur des cas types. API locale avec 12 missions (rangs E à B, CDI et CDD, missions passées), deux comptes. Vérifié : verrous et manques d'XP exacts, recherche sans accents, règle CDI/CDD, missions passées masquées. Détail au clavier : focus gardé, Échap, retour du focus sur le bouton. Pas de « Postuler » sur un portail verrouillé. L'épreuve d'entrée mène à la candidature. À 375 px : aucun débordement, fenêtre à 16 px des bords. Aucune erreur dans la console, aucun lien cassé |
 
 Constats sur l'API faits pendant le lot 1, corrigés sur la branche `fix/api-propositions-inscriptions` (PR séparée, indépendante de la refonte) :
 - `GET /candidat/proposals` renvoyait `mission.budget`, une colonne qui n'existe pas : le montant était toujours vide. La réponse donne maintenant `mission.reward`, et le QG lit ce champ.
