@@ -108,6 +108,19 @@ class CandidatProposalResponseTest extends TestCase
         $this->assertSame('declined', $this->proposition->fresh()->status);
     }
 
+    public function test_la_liste_indique_si_la_mission_est_fermee(): void
+    {
+        $this->withHeaders($this->bearerFor($this->candidat->user))->getJson('/api/candidat/proposals')
+            ->assertOk()
+            ->assertJsonPath('data.0.mission.active', true)
+            ->assertJsonPath('data.0.mission.closed_at', null);
+
+        $this->mission->update(['closed_at' => now()]);
+
+        $reponse = $this->withHeaders($this->bearerFor($this->candidat->user))->getJson('/api/candidat/proposals')->assertOk();
+        $this->assertNotNull($reponse->json('data.0.mission.closed_at'));
+    }
+
     public function test_le_lien_de_l_email_applique_la_meme_regle_de_mission_fermee(): void
     {
         $this->mission->update(['active' => false]);

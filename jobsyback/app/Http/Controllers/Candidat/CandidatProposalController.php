@@ -55,6 +55,9 @@ class CandidatProposalController extends Controller
                     'reward' => $proposal->mission->reward ?? null,
                     'location' => $proposal->mission->location ?? null,
                     'deadline' => $proposal->mission->deadline ?? null,
+                    // Une mission désactivée ou clôturée refuse l'acceptation (ProposalResponseService) : le front le dit d'avance
+                    'active' => (bool) ($proposal->mission->active ?? false),
+                    'closed_at' => $proposal->mission->closed_at ?? null,
                 ],
 
                 // Infos de l'entreprise
