@@ -238,6 +238,71 @@ On contrôle en plus le détail au clavier (ouverture, Échap, retour du focus).
 - La recherche fonctionne à tous les rangs.
 - Le détail est utilisable entièrement au clavier.
 
+## Lot 2b : l'Épreuve d'entrée (plan détaillé du 18/10/2026)
+
+**Objectif.** La candidature (`/dashboard/candidats/missions/{id}/application`) devient l'épreuve d'entrée du portail. Le candidat sait à tout moment :
+- où il en est, et combien d'étapes il reste ;
+- ce qui se passe s'il s'arrête ;
+- pourquoi une étape échoue, et comment réessayer.
+
+**Ce que fait réellement l'API**, que l'écran doit suivre (`CandidatureController`) :
+
+| Profil et mission | Étape 1 (motivation, 3 questions) | Étape 2 (technique, 3 questions) |
+|---|---|---|
+| Rang E ou D | Envoie la candidature (statut « en attente ») | Aucune |
+| Rang C et plus, mission ponctuelle | Candidature déjà reçue | Affine la note |
+| Rang C et plus, CDD ou CDI | Reste un brouillon | Envoie la candidature |
+
+L'IA ne lit que les 1 500 premiers caractères d'une réponse de motivation, et demande des réponses techniques de 280 caractères au plus.
+
+**Défauts de l'écran actuel, corrigés.**
+- Au rang D, l'écran affichait une étape technique sans questions et plantait (écran blanc). L'écran ne traitait à part que le rang E, alors que l'API termine aussi au rang D.
+- Les erreurs des étapes 1 et 2 partaient seulement dans la console. Le candidat ne voyait rien, par exemple un refus de date limite.
+- « Précédent » ramenait sur une étape déjà envoyée : refus incompréhensible, ou nouvelle génération de questions.
+- Promesses ou affirmations fausses :
+  - « retour par e-mail sous 48h à 72h ouvrées » : aucun délai n'est garanti ;
+  - « vos réponses ont été analysées » : la notation se fait ensuite, en arrière-plan ;
+  - « Neural Processing Engine v3.0 » : pur habillage ;
+  - « vous ne pourrez pas revenir en arrière » : contredit par le bouton « Précédent ».
+- Les zones de réponse n'avaient pas d'étiquette liée, les animations tournaient en boucle sans respecter « réduire les animations », et le minimum annoncé (10 caractères) ne correspondait pas à la règle du code (11).
+
+**Ce que fait le nouvel écran.**
+- **Accueil de l'épreuve.** Mission, récompense en FCFA, +250 XP à la validation, date limite, étapes prévues. L'écran refuse d'avance, avec la raison et l'action utile :
+  - un rang insuffisant ;
+  - une date limite passée ;
+  - une mission fermée ;
+  - une candidature déjà envoyée. Un brouillon se reprend.
+- **Indicateur d'étapes**, avec la même règle que l'API : 2 étapes aux rangs E et D, 3 sinon.
+- **Questions de motivation.** Étiquettes liées, conseil de l'IA, compteur de caractères (10 au minimum, 1 500 au maximum).
+- **Questions techniques**, une à la fois. Compteur jusqu'à 280 caractères, retour possible à la question précédente avant l'envoi. Un message dit si la candidature est déjà reçue (mission ponctuelle) ou si cette étape l'envoie.
+- **Envoi.** Le texte d'attente est honnête et reste calme si l'appareil demande moins d'animations. Une erreur s'affiche dans l'écran avec le message de l'API et un bouton « Réessayer », sans perdre les réponses.
+- **Fin de l'épreuve.** Les vraies suites : l'entreprise examine les candidatures ; si elle retient le candidat, il reçoit une offre par e-mail et dans ses notifications, avec un délai pour l'accepter. Liens vers le QG et les missions.
+- **Réponses gardées sur l'appareil** jusqu'à l'envoi, pour qu'une page rechargée ou un réseau coupé ne fasse pas tout perdre.
+
+**Fichiers.**
+- `app/dashboard/candidats/missions/[id]/application/page.tsx`
+- `components/dashboardCandidat/epreuve/` : `EpreuveEntree`, `EtapesEpreuve`, `AccueilEpreuve`, `QuestionsMotivation`, `QuestionsTechniques`, `FinEpreuve`, `brouillon`, `types`
+- `components/dashboardCandidat/portails/DetailPortail.tsx` (durée annoncée)
+
+**Vérification.**
+- `tsc`, ESLint et `build`.
+- API locale avec l'ensemble des corrections d'API en cours, notation laissée en file d'attente.
+- Parcours complets :
+  - rang D, mission ponctuelle ;
+  - rang C, mission ponctuelle ;
+  - rang C, CDD.
+- Cas de refus : verrou, date passée, candidature déjà envoyée. Reprise d'un brouillon.
+- Erreur simulée à l'envoi : le message s'affiche, les réponses sont gardées et « Réessayer » fonctionne.
+- À 375 px, à 1280 px et avec animations réduites : aucun débordement, aucune erreur dans la console. Le focus va au titre de chaque nouvelle étape.
+
+**Critères d'acceptation.**
+- Aucun écran blanc, quel que soit le rang.
+- Toute erreur de l'API est lisible à l'écran.
+- Aucune promesse que le système ne tient pas.
+- Une page rechargée garde les réponses non envoyées.
+
+**Zone floue.** Au rang C et plus, sur un CDD ou un CDI, un brouillon dont les questions techniques ont déjà été générées reprend à l'étape 1. L'API ne renvoie pas les questions techniques existantes au démarrage. Reprendre directement à l'étape 2 demande un petit changement d'API, à proposer à Gloria.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -323,18 +388,25 @@ Repères à confirmer :
   - plus de candidature démarrée ni de brouillon envoyé après la fin du jour limite ;
   - une candidature reçue à temps peut toujours compléter son étape technique.
 - D12 (lot B1) : en plus du rang qui monte à chaque gain d'XP, une migration de rattrapage met à niveau, une seule fois, les candidats qui avaient déjà assez de score. En complément, le profil d'un candidat validé se charge même sans analyse de CV. Il répondait 404, ce qui mettait tout le tableau de bord en erreur.
+- D13 (lot 2b) : l'enchaînement des étapes suit la réponse de l'API (questions techniques renvoyées ou non), et non une supposition du front sur le rang. L'indicateur annonce le nombre d'étapes avec la même règle que l'API.
+- D14 (lot 2b) : on ne revient jamais sur une étape déjà envoyée. À l'intérieur de l'étape technique, on peut revenir à une question précédente tant que rien n'est envoyé.
+- D15 (lot 2b) : les réponses non envoyées sont gardées dans le navigateur (`localStorage`, une clé par candidature) et effacées après l'envoi. C'est un confort : l'écran fonctionne aussi sans.
+- D16 (lot 2b) : les anciens composants de candidature (`IntroStep`, `MotivationStep`, `TechnicalStep`, `AIProcessing`, `CompletionStep`, `ProgressBar`) ne sont plus utilisés, mais ils ne sont pas supprimés. Supprimer des fichiers de l'équipe demande l'accord de Gloria (même principe que D6).
 
 ## Avancement
 
 | Lot | Statut | PR | Vérification |
 |---|---|---|---|
 | Plan | Validé le 17/10/2026 | — | — |
-| 0 | Branche `design/lot-0-fondations` poussée, PR à ouvrir | — | Types et build verts, captures du catalogue `/systeme` à 375 px et 1280 px |
+| 0 | Fusionné le 17/10/2026, déployé, `/systeme` en ligne | #5 | Types et build verts, captures du catalogue `/systeme` à 375 px et 1280 px |
 | 1 | Prêt sur `design/lot-1-qg` | — | Types, lint et build verts. API locale (SQLite) avec deux comptes : un compte actif qui déclenche chaque quête, un compte neuf. Captures à 375 px, à 1280 px et avec animations réduites : aucun débordement, aucune erreur dans la console, aucun lien cassé |
 | B1 | Prêt sur `feat/api-rang-par-xp` (back seul, depuis `main`) | — | 8 tests ajoutés (`RankProgressionTest` et `ProfileRankTest`), qui échouent sans le changement. Suite complète : 97 tests |
 | Date limite | Prêt sur `fix/api-candidature-date-limite` (back seul, depuis `main`) | — | 5 tests ajoutés (`ApplicationDeadlineTest`) : les 3 cas de refus échouent sans la règle. `MissionFactory` corrigée (sa date figée au 31/10/2026 aurait fait échouer les tests à partir de novembre). Suite complète : 94 tests |
 | API réunie | Les 3 branches d'API fusionnées localement, à titre de vérification | — | 105 tests, aucun conflit |
-| 2a | Prêt sur `design/lot-2a-portails` (après le lot 1) | — | Types, lint et build verts. Règles testées sur des cas types. API locale avec 12 missions (rangs E à B, CDI et CDD, missions passées), deux comptes. Vérifié : verrous et manques d'XP exacts, recherche sans accents, règle CDI/CDD, missions passées masquées. Détail au clavier : focus gardé, Échap, retour du focus sur le bouton. Pas de « Postuler » sur un portail verrouillé. L'épreuve d'entrée mène à la candidature. À 375 px : aucun débordement, fenêtre à 16 px des bords. Aucune erreur dans la console, aucun lien cassé |
+| 2b | Prêt sur `design/lot-2b-epreuve` (après le lot 2a) | — | Types, lint et build verts. API locale, 3 comptes (rangs D, E, C), notation en file d'attente. 24 contrôles automatiques réussis : 3 parcours complets (rang D en mission ponctuelle, rang C en mission ponctuelle, rang C en CDD) ; 4 refus d'avance (verrou, date passée, déjà postulé, reprise d'un brouillon) ; réponses retrouvées après rechargement ; refus 410 et coupure réseau affichés, réponses gardées, « Réessayer » qui fonctionne ; focus au titre de chaque étape ; statut « en attente » en base après l'envoi ; brouillons effacés. À 375 px et avec animations réduites : aucun débordement, aucune erreur dans la console. Pas de régression sur le QG ni sur les portails |
+
+Constat pour Gloria (lot 2b) : les questions de secours de l'API, servies quand l'IA est indisponible, vouvoient le candidat (« Qu'est-ce qui vous motive… »), alors que l'interface le tutoie. À harmoniser dans `ApplicationAIService` si elle le souhaite.
+| 2a | Poussé sur `design/lot-2a-portails` (après le lot 1) | — | Types, lint et build verts. Règles testées sur des cas types. API locale avec 12 missions (rangs E à B, CDI et CDD, missions passées), deux comptes. Vérifié : verrous et manques d'XP exacts, recherche sans accents, règle CDI/CDD, missions passées masquées. Détail au clavier : focus gardé, Échap, retour du focus sur le bouton. Pas de « Postuler » sur un portail verrouillé. L'épreuve d'entrée mène à la candidature. À 375 px : aucun débordement, fenêtre à 16 px des bords. Aucune erreur dans la console, aucun lien cassé |
 
 Constats sur l'API faits pendant le lot 1, corrigés sur la branche `fix/api-propositions-inscriptions` (PR séparée, indépendante de la refonte) :
 - `GET /candidat/proposals` renvoyait `mission.budget`, une colonne qui n'existe pas : le montant était toujours vide. La réponse donne maintenant `mission.reward`, et le QG lit ce champ.

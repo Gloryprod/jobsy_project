@@ -24,7 +24,11 @@ export type EtatPortail = {
  * Même règle que l'API (CandidatureController) : le seuil du rang du candidat doit atteindre
  * celui du rang minimum de la mission. Sans rang minimum, la mission est ouverte à tous (rang E).
  */
-export function etatPortail(mission: MissionPortail, rangCandidat: string | null | undefined, score: number | null | undefined): EtatPortail {
+export function etatPortail(
+  mission: Pick<MissionPortail, "min_rank_required">,
+  rangCandidat: string | null | undefined,
+  score: number | null | undefined,
+): EtatPortail {
   const requis = rangParLettre(mission.min_rank_required || "E");
   const ouvert = rangParLettre(rangCandidat).points >= requis.points;
   return { ouvert, requis, manque: ouvert ? 0 : Math.max(0, requis.points - (Number(score) || 0)) };

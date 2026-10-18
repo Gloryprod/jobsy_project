@@ -156,8 +156,8 @@ export function DetailPortail({ mission, etat, statut, actionCandidature, rangCa
               <DialogDescription className="sr-only">Présentation de la candidature avant de la commencer.</DialogDescription>
               <FenetreSysteme etiquette="Épreuve d'entrée" titre={mission.title} niveauTitre={3}>
                 <p className="text-systeme-attenue">
-                  Tu vas répondre à quelques questions sur cette mission. L&apos;IA analyse tes réponses et l&apos;entreprise voit ton résultat. Prévois
-                  environ 5 minutes, au calme.
+                  Tu vas répondre à quelques questions sur cette mission. L&apos;IA analyse tes réponses et l&apos;entreprise voit ton résultat. Prévois 5
+                  à 10 minutes, au calme.
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <BoutonSysteme onClick={() => router.push(`/dashboard/candidats/missions/${mission.id}/application`)}>
