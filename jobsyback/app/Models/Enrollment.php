@@ -13,7 +13,6 @@ class Enrollment extends Model
     protected $fillable = [
         'candidat_id',
         'course_id',
-        'enrolled_at',
         'progress_percentage',
         'status',
         'average_quiz_score',

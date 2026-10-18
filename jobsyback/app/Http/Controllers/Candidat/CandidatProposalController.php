@@ -49,7 +49,8 @@ class CandidatProposalController extends Controller
                 'mission' => [
                     'id' => $proposal->mission->id ?? null,
                     'title' => $proposal->mission->title ?? 'Mission',
-                    'budget' => $proposal->mission->budget ?? null,
+                    // Montant de la mission : la colonne s'appelle reward (budget n'existe pas et renvoyait toujours null)
+                    'reward' => $proposal->mission->reward ?? null,
                     'location' => $proposal->mission->location ?? null,
                     'deadline' => $proposal->mission->deadline ?? null,
                 ],
