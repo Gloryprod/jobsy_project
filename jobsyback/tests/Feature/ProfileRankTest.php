@@ -73,6 +73,20 @@ class ProfileRankTest extends TestCase
             ->assertJsonPath('data.rank.rank', 'E');
     }
 
+    public function test_un_profil_valide_sans_analyse_de_cv_se_charge_quand_meme(): void
+    {
+        // Avant : 404 « Données de CV non trouvées », et tout le tableau de bord du candidat en erreur
+        $candidat = Candidat::factory()->create(['rank_id' => Rank::where('rank', 'C')->value('id'), 'score' => 900]);
+        $candidat->forceFill(['is_validate' => true])->save();
+
+        $this->withHeaders($this->bearerFor($candidat->user))
+            ->getJson('/api/candidat/profile-elements')
+            ->assertOk()
+            ->assertJsonPath('data.rank.rank', 'C');
+
+        $this->assertEquals(900, $candidat->fresh()->score);
+    }
+
     public function test_seul_un_admin_peut_valider_un_profil(): void
     {
         $candidat = $this->candidatWithCv('Master en finance');

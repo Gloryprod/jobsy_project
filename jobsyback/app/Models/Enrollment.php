@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\RankService;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 
@@ -208,6 +209,8 @@ class Enrollment extends Model
             $stringToHash = "jobsy-cert-{$this->candidat_id}-{$this->course_id}-" . now()->timestamp;
             $hash = hash('sha256', $stringToHash);
             $this->candidat->update(['score' => $this->candidat->score + $this->course->reward_xp]);
+            // Le rang suit l'expérience réelle : l'XP de la formation peut faire passer au rang supérieur
+            app(RankService::class)->syncRankWithScore($this->candidat);
 
             $deliveredSkills = $this->course->delivered_skills ?? [];
 

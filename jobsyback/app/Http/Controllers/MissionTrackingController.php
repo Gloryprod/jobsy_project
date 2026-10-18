@@ -6,6 +6,7 @@ use App\Exceptions\WalletException;
 use App\Mail\ContractSignedMail;
 use App\Models\MissionOffers;
 use App\Services\BadgeEvaluatorService;
+use App\Services\RankService;
 use App\Services\WalletService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -148,6 +149,8 @@ class MissionTrackingController extends Controller
                     DB::transaction(function () use ($offer, $rating, $recruiterReview, $candidat) {
                         $offer->update(['status' => 'validated', 'rating' => $rating, 'recruiter_review' => $recruiterReview, 'validated_at' => now()]);
                         $candidat->increment('score', 250);
+                        // Le rang suit l'expérience réelle : les 250 XP peuvent faire passer au rang supérieur
+                        app(RankService::class)->syncRankWithScore($candidat);
                         $this->walletService->processFinalPayment($offer); // 10% de commission
                     });
                 } catch (WalletException $e) {
