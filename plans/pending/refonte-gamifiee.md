@@ -124,7 +124,7 @@ Un lot n'est terminé qu'une fois fusionné, déployé par Vercel et vérifié s
 | 0 | **Fondations du Système** : jetons (couleurs, typos, mouvement) dans `app/globals.css`, polices dans `app/layout.tsx`, kit `components/systeme/`, calcul de progression `lib/progression.ts`, catalogue interne `/systeme` (non indexé), plan versionné dans `plans/` | M | Décisions 1, 6 et 8 |
 | 1 | **Le QG candidat** : réécriture de `DashboardHome.tsx` avec le kit, suppression des valeurs inventées et du code commenté, en-tête et navigation candidat | M | Lot 0, accord de Gloria (décision 5) |
 | 2a | **Portails** : liste des missions, détail, verrou de rang | M | Lot 0 |
-| 2b | **Épreuve d'entrée** : les 5 étapes de candidature | S | 2a |
+| 2b | **Épreuve d'entrée** : les 5 étapes de candidature. À corriger au passage : aux étapes 1 et 2, la page n'affiche pas les erreurs de l'API, qui partent seulement dans la console. Le candidat ne voit donc pas, par exemple, le refus d'un brouillon envoyé après la date limite | S | 2a |
 | 2c | **Invitations de guilde et journal de quêtes** : propositions, offres confirmées | M | 2a |
 | 3a | **Donjons** : catalogue et carte des modules | M | Lot 0 |
 | 3b | **Combat et boss** : leçons, quiz, examen final, projet, certification | M | 3a |
@@ -319,8 +319,10 @@ Repères à confirmer :
 - D8 (lot 1) : les quêtes du jour sont calculées côté front, à partir des routes existantes, par une fonction pure (`components/dashboardCandidat/qg/quetes.ts`). Une route d'API dédiée ne se justifiera que si les règles deviennent trop lourdes pour le navigateur.
 - D9 (lot 2a) : la navigation garde « Missions », un mot clair pour un nouvel utilisateur (couche réalité). « Portail » n'apparaît que dans les fenêtres du Système. Cette décision complète D7.
 - D10 (lot 2a) : le badge de correspondance IA (`MissionMatchBadge`) ne s'affiche que dans le détail d'une mission. Il fait un appel d'API par mission, et sur la liste cela faisait autant d'appels que de cartes, ce qui coûte cher en 3G.
-- D11 (lot 2a) : une mission dont la date limite est passée n'est plus affichée dans la liste. Attention : l'API (`CandidatureController`) accepte encore une candidature tant que la mission est active et non clôturée, même après sa date limite. Faut-il la refuser côté API ? C'est une décision à prendre avec Gloria.
-- D12 (lot B1) : en plus du rang qui monte à chaque gain d'XP, une migration de rattrapage met à niveau, une seule fois, les candidats qui avaient déjà assez de score.
+- D11 (lot 2a) : une mission dont la date limite est passée n'est plus affichée dans la liste. Le porteur a décidé le 18/10/2026 que l'API la refuse aussi (branche `fix/api-candidature-date-limite`) :
+  - plus de candidature démarrée ni de brouillon envoyé après la fin du jour limite ;
+  - une candidature reçue à temps peut toujours compléter son étape technique.
+- D12 (lot B1) : en plus du rang qui monte à chaque gain d'XP, une migration de rattrapage met à niveau, une seule fois, les candidats qui avaient déjà assez de score. En complément, le profil d'un candidat validé se charge même sans analyse de CV. Il répondait 404, ce qui mettait tout le tableau de bord en erreur.
 
 ## Avancement
 
@@ -329,7 +331,9 @@ Repères à confirmer :
 | Plan | Validé le 17/10/2026 | — | — |
 | 0 | Branche `design/lot-0-fondations` poussée, PR à ouvrir | — | Types et build verts, captures du catalogue `/systeme` à 375 px et 1280 px |
 | 1 | Prêt sur `design/lot-1-qg` | — | Types, lint et build verts. API locale (SQLite) avec deux comptes : un compte actif qui déclenche chaque quête, un compte neuf. Captures à 375 px, à 1280 px et avec animations réduites : aucun débordement, aucune erreur dans la console, aucun lien cassé |
-| B1 | Prêt sur `feat/api-rang-par-xp` (back seul, depuis `main`) | — | 7 tests ajoutés (`RankProgressionTest`), qui échouent sans le changement. Suite complète : 96 tests |
+| B1 | Prêt sur `feat/api-rang-par-xp` (back seul, depuis `main`) | — | 8 tests ajoutés (`RankProgressionTest` et `ProfileRankTest`), qui échouent sans le changement. Suite complète : 97 tests |
+| Date limite | Prêt sur `fix/api-candidature-date-limite` (back seul, depuis `main`) | — | 5 tests ajoutés (`ApplicationDeadlineTest`) : les 3 cas de refus échouent sans la règle. `MissionFactory` corrigée (sa date figée au 31/10/2026 aurait fait échouer les tests à partir de novembre). Suite complète : 94 tests |
+| API réunie | Les 3 branches d'API fusionnées localement, à titre de vérification | — | 105 tests, aucun conflit |
 | 2a | Prêt sur `design/lot-2a-portails` (après le lot 1) | — | Types, lint et build verts. Règles testées sur des cas types. API locale avec 12 missions (rangs E à B, CDI et CDD, missions passées), deux comptes. Vérifié : verrous et manques d'XP exacts, recherche sans accents, règle CDI/CDD, missions passées masquées. Détail au clavier : focus gardé, Échap, retour du focus sur le bouton. Pas de « Postuler » sur un portail verrouillé. L'épreuve d'entrée mène à la candidature. À 375 px : aucun débordement, fenêtre à 16 px des bords. Aucune erreur dans la console, aucun lien cassé |
 
 Constats sur l'API faits pendant le lot 1, corrigés sur la branche `fix/api-propositions-inscriptions` (PR séparée, indépendante de la refonte) :
