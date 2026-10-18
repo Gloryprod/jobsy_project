@@ -303,6 +303,69 @@ L'IA ne lit que les 1 500 premiers caractères d'une réponse de motivation, et 
 
 **Zone floue.** Au rang C et plus, sur un CDD ou un CDI, un brouillon dont les questions techniques ont déjà été générées reprend à l'étape 1. L'API ne renvoie pas les questions techniques existantes au démarrage. Reprendre directement à l'étape 2 demande un petit changement d'API, à proposer à Gloria.
 
+## Lot 2c : invitations des entreprises et journal de quêtes (plan détaillé du 18/10/2026)
+
+Le lot est découpé en deux parties, chacune de taille M :
+- **2c-A, Invitations** : répondre aux propositions des entreprises.
+- **2c-B, Journal de quêtes** : l'offre à confirmer et le suivi des missions confirmées.
+
+### 2c-A : les invitations des entreprises
+
+**Constat.** Le candidat ne peut répondre à une proposition que par les liens de l'e-mail : le QG lui dit « réponds avec les boutons de l'e-mail ». Dans l'API (`ProposalResponseController`) :
+- aucun verrou n'empêche deux réponses simultanées, par exemple un double clic. L'audit l'avait déjà relevé ;
+- le message de refus affirme « L'entreprise en a été informée », alors qu'aucune notification n'est envoyée.
+
+**API**, branche `feat/api-reponse-propositions`, empilée sur `fix/api-propositions-inscriptions` qui touche le même contrôleur :
+- `ProposalResponseService` réunit l'acceptation et le refus. La transaction verrouille la proposition (`lockForUpdate`) : une seule réponse possible. Le service est utilisé à la fois par les liens de l'e-mail et par les nouvelles routes.
+- Deux nouvelles routes : `POST /candidat/proposals/{id}/accept` et `POST /candidat/proposals/{id}/decline`. Elles répondent :
+  - 403 si la proposition est celle d'un autre candidat ;
+  - 409 si elle a déjà reçu une réponse ;
+  - 410 à l'acceptation si la mission est fermée.
+- Le message de refus des liens de l'e-mail ne prétend plus prévenir l'entreprise.
+- Tests : acceptation (candidature créée, entreprise prévenue), refus, autre candidat, double réponse, mission fermée. Les liens de l'e-mail continuent de fonctionner (`ProposalResponseTest`).
+
+**Front.**
+- Une page `/dashboard/candidats/invitations`. Pour chaque proposition :
+  - l'entreprise, la mission, la récompense et le message (texte riche affiché par `SafeHtml`) ;
+  - pour une proposition en attente, « Accepter » ou « Décliner », avec une confirmation avant de décliner.
+- Après l'acceptation, la page donne la vraie suite : l'entreprise prépare l'offre, qui arrive par e-mail et dans les notifications, avec un délai pour la confirmer.
+- Dans le QG, la carte des invitations mène à cette page. Une invitation en attente devient une quête du jour, juste après une offre à confirmer.
+
+### 2c-B : le journal de quêtes
+
+**Constats.**
+- **Page de l'offre** (`missions/offers/{id}`) :
+  - une offre déjà acceptée ou refusée affiche encore les boutons, et une deuxième réponse échoue avec « Erreur lors de la réponse » ;
+  - le refus se fait sans confirmation ;
+  - le montant s'affiche brut ;
+  - une erreur de chargement laisse l'écran bloqué sur le chargement.
+- **Missions confirmées** (`missions/en_cours`) :
+  - l'étiquette de statut est toujours vide, car elle lit une variable globale `status` au lieu de `offer.status` ;
+  - les erreurs d'action ne sont pas affichées ;
+  - le lien du contrat apparaît même sans contrat ;
+  - le lieu affiché est celui de la mission, et non le lieu de rendez-vous de l'offre ;
+  - les animations sont en boucle.
+
+**Front.**
+- **Offre à confirmer.** La page tient compte de l'état de l'offre : en attente (compte à rebours sur `expires_at`, accepter ou décliner avec confirmation), acceptée, déclinée ou expirée. Elle affiche la date, l'heure et le lieu de rendez-vous, le contact, les instructions et la récompense. Les erreurs montrent le message de l'API.
+- **Journal de quêtes.** Chaque mission confirmée suit cinq étapes réelles :
+  1. offre acceptée ;
+  2. arrivée signalée ;
+  3. présence confirmée par l'entreprise, avec génération du contrat ;
+  4. travail terminé ;
+  5. mission validée (paiement et +250 XP).
+
+  Les actions du candidat sont « Signaler mon arrivée » et « Déclarer la mission terminée ». Les étapes qui dépendent de l'entreprise sont annoncées comme telles. La récompense affiche le montant net après la commission Jobsy de 10 % (`WalletService::COMMISSION_RATE`). Le contrat n'apparaît que s'il existe.
+
+**Vérification.**
+- Tests PHPUnit de l'API.
+- Pour le front : API locale, avec les branches d'API appliquées temporairement.
+- Parcours :
+  - accepter et décliner une invitation ;
+  - répondre à une offre (et voir qu'une offre déjà acceptée ne propose plus de bouton) ;
+  - signaler son arrivée, puis déclarer la mission terminée après la confirmation de présence par l'entreprise.
+- Erreurs affichées. À 375 px, à 1280 px et avec animations réduites. Pas de régression sur les écrans précédents.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -392,6 +455,8 @@ Repères à confirmer :
 - D14 (lot 2b) : on ne revient jamais sur une étape déjà envoyée. À l'intérieur de l'étape technique, on peut revenir à une question précédente tant que rien n'est envoyé.
 - D15 (lot 2b) : les réponses non envoyées sont gardées dans le navigateur (`localStorage`, une clé par candidature) et effacées après l'envoi. C'est un confort : l'écran fonctionne aussi sans.
 - D16 (lot 2b) : les anciens composants de candidature (`IntroStep`, `MotivationStep`, `TechnicalStep`, `AIProcessing`, `CompletionStep`, `ProgressBar`) ne sont plus utilisés, mais ils ne sont pas supprimés. Supprimer des fichiers de l'équipe demande l'accord de Gloria (même principe que D6).
+- D17 (lot 2c) : accepter une proposition reste possible après la date limite de la mission. C'est une invitation directe de l'entreprise, et la règle de la décision D11 vise les candidatures spontanées. En revanche, une mission fermée (inactive ou clôturée) refuse l'acceptation.
+- D18 (lot 2c) : la page des invitations est une nouvelle adresse (`/dashboard/candidats/invitations`). On l'atteint depuis le QG et les quêtes du jour. Elle n'apparaît pas encore dans la navigation, qui sera refaite au lot 8 (D7).
 
 ## Avancement
 
