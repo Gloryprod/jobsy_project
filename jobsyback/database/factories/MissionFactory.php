@@ -24,7 +24,9 @@ class MissionFactory extends Factory
             'description' => fake()->paragraph(),
             'reward' => 15000,
             'duration' => '1 semaine',
-            'deadLine' => '2026-10-31',
+            // Date relative : une date fixe rendrait toutes les missions de test « passées » une fois atteinte.
+            // Clé en minuscules : « deadLine » écrasait la date limite passée par un test (colonnes insensibles à la casse).
+            'deadline' => now()->addMonth()->toDateString(),
             'category' => 'Digital',
             'type_contrat' => 'Mission Ponctuelle',
             'skills' => ['PHP', 'Laravel', 'JavaScript'],

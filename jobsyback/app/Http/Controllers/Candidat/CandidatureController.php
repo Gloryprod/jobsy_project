@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 
 class CandidatureController extends Controller
 {
+    private const DATE_LIMITE_PASSEE = "La date limite de cette mission est passée : elle n'accepte plus de candidatures.";
 
     public function apply_job(ApplicationRequest $request, Int $candidat_id, Int $mission_id, ApplicationAIService $aiService){
         $candidat = $request->user()->candidat;
@@ -30,6 +31,11 @@ class CandidatureController extends Controller
 
         if (!$mission) {
             return apiResponse(null, "Mission introuvable ou fermée.", 'error', 404);
+        }
+
+        // Une candidature se démarre et s'envoie avant la fin du jour limite
+        if ($mission->isPastDeadline()) {
+            return apiResponse(null, self::DATE_LIMITE_PASSEE, 'error', 410);
         }
 
         // Rang minimum exigé par l'entreprise (E par défaut : ouvert à tous)
@@ -85,6 +91,11 @@ class CandidatureController extends Controller
         // L'étape 1 n'est notée qu'une fois : après soumission, la candidature quitte l'état « draft »
         if ($application->status !== 'draft') {
             return apiResponse(null, "Cette étape a déjà été soumise.", 'error', 409);
+        }
+
+        // Un brouillon commencé avant la date limite ne peut plus être envoyé après
+        if ($application->mission?->isPastDeadline()) {
+            return apiResponse(null, self::DATE_LIMITE_PASSEE, 'error', 410);
         }
 
         $assessment = $application->assessment;
@@ -159,6 +170,12 @@ class CandidatureController extends Controller
         $step2 = $application->assessment->step_2_data;
         if (empty($step2['questions']) || isset($step2['responses'])) {
             return apiResponse(null, "Cette étape a déjà été soumise ou n'est pas disponible.", 'error', 409);
+        }
+
+        // Encore un brouillon : la candidature n'a pas été reçue avant la date limite. Une candidature déjà
+        // reçue à temps (mission ponctuelle, recevable dès l'étape 1) peut toujours compléter son étape technique.
+        if ($application->status === 'draft' && $application->mission?->isPastDeadline()) {
+            return apiResponse(null, self::DATE_LIMITE_PASSEE, 'error', 410);
         }
 
         $assessment = $application->assessment;
