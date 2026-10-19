@@ -1,6 +1,7 @@
 // Quêtes du jour : les prochaines actions réelles du candidat, tirées de ses données. Fonction pure, sans appel réseau.
 import { formaterDateCourte, formaterFcfa } from "@/lib/formats";
-import type { Candidature, Inscription, MissionResume, ProfilCandidat } from "./types";
+import { XP_MISSION_VALIDEE } from "@/lib/recompense";
+import type { Candidature, Inscription, MissionResume, ProfilCandidat, Proposition } from "./types";
 
 export type Quete = {
   id: string;
@@ -15,9 +16,6 @@ export type Quete = {
 };
 
 export const NOMBRE_MAX_QUETES = 3;
-
-// +250 XP à la validation d'une mission : règle de MissionTrackingController
-const XP_MISSION_VALIDEE = 250;
 
 const lienFormation = (inscription: Inscription) => `/dashboard/candidats/formations/${inscription.course?.id ?? inscription.course_id}/workspace`;
 
@@ -37,7 +35,20 @@ export function missionOuverte(mission: MissionResume | null | undefined, mainte
   return Number.isNaN(debut) || maintenant < debut + 24 * 60 * 60 * 1000;
 }
 
-function recompenseMission(reward: number | string | null | undefined): string {
+/**
+ * La mission d'une invitation accepte encore quelqu'un : même règle que l'API (ProposalResponseService).
+ * La date limite ne compte pas, c'est une invitation directe de l'entreprise (décision D17).
+ */
+export function missionInvitationOuverte(proposition: Proposition): boolean {
+  return proposition.mission?.active !== false && !proposition.mission?.closed_at;
+}
+
+/** L'invitation attend une réponse et peut encore être acceptée. */
+export function invitationEnAttente(proposition: Proposition): boolean {
+  return proposition.status === "pending" && missionInvitationOuverte(proposition);
+}
+
+export function recompenseMission(reward: number | string | null | undefined): string {
   const montant = formaterFcfa(reward);
   return montant ? `${montant} et +${XP_MISSION_VALIDEE} XP à la validation` : `+${XP_MISSION_VALIDEE} XP à la validation`;
 }
@@ -58,11 +69,13 @@ export function quetesDuJour({
   profil,
   candidatures = [],
   inscriptions = [],
+  propositions = [],
   maintenant,
 }: {
   profil: ProfilCandidat | null | undefined;
   candidatures?: Candidature[];
   inscriptions?: Inscription[];
+  propositions?: Proposition[];
   maintenant: number;
 }): Quete[] {
   const quetes: Quete[] = [];
@@ -83,7 +96,24 @@ export function quetesDuJour({
       });
     });
 
-  // 2. Examens finaux prêts
+  // 2. Invitations des entreprises en attente de réponse, la plus ancienne d'abord (pas de délai de réponse en base)
+  propositions
+    .filter(invitationEnAttente)
+    .sort((a, b) => new Date(a.sent_at ?? 0).getTime() - new Date(b.sent_at ?? 0).getTime())
+    .forEach((p) => {
+      quetes.push({
+        id: `invitation-${p.id}`,
+        titre: `Réponds à l'invitation : ${p.mission.title}`,
+        detail: p.entreprise?.nom_entreprise
+          ? `${p.entreprise.nom_entreprise} t'invite directement sur cette mission.`
+          : "Une entreprise t'invite directement sur cette mission.",
+        lien: "/dashboard/candidats/invitations",
+        action: "Répondre",
+        recompense: recompenseMission(p.mission.reward),
+      });
+    });
+
+  // 3. Examens finaux prêts
   inscriptions
     .filter((i) => i.status === "evaluation_ready" && i.course)
     .forEach((i) => {
@@ -97,7 +127,7 @@ export function quetesDuJour({
       });
     });
 
-  // 3. Candidatures commencées mais pas envoyées, tant que la mission est ouverte
+  // 4. Candidatures commencées mais pas envoyées, tant que la mission est ouverte
   candidatures
     .filter((c) => c.status === "draft" && c.mission && missionOuverte(c.mission, maintenant))
     .forEach((c) => {
@@ -112,7 +142,7 @@ export function quetesDuJour({
       });
     });
 
-  // 4. Formations en cours, la plus avancée d'abord
+  // 5. Formations en cours, la plus avancée d'abord
   inscriptions
     .filter((i) => (i.status === "learning" || i.status === "enrolled") && i.course)
     .sort((a, b) => (b.progress_percentage ?? 0) - (a.progress_percentage ?? 0))
@@ -127,7 +157,7 @@ export function quetesDuJour({
       });
     });
 
-  // 5. Profil sans compétences : le CV n'a pas encore été lu
+  // 6. Profil sans compétences : le CV n'a pas encore été lu
   if (profil && !profil.domaine_competence && (profil.skills?.length ?? 0) === 0) {
     quetes.push({
       id: "profil-cv",
@@ -138,7 +168,7 @@ export function quetesDuJour({
     });
   }
 
-  // 6. Rien d'autre à faire : aller chercher une mission
+  // 7. Rien d'autre à faire : aller chercher une mission
   if (quetes.length === 0) {
     quetes.push({
       id: "exploration",
