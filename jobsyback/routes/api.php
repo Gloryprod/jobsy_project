@@ -183,6 +183,9 @@ Route::middleware(['auth:sanctum', 'role:JEUNE', 'access.token'])->group(functio
 
     Route::get('/missions/{missionId}/my-match-score', [MatchingMissionController::class, 'getMyMatchScoreForMission']);
     Route::get('/candidat/proposals', [CandidatProposalController::class, 'index']);
+    // Réponse aux propositions depuis l'application (même règle que les liens de l'e-mail)
+    Route::post('/candidat/proposals/{proposal}/accept', [CandidatProposalController::class, 'accept']);
+    Route::post('/candidat/proposals/{proposal}/decline', [CandidatProposalController::class, 'decline']);
 
 });
 
