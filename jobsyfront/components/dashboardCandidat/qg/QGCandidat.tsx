@@ -46,11 +46,18 @@ export function QGCandidat() {
     );
   }
 
-  // Les quêtes attendent les deux listes dont elles dépendent (ou leur erreur)
-  const listesPretes = (candidatures.data || candidatures.error) && (inscriptions.data || inscriptions.error);
+  // Les quêtes attendent les trois listes dont elles dépendent (ou leur erreur)
+  const listesPretes =
+    (candidatures.data || candidatures.error) && (inscriptions.data || inscriptions.error) && (propositions.data || propositions.error);
   const quetes =
     maintenant !== null && listesPretes
-      ? quetesDuJour({ profil: profil.data, candidatures: candidatures.data, inscriptions: inscriptions.data, maintenant })
+      ? quetesDuJour({
+          profil: profil.data,
+          candidatures: candidatures.data,
+          inscriptions: inscriptions.data,
+          propositions: propositions.data,
+          maintenant,
+        })
       : null;
 
   const missionsValidees = candidatures.data

@@ -1,8 +1,10 @@
 import { formaterDateCourte, formaterFcfa } from "@/lib/formats";
-import { CarteRealite, ErreurSection, PastilleStatut, type TonStatut } from "./CarteRealite";
+import { CarteRealite, ErreurSection, LienDiscret, PastilleStatut, type TonStatut } from "./CarteRealite";
+import { invitationEnAttente, missionInvitationOuverte } from "./quetes";
 import type { Proposition } from "./types";
 
 const NOMBRE_AFFICHE = 3;
+export const LIEN_INVITATIONS = "/dashboard/candidats/invitations";
 
 const STATUTS: Record<string, { libelle: string; ton: TonStatut }> = {
   pending: { libelle: "En attente de ta réponse", ton: "action" },
@@ -10,6 +12,12 @@ const STATUTS: Record<string, { libelle: string; ton: TonStatut }> = {
   declined: { libelle: "Déclinée", ton: "neutre" },
   expired: { libelle: "Expirée", ton: "neutre" },
 };
+
+/** Statut affiché d'une invitation : une invitation en attente sur une mission fermée ne peut plus être acceptée. */
+export function statutInvitation(proposition: Proposition): { libelle: string; ton: TonStatut } {
+  if (proposition.status === "pending" && !missionInvitationOuverte(proposition)) return { libelle: "Mission fermée", ton: "neutre" };
+  return STATUTS[proposition.status] ?? { libelle: proposition.status, ton: "neutre" };
+}
 
 type Props = {
   propositions: Proposition[] | undefined;
@@ -20,10 +28,13 @@ type Props = {
 /** Propositions envoyées directement par les entreprises (« invitations de guilde »). */
 export function Invitations({ propositions, erreur, reessayer }: Props) {
   // Celles qui attendent une réponse d'abord
-  const triees = propositions ? [...propositions].sort((a, b) => Number(b.status === "pending") - Number(a.status === "pending")) : [];
+  const triees = propositions ? [...propositions].sort((a, b) => Number(invitationEnAttente(b)) - Number(invitationEnAttente(a))) : [];
 
   return (
-    <CarteRealite titre="Invitations des entreprises">
+    <CarteRealite
+      titre="Invitations des entreprises"
+      lienPied={triees.length > 0 ? <LienDiscret href={LIEN_INVITATIONS}>Voir toutes mes invitations</LienDiscret> : undefined}
+    >
       {erreur ? (
         <ErreurSection texte="Les propositions des entreprises n'ont pas pu être chargées." reessayer={reessayer} />
       ) : !propositions ? (
@@ -35,7 +46,7 @@ export function Invitations({ propositions, erreur, reessayer }: Props) {
       ) : (
         <ul className="grid gap-3">
           {triees.slice(0, NOMBRE_AFFICHE).map((proposition) => {
-            const statut = STATUTS[proposition.status] ?? { libelle: proposition.status, ton: "neutre" as TonStatut };
+            const statut = statutInvitation(proposition);
             const montant = formaterFcfa(proposition.mission?.reward);
             const recue = formaterDateCourte(proposition.sent_at);
             return (
@@ -49,8 +60,10 @@ export function Invitations({ propositions, erreur, reessayer }: Props) {
                   {montant ? `, ${montant}` : ""}
                 </p>
                 {recue && <p className="text-xs text-slate-500">Reçue le {recue}</p>}
-                {proposition.status === "pending" && (
-                  <p className="text-sm text-slate-600">Réponds avec les boutons de l&apos;e-mail que tu as reçu.</p>
+                {proposition.status === "pending" && missionInvitationOuverte(proposition) && (
+                  <LienDiscret href={LIEN_INVITATIONS} className="justify-self-start">
+                    Répondre
+                  </LienDiscret>
                 )}
               </li>
             );

@@ -303,6 +303,69 @@ L'IA ne lit que les 1 500 premiers caractères d'une réponse de motivation, et 
 
 **Zone floue.** Au rang C et plus, sur un CDD ou un CDI, un brouillon dont les questions techniques ont déjà été générées reprend à l'étape 1. L'API ne renvoie pas les questions techniques existantes au démarrage. Reprendre directement à l'étape 2 demande un petit changement d'API, à proposer à Gloria.
 
+## Lot 2c : invitations des entreprises et journal de quêtes (plan détaillé du 18/10/2026)
+
+Le lot est découpé en deux parties, chacune de taille M :
+- **2c-A, Invitations** : répondre aux propositions des entreprises.
+- **2c-B, Journal de quêtes** : l'offre à confirmer et le suivi des missions confirmées.
+
+### 2c-A : les invitations des entreprises
+
+**Constat.** Le candidat ne peut répondre à une proposition que par les liens de l'e-mail : le QG lui dit « réponds avec les boutons de l'e-mail ». Dans l'API (`ProposalResponseController`) :
+- aucun verrou n'empêche deux réponses simultanées, par exemple un double clic. L'audit l'avait déjà relevé ;
+- le message de refus affirme « L'entreprise en a été informée », alors qu'aucune notification n'est envoyée.
+
+**API**, branche `feat/api-reponse-propositions`, empilée sur `fix/api-propositions-inscriptions` qui touche le même contrôleur :
+- `ProposalResponseService` réunit l'acceptation et le refus. La transaction verrouille la proposition (`lockForUpdate`) : une seule réponse possible. Le service est utilisé à la fois par les liens de l'e-mail et par les nouvelles routes.
+- Deux nouvelles routes : `POST /candidat/proposals/{id}/accept` et `POST /candidat/proposals/{id}/decline`. Elles répondent :
+  - 403 si la proposition est celle d'un autre candidat ;
+  - 409 si elle a déjà reçu une réponse ;
+  - 410 à l'acceptation si la mission est fermée.
+- Le message de refus des liens de l'e-mail ne prétend plus prévenir l'entreprise.
+- Tests : acceptation (candidature créée, entreprise prévenue), refus, autre candidat, double réponse, mission fermée. Les liens de l'e-mail continuent de fonctionner (`ProposalResponseTest`).
+
+**Front.**
+- Une page `/dashboard/candidats/invitations`. Pour chaque proposition :
+  - l'entreprise, la mission, la récompense et le message (texte riche affiché par `SafeHtml`) ;
+  - pour une proposition en attente, « Accepter » ou « Décliner », avec une confirmation avant de décliner.
+- Après l'acceptation, la page donne la vraie suite : l'entreprise prépare l'offre, qui arrive par e-mail et dans les notifications, avec un délai pour la confirmer.
+- Dans le QG, la carte des invitations mène à cette page. Une invitation en attente devient une quête du jour, juste après une offre à confirmer.
+
+### 2c-B : le journal de quêtes
+
+**Constats.**
+- **Page de l'offre** (`missions/offers/{id}`) :
+  - une offre déjà acceptée ou refusée affiche encore les boutons, et une deuxième réponse échoue avec « Erreur lors de la réponse » ;
+  - le refus se fait sans confirmation ;
+  - le montant s'affiche brut ;
+  - une erreur de chargement laisse l'écran bloqué sur le chargement.
+- **Missions confirmées** (`missions/en_cours`) :
+  - l'étiquette de statut est toujours vide, car elle lit une variable globale `status` au lieu de `offer.status` ;
+  - les erreurs d'action ne sont pas affichées ;
+  - le lien du contrat apparaît même sans contrat ;
+  - le lieu affiché est celui de la mission, et non le lieu de rendez-vous de l'offre ;
+  - les animations sont en boucle.
+
+**Front.**
+- **Offre à confirmer.** La page tient compte de l'état de l'offre : en attente (compte à rebours sur `expires_at`, accepter ou décliner avec confirmation), acceptée, déclinée ou expirée. Elle affiche la date, l'heure et le lieu de rendez-vous, le contact, les instructions et la récompense. Les erreurs montrent le message de l'API.
+- **Journal de quêtes.** Chaque mission confirmée suit cinq étapes réelles :
+  1. offre acceptée ;
+  2. arrivée signalée ;
+  3. présence confirmée par l'entreprise, avec génération du contrat ;
+  4. travail terminé ;
+  5. mission validée (paiement et +250 XP).
+
+  Les actions du candidat sont « Signaler mon arrivée » et « Déclarer la mission terminée ». Les étapes qui dépendent de l'entreprise sont annoncées comme telles. La récompense affiche le montant net après la commission Jobsy de 10 % (`WalletService::COMMISSION_RATE`). Le contrat n'apparaît que s'il existe.
+
+**Vérification.**
+- Tests PHPUnit de l'API.
+- Pour le front : API locale, avec les branches d'API appliquées temporairement.
+- Parcours :
+  - accepter et décliner une invitation ;
+  - répondre à une offre (et voir qu'une offre déjà acceptée ne propose plus de bouton) ;
+  - signaler son arrivée, puis déclarer la mission terminée après la confirmation de présence par l'entreprise.
+- Erreurs affichées. À 375 px, à 1280 px et avec animations réduites. Pas de régression sur les écrans précédents.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -392,6 +455,12 @@ Repères à confirmer :
 - D14 (lot 2b) : on ne revient jamais sur une étape déjà envoyée. À l'intérieur de l'étape technique, on peut revenir à une question précédente tant que rien n'est envoyé.
 - D15 (lot 2b) : les réponses non envoyées sont gardées dans le navigateur (`localStorage`, une clé par candidature) et effacées après l'envoi. C'est un confort : l'écran fonctionne aussi sans.
 - D16 (lot 2b) : les anciens composants de candidature (`IntroStep`, `MotivationStep`, `TechnicalStep`, `AIProcessing`, `CompletionStep`, `ProgressBar`) ne sont plus utilisés, mais ils ne sont pas supprimés. Supprimer des fichiers de l'équipe demande l'accord de Gloria (même principe que D6).
+- D17 (lot 2c) : accepter une proposition reste possible après la date limite de la mission. C'est une invitation directe de l'entreprise, et la règle de la décision D11 vise les candidatures spontanées. En revanche, une mission fermée (inactive ou clôturée) refuse l'acceptation.
+- D18 (lot 2c) : la page des invitations est une nouvelle adresse (`/dashboard/candidats/invitations`). On l'atteint depuis le QG et les quêtes du jour. Elle n'apparaît pas encore dans la navigation, qui sera refaite au lot 8 (D7).
+- D19 (lot 2c) : le montant net affiché au candidat (récompense moins la commission Jobsy de 10 %, arrondie au franc) est calculé dans le front, avec la règle de `WalletService` (`lib/recompense.ts`). Si le taux change dans l'API, ce fichier doit suivre. Une route qui renvoie le net éviterait cet écart.
+- D20 (lot 2c) : les messages de refus de l'API des offres vouvoient le candidat (« Vous avez déjà répondu à cette offre. ») et le suivi répond « Action impossible ». Le front affiche ses propres messages selon le code de la réponse (409, 410, 403) au lieu de les recopier.
+- D21 (lot 2c) : le journal de quêtes n'a plus de recherche ni de pagination. Un candidat a peu de missions confirmées, et les missions terminées sont listées en version compacte. À revoir si les listes s'allongent.
+- D22 (lot 2c) : l'ancien hook `useCountdown` n'est plus utilisé, mais il n'est pas supprimé (même principe que D16).
 
 ## Avancement
 
@@ -399,15 +468,22 @@ Repères à confirmer :
 |---|---|---|---|
 | Plan | Validé le 17/10/2026 | — | — |
 | 0 | Fusionné le 17/10/2026, déployé, `/systeme` en ligne | #5 | Types et build verts, captures du catalogue `/systeme` à 375 px et 1280 px |
-| 1 | Prêt sur `design/lot-1-qg` | — | Types, lint et build verts. API locale (SQLite) avec deux comptes : un compte actif qui déclenche chaque quête, un compte neuf. Captures à 375 px, à 1280 px et avec animations réduites : aucun débordement, aucune erreur dans la console, aucun lien cassé |
-| B1 | Prêt sur `feat/api-rang-par-xp` (back seul, depuis `main`) | — | 8 tests ajoutés (`RankProgressionTest` et `ProfileRankTest`), qui échouent sans le changement. Suite complète : 97 tests |
-| Date limite | Prêt sur `fix/api-candidature-date-limite` (back seul, depuis `main`) | — | 5 tests ajoutés (`ApplicationDeadlineTest`) : les 3 cas de refus échouent sans la règle. `MissionFactory` corrigée (sa date figée au 31/10/2026 aurait fait échouer les tests à partir de novembre). Suite complète : 94 tests |
-| API réunie | Les 3 branches d'API fusionnées localement, à titre de vérification | — | 105 tests, aucun conflit |
+| 1 | Fusionné le 18/10/2026 | #9 | Types, lint et build verts. API locale (SQLite) avec deux comptes : un compte actif qui déclenche chaque quête, un compte neuf. Captures à 375 px, à 1280 px et avec animations réduites : aucun débordement, aucune erreur dans la console, aucun lien cassé |
+| B1 | Fusionné le 18/10/2026 (back seul) | #8 | 8 tests ajoutés (`RankProgressionTest` et `ProfileRankTest`), qui échouent sans le changement. Suite complète : 97 tests |
+| Date limite | Fusionné le 18/10/2026 (back seul) | #7 | 5 tests ajoutés (`ApplicationDeadlineTest`) : les 3 cas de refus échouent sans la règle. `MissionFactory` corrigée (sa date figée au 31/10/2026 aurait fait échouer les tests à partir de novembre). Suite complète : 94 tests |
+| 2a | Fusionné le 18/10/2026 | #10 | Types, lint et build verts. Règles testées sur des cas types. API locale avec 12 missions (rangs E à B, CDI et CDD, missions passées), deux comptes. Vérifié : verrous et manques d'XP exacts, recherche sans accents, règle CDI/CDD, missions passées masquées. Détail au clavier : focus gardé, Échap, retour du focus sur le bouton. Pas de « Postuler » sur un portail verrouillé. L'épreuve d'entrée mène à la candidature. À 375 px : aucun débordement, fenêtre à 16 px des bords. Aucune erreur dans la console, aucun lien cassé |
 | 2b | Prêt sur `design/lot-2b-epreuve` (après le lot 2a) | — | Types, lint et build verts. API locale, 3 comptes (rangs D, E, C), notation en file d'attente. 24 contrôles automatiques réussis : 3 parcours complets (rang D en mission ponctuelle, rang C en mission ponctuelle, rang C en CDD) ; 4 refus d'avance (verrou, date passée, déjà postulé, reprise d'un brouillon) ; réponses retrouvées après rechargement ; refus 410 et coupure réseau affichés, réponses gardées, « Réessayer » qui fonctionne ; focus au titre de chaque étape ; statut « en attente » en base après l'envoi ; brouillons effacés. À 375 px et avec animations réduites : aucun débordement, aucune erreur dans la console. Pas de régression sur le QG ni sur les portails |
+| Réponse aux propositions | Prêt sur `feat/api-reponse-propositions` (back seul, la correction des propositions est déjà dans `main`, PR #6) | — | 8 tests ajoutés (`CandidatProposalResponseTest`) : acceptation, refus, autre candidat, double réponse, mission fermée, liste qui indique la mission fermée, liens de l'e-mail. Tous échouent sans le changement. Suite complète : 100 tests |
+| 2c | Prêt sur `design/lot-2c-invitations-journal` (après le lot 2b) | — | Types, lint et build verts. API locale réunie (4 branches d'API) et un compte dédié. 81 contrôles automatiques réussis : invitations acceptées et déclinées pour de vrai, mission fermée (pas d'« Accepter », refus possible), quêtes du jour dans le bon ordre ; offre acceptée, déclinée avec confirmation, expirée, introuvable ; journal à cinq étapes avec arrivée signalée, présence confirmée par l'entreprise via la vraie route (contrat généré et téléchargé), puis travail terminé ; montants nets exacts ; erreurs 403, 409, 410 et coupures réseau affichées ; focus rendu au bon endroit (Échap, Annuler, après chaque réponse) ; statuts vérifiés en base. À 375 px et avec animations réduites : aucun débordement, aucune animation en boucle, aucune erreur dans la console. Pas de régression sur le QG ni sur les missions |
+| API réunie | Les 4 branches d'API fusionnées localement, à titre de vérification | — | 113 tests, aucun conflit |
 
 Constat pour Gloria (lot 2b) : les questions de secours de l'API, servies quand l'IA est indisponible, vouvoient le candidat (« Qu'est-ce qui vous motive… »), alors que l'interface le tutoie. À harmoniser dans `ApplicationAIService` si elle le souhaite.
-| 2a | Poussé sur `design/lot-2a-portails` (après le lot 1) | — | Types, lint et build verts. Règles testées sur des cas types. API locale avec 12 missions (rangs E à B, CDI et CDD, missions passées), deux comptes. Vérifié : verrous et manques d'XP exacts, recherche sans accents, règle CDI/CDD, missions passées masquées. Détail au clavier : focus gardé, Échap, retour du focus sur le bouton. Pas de « Postuler » sur un portail verrouillé. L'épreuve d'entrée mène à la candidature. À 375 px : aucun débordement, fenêtre à 16 px des bords. Aucune erreur dans la console, aucun lien cassé |
 
-Constats sur l'API faits pendant le lot 1, corrigés sur la branche `fix/api-propositions-inscriptions` (PR séparée, indépendante de la refonte) :
+Constats pour Gloria (lot 2c) :
+- Le candidat peut signaler son arrivée à tout moment, même plusieurs jours avant le rendez-vous : l'API ne compare pas avec `start_date`. Le front le rappelle (« une fois sur place, le jour du rendez-vous ») sans bloquer. Faut-il une règle côté API ?
+- Le statut `expired` des propositions est prévu dans les commentaires de l'API, mais rien ne l'attribue : une invitation sans réponse reste en attente indéfiniment.
+- Le message de refus des liens de l'e-mail affirmait « L'entreprise en a été informée » alors qu'aucune notification n'est envoyée. Il est corrigé sur `feat/api-reponse-propositions`.
+
+Constats sur l'API faits pendant le lot 1, corrigés sur la branche `fix/api-propositions-inscriptions` (PR #6, fusionnée le 18/10/2026) :
 - `GET /candidat/proposals` renvoyait `mission.budget`, une colonne qui n'existe pas : le montant était toujours vide. La réponse donne maintenant `mission.reward`, et le QG lit ce champ.
 - `Enrollment` déclarait `enrolled_at` dans `$fillable`, une colonne absente de la table. Le champ est retiré, et un test vérifie désormais, pour tous les modèles, que chaque attribut de `$fillable` existe en base.

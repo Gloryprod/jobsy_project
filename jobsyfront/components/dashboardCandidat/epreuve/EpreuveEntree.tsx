@@ -5,6 +5,7 @@ import Link from "next/link";
 import useSWR from "swr";
 import { ArrowLeft } from "lucide-react";
 import api from "@/lib/api";
+import { messageErreur } from "@/lib/erreurs";
 import { useUser } from "@/context/UserProvider";
 import { BoutonSysteme, FenetreSysteme, LienSysteme, useMaintenant } from "@/components/systeme";
 import { statutCandidature } from "../qg/JournalQuetes";
@@ -23,14 +24,6 @@ const lireDonnees = (url: string) => api.get(url).then((reponse) => reponse.data
 
 /** Mêmes rangs que l'API (CandidatureController::submit_step_one) : la candidature s'envoie dès la motivation. */
 const RANGS_SANS_ETAPE_TECHNIQUE = ["E", "D"];
-
-/** Message de l'API s'il y en a un (rang, date limite, déjà postulé…), sinon un message utile. */
-function messageErreur(erreur: unknown, parDefaut: string): string {
-  const reponse = (erreur as { response?: { data?: { message?: unknown } } } | null)?.response;
-  if (!reponse) return "La connexion a été coupée. Vérifie ton réseau, puis réessaie.";
-  const message = reponse.data?.message;
-  return typeof message === "string" && message.trim() ? message : parDefaut;
-}
 
 function questionsValides(valeur: unknown): QuestionEpreuve[] {
   if (!Array.isArray(valeur)) return [];

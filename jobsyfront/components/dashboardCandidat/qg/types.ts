@@ -54,11 +54,24 @@ export type Inscription = {
 /** GET /candidat/proposals (CandidatProposalController::index). Pas de date limite en base. */
 export type Proposition = {
   id: number;
+  mission_id?: number | null;
+  /** pending, accepted, declined (expired est prévu par l'API mais n'est attribué nulle part aujourd'hui) */
   status: string;
   subject: string;
+  /** Texte riche saisi par l'entreprise : à afficher avec SafeHtml */
   message: string;
   sent_at?: string | null;
-  /** reward : montant de la mission (corrigé dans l'API, la réponse renvoyait « budget », toujours vide) */
-  mission: { id: number | null; title: string; reward?: number | string | null; location?: string | null };
-  entreprise: { nom_entreprise: string; logo?: string | null };
+  responded_at?: string | null;
+  mission: {
+    id: number | null;
+    title: string;
+    /** reward : montant de la mission (corrigé dans l'API, la réponse renvoyait « budget », toujours vide) */
+    reward?: number | string | null;
+    location?: string | null;
+    deadline?: string | null;
+    /** Mission désactivée ou clôturée : l'API refuse l'acceptation (410) */
+    active?: boolean | null;
+    closed_at?: string | null;
+  };
+  entreprise: { nom_entreprise: string; logo?: string | null; secteur_activite?: string | null };
 };

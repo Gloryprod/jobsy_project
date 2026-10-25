@@ -12,3 +12,20 @@ export function formaterDateCourte(date: string | null | undefined): string | nu
   if (Number.isNaN(valeur.getTime())) return null;
   return valeur.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
 }
+
+/**
+ * « lundi 20 octobre 2026 » pour une date sans heure (colonne date : l'API envoie minuit UTC).
+ * Lue en UTC pour ne jamais glisser au jour précédent selon le fuseau du téléphone.
+ */
+export function formaterJour(date: string | null | undefined): string | null {
+  if (!date) return null;
+  const valeur = new Date(date);
+  if (Number.isNaN(valeur.getTime())) return null;
+  return valeur.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+}
+
+/** « 8 h 30 » à partir de « 08:30 » ou « 08:30:00 », ou null si le format est inconnu. */
+export function formaterHeure(heure: string | null | undefined): string | null {
+  const morceaux = heure?.match(/^(\d{1,2}):(\d{2})/);
+  return morceaux ? `${Number(morceaux[1])} h ${morceaux[2]}` : null;
+}
