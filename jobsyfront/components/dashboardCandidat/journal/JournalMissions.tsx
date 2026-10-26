@@ -9,7 +9,7 @@ import { partageRecompense, XP_MISSION_VALIDEE } from "@/lib/recompense";
 import { useUser } from "@/context/UserProvider";
 import { BoutonSysteme, FenetreSysteme, LienSysteme } from "@/components/systeme";
 import { CarteRealite, LienDiscret, PastilleStatut } from "../qg/CarteRealite";
-import { CarteMissionConfirmee, LienContrat } from "./CarteMissionConfirmee";
+import { BoutonContrat, CarteMissionConfirmee } from "./CarteMissionConfirmee";
 import { STATUT_ARRETEE, STATUTS_TERMINES } from "./regles";
 import type { OffreDetaillee } from "./types";
 
@@ -131,11 +131,13 @@ function MissionTerminee({ offre }: { offre: OffreDetaillee }) {
             : `+${XP_MISSION_VALIDEE} XP gagnés.`}
         </p>
       )}
-      <div className="flex flex-wrap gap-x-5">
+      <div className="flex flex-wrap items-start gap-x-5">
         {!arretee && payee && <LienDiscret href="/dashboard/candidats/loot">Voir mon portefeuille</LienDiscret>}
-        <LienContrat
-          chemin={offre.contract_path}
-          className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[#000080] underline-offset-4 hover:underline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#000080]"
+        <BoutonContrat
+          offreId={offre.id}
+          disponible={!!offre.contract_path}
+          className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-sm font-bold text-[#000080] underline-offset-4 hover:underline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#000080] disabled:cursor-wait disabled:opacity-60"
+          classeErreur="text-sm text-red-700"
         />
       </div>
     </li>

@@ -4,7 +4,8 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 // c'est la convention du reste du front (`${NEXT_PUBLIC_API_URL}/storage/...`). Un /api final est toléré.
 export const API_ROOT = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/+$/, "").replace(/\/api$/, "");
 export const API_URL = `${API_ROOT}/api`;
-// Fichiers publics (logos, CV, diplômes, contrats, leçons) servis par Laravel sous /storage
+// Fichiers publics (logos, CV, diplômes, leçons) servis par Laravel sous /storage.
+// Les contrats n'y sont plus : ils se téléchargent par l'API, après connexion (lib/contrats.ts).
 export const STORAGE_URL = `${API_ROOT}/storage`;
 
 /**
