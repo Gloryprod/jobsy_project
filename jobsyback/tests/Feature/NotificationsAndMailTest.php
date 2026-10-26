@@ -89,6 +89,7 @@ class NotificationsAndMailTest extends TestCase
     public function test_le_contrat_part_en_file_d_attente_avec_le_pdf_du_disque(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
         Mail::fake();
 
         $entreprise = Entreprise::factory()->create();
@@ -98,8 +99,16 @@ class NotificationsAndMailTest extends TestCase
             ->postJson("/api/mission-offers/{$offer->id}/update-status", ['status' => 'in_progress', 'is_on_time' => true])
             ->assertOk();
 
-        Storage::disk('public')->assertExists("contrats/contrat_{$offer->application_id}.pdf");
-        Mail::assertQueued(ContractSignedMail::class, fn ($mail) => $mail->contractPath === "contrats/contrat_{$offer->application_id}.pdf");
+        $chemin = "contrats/contrat_{$offer->application_id}.pdf";
+        // Sur le disque privé, jamais sur le disque public servi par le serveur web
+        Storage::disk('local')->assertExists($chemin);
+        Storage::disk('public')->assertMissing($chemin);
+        Mail::assertQueued(ContractSignedMail::class, function ($mail) use ($chemin) {
+            // La pièce jointe est relue au rendu : elle vient du disque privé (le disque public n'a pas le fichier)
+            $mail->assertHasAttachedData(Storage::disk('local')->get($chemin), 'Contrat_Jobsy.pdf', ['mime' => 'application/pdf']);
+
+            return $mail->contractPath === $chemin;
+        });
         $this->assertTrue($offer->fresh()->is_on_time);
     }
 

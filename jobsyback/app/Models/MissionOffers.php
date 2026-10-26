@@ -8,7 +8,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class MissionOffers extends Model
 {
     use SoftDeletes;
-    
+
+    /**
+     * Disque des contrats PDF : le disque privé (storage/app/private), jamais servi par le serveur web.
+     * Le contrat (noms, rémunération) ne se télécharge que par GET /api/mission-offers/{id}/contract, après connexion.
+     */
+    public const CONTRACT_DISK = 'local';
+
     protected $fillable = [
         'application_id',
         'start_date',

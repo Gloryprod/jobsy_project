@@ -98,8 +98,8 @@ class MissionTrackingController extends Controller
                 // 2. Définir le nom du fichier
                 $fileName = 'contrats/contrat_' . $application->id . '.pdf';
 
-                // 3. Sauvegarder le contenu brut du PDF dans le disque 'public'
-                Storage::disk('public')->put($fileName, $pdf->output());
+                // 3. Sauvegarder le PDF sur le disque privé : il ne se télécharge qu'après connexion (ContractController)
+                Storage::disk(MissionOffers::CONTRACT_DISK)->put($fileName, $pdf->output());
 
                 // 4. Récupérer le chemin pour l'enregistrer en base de données si besoin
                 $path = $fileName;
