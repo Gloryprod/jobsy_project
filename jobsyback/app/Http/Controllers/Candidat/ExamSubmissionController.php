@@ -226,11 +226,11 @@ class ExamSubmissionController extends Controller
             ->first();
 
         // Délai de 24 h après un échec, comme affiché dans l'espace de formation
-        if ($finalExamScore && $finalExamScore->updated_at->copy()->addHours(24)->isFuture()) {
+        if ($finalExamScore && $finalExamScore->updated_at->copy()->addHours(CourseWorkspaceController::DELAI_NOUVELLE_TENTATIVE_HEURES)->isFuture()) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Vous devez attendre 24 h après un échec avant de repasser le projet.',
-                'time_remaining' => (int) now()->diffInSeconds($finalExamScore->updated_at->copy()->addHours(24)),
+                'message' => 'Vous devez attendre ' . CourseWorkspaceController::DELAI_NOUVELLE_TENTATIVE_HEURES . ' h après un échec avant de repasser le projet.',
+                'time_remaining' => (int) now()->diffInSeconds($finalExamScore->updated_at->copy()->addHours(CourseWorkspaceController::DELAI_NOUVELLE_TENTATIVE_HEURES)),
             ], 429);
         }
 
