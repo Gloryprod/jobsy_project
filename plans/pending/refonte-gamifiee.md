@@ -366,6 +366,75 @@ Le lot est découpé en deux parties, chacune de taille M :
   - signaler son arrivée, puis déclarer la mission terminée après la confirmation de présence par l'entreprise.
 - Erreurs affichées. À 375 px, à 1280 px et avec animations réduites. Pas de régression sur les écrans précédents.
 
+## Lot 3a : les donjons, catalogue et carte des modules (plan détaillé du 27/10/2026)
+
+**Objectif.** Avant d'entrer dans une formation, le jeune sait :
+- ce qu'elle lui rapporte (XP, badge, certificat) ;
+- ce qu'elle lui demande : nombre de modules, quiz, examen final ou projet, kit de matériel ;
+- où il en est.
+
+Les leçons, les quiz et l'examen restent dans l'espace de formation (lot 3b).
+
+**Constats.**
+- **Catalogue** (`formations/page.tsx`) :
+  - la progression d'une formation commencée n'est pas affichée, alors que l'API la donne (`progress_percentage`) ;
+  - les filtres affichent des codes techniques (STANDARD, LOGISTIQUE, EXPERT) sans dire ce qu'ils impliquent ;
+  - le bouton inscrit tout de suite, sans prévenir qu'une formation demande un kit livré ou un projet final à deux tentatives ;
+  - la recherche tient compte des accents ;
+  - « Réessayer » recharge toute la page.
+- **Page des modules** (`formations/{id}/modules`) :
+  - aucune page n'y mène ;
+  - elle reprend du code d'administration en commentaire (suppression d'un module) ;
+  - elle affiche un module par page.
+- **API.** `GET /get_modules/{id}` renvoie à tout candidat connecté, inscrit ou non :
+  - le contenu complet des leçons ;
+  - les questions des quiz **avec les bonnes réponses** (`correct_answers`).
+
+  Or `submitQuiz` ne montre les corrections qu'après un quiz réussi : cette route contourne la règle.
+
+**API**, branche `fix/api-carte-modules`, depuis `main` :
+- `GET /get_modules/{id}` renvoie un **résumé** par module : titre, description, ordre, nombre de leçons, durée totale, nombre de questions du quiz.
+  - Pour un candidat inscrit, il ajoute aussi les leçons terminées et l'état du quiz (réussi ou non).
+  - Il ne renvoie plus ni contenu de leçon ni question.
+- Réponse 404 pour une formation désactivée que le candidat ne suit pas, avec la même règle que le catalogue.
+- Tests : pas de contenu ni de réponse dans la réponse, progression exacte d'un inscrit, formation désactivée, ordre des modules.
+
+**Front.**
+- **Catalogue : les donjons d'entraînement.**
+  - En tête, les donjons en cours du candidat : progression réelle et prochaine étape.
+  - Filtres avec les noms de l'administration, chacun expliqué en une phrase :
+    - Standard : quiz et examen en ligne ;
+    - Logistique : avec un kit de matériel livré ;
+    - Expert : projet pratique final.
+  - **Cartes.** Chacune montre :
+    - le type, le titre et une description courte ;
+    - le nombre de salles (modules) ;
+    - la récompense (+XP, badge) ;
+    - l'état réel : nouveau, en cours avec %, kit en attente, boss prêt, en correction, certifié, non validé ;
+    - l'action « Voir le donjon ».
+  - Recherche sans accents.
+- **Carte du donjon** (`formations/{id}/modules`, l'adresse existante). Elle présente :
+  - l'entrée : pour une formation avec kit, le matériel doit être livré avant la première salle ;
+  - les salles (modules) dans l'ordre, avec leurs leçons, leur durée et leur quiz. Chaque salle est franchie, en cours ou à venir : le parcours est séquentiel, comme dans l'espace de formation ;
+  - le boss, avec ses vraies règles :
+    - Standard et Logistique : examen final en QCM, nouvelle tentative 24 h après un échec ;
+    - Expert : projet pratique, 2 tentatives au plus, avec 24 h d'écart ;
+  - le trésor : XP, badge, certificat vérifiable.
+
+  L'action suit l'état : « Entrer dans le donjon » (inscription, puis l'espace de formation), « Continuer », « Suivre la livraison du kit », « Affronter le boss », « Voir mon certificat ».
+
+**Vérification.**
+- Tests PHPUnit de l'API.
+- API locale avec des formations des trois types et un candidat dans chaque état : non inscrit, en cours, kit en attente, boss prêt, certifié, non validé.
+- Contrôles :
+  - états des salles conformes aux leçons terminées et aux quiz réussis ;
+  - aucune réponse de quiz dans les échanges réseau ;
+  - inscription réelle depuis la carte ;
+  - erreurs affichées ;
+  - focus au clavier ;
+  - 375 px, 1280 px et animations réduites ;
+  - pas de régression sur le QG.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
