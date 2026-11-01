@@ -226,7 +226,9 @@ class CourseWorkspaceController extends Controller
                             'id' => $q->id,
                             'question_text' => $q->question_text,
                             'options' => $q->options, // Déjà converti en array par ton cast
-                            'points' => $q->points
+                            'points' => $q->points,
+                            // Une ou plusieurs réponses attendues : la notation en dépend (comme à l'examen final)
+                            'is_multiple' => count($q->correct_answers ?? []) > 1,
                         ];
                     })
                 ];
@@ -255,6 +257,7 @@ class CourseWorkspaceController extends Controller
                 'time_remaining' => $timeRemaining,
                 'attempts_count' => $attemptsCount,
                 'is_permanently_blocked' => $isPermanentlyBlocked,
+                'quiz_passing_score' => self::SEUIL_QUIZ_MODULE,
             ]
         ]);
     }
@@ -276,10 +279,20 @@ class CourseWorkspaceController extends Controller
             ->whereHas('module', fn ($q) => $q->where('course_id', $request->course_id))
             ->exists();
 
-        if (!$lessonInCourse || !$this->enrollmentFor($candidatId, (int) $request->course_id)) {
+        $inscription = $this->enrollmentFor($candidatId, (int) $request->course_id);
+
+        if (!$lessonInCourse || !$inscription) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Leçon introuvable dans vos formations.'
+            ], 403);
+        }
+
+        // Même règle que le quiz : les leçons s'ouvrent une fois le kit de matériel livré
+        if ($inscription->status === 'waiting_kit') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Les leçons s\'ouvrent une fois le kit de matériel livré.'
             ], 403);
         }
 
