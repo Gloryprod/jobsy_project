@@ -468,6 +468,41 @@ L'espace de formation compte environ 2 400 lignes : apprentissage, examen final,
 
 **Vérification** : tests PHPUnit ; API locale ; parcours d'une salle complète (leçons, quiz raté puis réussi) ; verrous ; clavier ; 375 px, 1280 px et animations réduites.
 
+### 3b-B : le boss
+
+Le projet pratique (`FinalExamProject`, 892 lignes) forme une partie à lui seul. Le boss est donc découpé à son tour :
+- **3b-B1** : l'examen final en QCM, le certificat et l'attente du kit ;
+- **3b-B2** : le projet pratique.
+
+**Constats du 3b-B1.**
+- **Examen final** (`FinalExamIntro.tsx`) :
+  - après une réussite, le message annonce « Vous pouvez retenter le test pour atteindre les 100 % », alors que l'API refuse tout nouvel essai une fois l'examen réussi ;
+  - un envoi pendant le délai de 24 h reçoit une réponse « bloquée » avec le code 200 : l'écran plante sur `data.is_passed` ;
+  - le compteur « répondues » compte aussi une question dont on a décoché toutes les cases ;
+  - les choix sont des boutons sans rôle de case ni de bouton radio ;
+  - le résultat passe par un toast, et l'écran bascule aussitôt sans le laisser lire ;
+  - le compte à rebours clignote en boucle.
+- **Certificat** (`CertifiedScreen.tsx`) : 130 lignes de code mis en commentaire, et la copie du lien échoue sans message si le presse-papiers est refusé.
+- **Attente du kit** (`LogisticHoldScreen.tsx`) :
+  - animations en boucle ;
+  - phrase coupée par des espaces (« to        ute préoccupation ») ;
+  - le bouton « Valider la réception » est proposé avant même que l'admin ait marqué le kit comme livré.
+
+**Front (sans changement d'API).**
+- **Le boss : l'examen final.** Les règles réelles de la carte (seuil, délai) sont annoncées avant. Chaque question est un choix unique ou multiple.
+  - Après une victoire : le score, puis « Voir mon certificat ».
+  - Après un échec : le score, la règle et l'heure de la prochaine tentative, puis « Revoir les salles ».
+  - Pendant le délai : le compte à rebours réel.
+  - Une réponse « bloquée » est gérée.
+- **Le trésor : le certificat.** XP et badge gagnés, lien de vérification public (copié, ou affiché s'il ne peut pas l'être), téléchargement du PDF.
+- **L'entrée : le kit.** Chaque étape est écrite en toutes lettres.
+  - Tant que le kit n'est pas livré : explication et « Vérifier à nouveau ».
+  - Une fois livré : « J'ai reçu mon kit ».
+  - Lien vers le profil pour le téléphone et l'adresse de livraison.
+- Les questions du combat et de l'examen partagent un même composant.
+
+**Vérification** : API locale ; examen raté puis bloqué, puis réussi ; certificat (lien, PDF) ; kit en livraison puis livré ; clavier ; 375 px, 1280 px et animations réduites ; pas de régression sur les salles ni sur les donjons.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
