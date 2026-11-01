@@ -53,6 +53,7 @@ interface ApiResponse {
     time_remaining: number | 0;
     attempts_count: number | 0;
     is_permanently_blocked: boolean;
+    quiz_passing_score?: number;
   };
 }
 
@@ -122,7 +123,7 @@ export default function FormationLogistiqueDetail({ params }: { params: { id: st
       return <LogisticHoldScreen enrollment_id = {enrollment_id}  course_title={course_title} delivery_status={delivery_status} logistic_type={logistic_type} onRefresh={() => mutate()}/>;
 
     case "learning":
-        return <LearningPage validation_mode={validation_mode} courseId={params.id} courseTitle={course_title} capsuleCurrent={currentCapsule} sections={sections} progress_percentage={progress_percentage} allCapsulesOrdered={allCapsulesOrdered} onMutate={mutate} />;
+        return <LearningPage quiz_passing_score={data?.data.quiz_passing_score} validation_mode={validation_mode} courseId={params.id} courseTitle={course_title} capsuleCurrent={currentCapsule} sections={sections} progress_percentage={progress_percentage} allCapsulesOrdered={allCapsulesOrdered} onMutate={mutate} />;
     
     case "evaluation_ready" : 
         if (validation_mode === "C") {
@@ -146,7 +147,7 @@ export default function FormationLogistiqueDetail({ params }: { params: { id: st
               ) : (
                 <FinalExamIntro courseId={params.id} courseTitle={course_title} onExamFinished={mutate} />
               )}
-                <LearningPage validation_mode={validation_mode} courseId={params.id} courseTitle={course_title} capsuleCurrent={currentCapsule} sections={sections} progress_percentage={progress_percentage} allCapsulesOrdered={allCapsulesOrdered} onMutate={mutate} />
+                <LearningPage quiz_passing_score={data?.data.quiz_passing_score} validation_mode={validation_mode} courseId={params.id} courseTitle={course_title} capsuleCurrent={currentCapsule} sections={sections} progress_percentage={progress_percentage} allCapsulesOrdered={allCapsulesOrdered} onMutate={mutate} />
             </div>
           )
         }
