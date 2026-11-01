@@ -435,6 +435,39 @@ Les leçons, les quiz et l'examen restent dans l'espace de formation (lot 3b).
   - 375 px, 1280 px et animations réduites ;
   - pas de régression sur le QG.
 
+## Lot 3b : l'espace de formation (plan détaillé du 01/11/2026)
+
+L'espace de formation compte environ 2 400 lignes : apprentissage, examen final, projet pratique, certificat, attente du kit. Le lot est donc découpé en deux parties :
+- **3b-A, les salles** : les leçons et les quiz de module ;
+- **3b-B, le boss** : l'examen final, le projet pratique, le certificat et l'attente du kit.
+
+### 3b-A : les salles
+
+**Constats** (`LearningPage.tsx`) :
+- après un quiz raté, chaque question est marquée « ✗ Incorrect », même les bonnes. L'API ne renvoie la correction qu'en cas de réussite : l'écran affiche donc une information fausse ;
+- le candidat ne sait pas si une question attend une ou plusieurs réponses, alors que la notation en dépend. Deux cases cochées sur une question à réponse unique valent zéro ;
+- le seuil de 80 % n'est annoncé qu'après un échec ;
+- la liste des leçons est faite de `div` cliquables : elle n'est pas utilisable au clavier ;
+- les messages passent par des toasts qui disparaissent ;
+- un `console.log` est resté, et l'indicateur de chargement ne tourne pas ;
+- un score de 0 % s'affiche « 0 » seul.
+
+**API**, branche `feat/api-salles-quiz`, empilée sur `fix/api-carte-modules` (constantes) :
+- l'espace de formation indique pour chaque question de quiz si plusieurs réponses sont attendues (`is_multiple`, comme l'examen final), et renvoie le seuil du quiz ;
+- une leçon ne peut pas être marquée terminée tant que le kit n'est pas livré (même règle que le quiz) ;
+- tests.
+
+**Front** :
+- l'écran d'une salle : la leçon en cours sur fond clair, lisible, et le plan des salles à côté, avec un bouton par leçon et la raison du verrou ;
+- le quiz devient un combat du Système :
+  - choix unique ou multiple annoncé pour chaque question (boutons radio ou cases) ;
+  - seuil annoncé avant ;
+  - après un échec, seulement le score et la règle. Après une réussite, la correction ;
+- messages dans la page, focus sur le titre de chaque nouvelle leçon ;
+- lien vers la carte du donjon.
+
+**Vérification** : tests PHPUnit ; API locale ; parcours d'une salle complète (leçons, quiz raté puis réussi) ; verrous ; clavier ; 375 px, 1280 px et animations réduites.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
