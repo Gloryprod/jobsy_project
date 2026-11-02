@@ -503,6 +503,83 @@ Le projet pratique (`FinalExamProject`, 892 lignes) forme une partie à lui seul
 
 **Vérification** : API locale ; examen raté puis bloqué, puis réussi ; certificat (lien, PDF) ; kit en livraison puis livré ; clavier ; 375 px, 1280 px et animations réduites ; pas de régression sur les salles ni sur les donjons.
 
+### 3b-B2 : le projet pratique (plan détaillé du 02/11/2026)
+
+Le boss des formations Expert (mode C) : un projet noté sur 20 par un jury. Le candidat a un temps imparti, puis une période de grâce. Il a 2 tentatives, avec 24 h d'attente après un échec.
+
+**Constats.**
+- **Une tentative peut être perdue dès le démarrage.**
+  - Le chrono se calcule avec l'horloge du téléphone. Sur un téléphone qui avance d'une heure, le temps paraît écoulé dès l'ouverture.
+  - Sans réponse, l'écran déclare alors une « copie blanche » : la tentative est perdue. Avec des réponses, la copie part au jury, inachevée.
+  - L'API accepte ces deux demandes sans vérifier l'heure limite.
+- **La grâce promise n'est pas tenue.** Le texte annonce 30 minutes de grâce, et l'API les accepte. L'écran envoie pourtant la copie au bout de 10 minutes (`EXTRA_TIME_MINUTES = 10`).
+- **Enregistrement automatique silencieux.** Quand il échoue, rien ne s'affiche : le candidat croit son travail enregistré.
+- **Note fausse.** Après une réussite, l'écran affiche « 14 % obtenus » au lieu de 14 sur 20.
+- **Écran bloqué.** Après les 24 h d'attente, l'écran ne propose pas la nouvelle tentative. Il faut recharger la page.
+- **Erreurs illisibles.** Un champ refusé par l'API (lien invalide, texte trop court) donne « Erreur lors de la soumission ». Un fichier refusé (format, plus de 20 Mo) donne « Échec du téléversement ». La raison de l'API se perd, car elle n'envoie pas de `message`.
+- **Fichiers.**
+  - Le champ ne dit ni les formats ni la taille maximale acceptés par l'API (PDF, ZIP, RAR, PNG, JPG ; 20 Mo).
+  - Un fichier envoyé ne peut plus être remplacé.
+  - Le champ n'a pas d'étiquette liée.
+- **Envoi définitif sans confirmation.**
+- **Animations en boucle.** Le chrono clignote, puis rebondit pendant toute la grâce.
+- **Projet absent.** L'écran propose « Retourner au cours », mais aucun écran ne transmet ce bouton.
+- **Accès trop large.** `GET /exam-submissions/project/{courseId}` renvoie le sujet à tout candidat connecté, même non inscrit.
+
+**API (`fix/api-projet-pratique`, depuis `main`).**
+- La lecture du projet est réservée aux inscrits (403 sinon). Elle renvoie aussi :
+  - l'heure du serveur ;
+  - la durée de la grâce ;
+  - le nombre maximal de tentatives ;
+  - pour une session en cours : la fin du temps imparti et la fin de la grâce.
+- L'envoi automatique et la copie blanche sont refusés (422) avant la fin de la grâce. La copie blanche est aussi refusée pour un projet sans limite de temps.
+- Les refus de validation (envoi, téléversement) renvoient aussi un `message`.
+- Tests ajoutés pour chaque règle.
+
+**Front.**
+- **Accueil.**
+  - Les règles réelles : temps imparti, grâce, note à atteindre sur 20, tentative en cours sur le maximum.
+  - Ce que le jury note : les critères et leurs points.
+  - L'XP et le badge à gagner.
+  - Avertissement : le chrono tourne même si on quitte la page.
+  - Le bouton dit ce qu'il fait : « Démarrer le chrono ».
+- **Pendant le projet.**
+  - Chrono à la minute, sur l'heure du serveur, sans animation en boucle.
+  - Bandeau quand la grâce commence. Annonce aux lecteurs d'écran à chaque changement de phase seulement.
+  - Énoncé, puis les livrables. Chaque champ a son étiquette, son aide et son erreur.
+  - État de l'enregistrement : en cours, enregistré à telle heure, ou échec avec « Réessayer ».
+  - Vérification avant l'envoi, avec les règles de l'API (champ requis, lien http ou https, texte de 10 caractères au moins), puis confirmation.
+  - À la fin de la grâce : envoi automatique du dernier brouillon, ou copie blanche s'il est vide.
+- **Fichier.**
+  - Formats et taille annoncés, et vérifiés avant l'envoi.
+  - Erreur de l'API affichée.
+  - Fichier remplaçable.
+- **Après l'envoi.** Copie chez le jury : date d'envoi, et e-mail au moment de la correction.
+- **Échec.**
+  - Note sur 20, seuil et retour du jury.
+  - Puis, selon le cas : compte à rebours réel, « Recharger » une fois le délai passé, « Repasser le projet », ou tentatives épuisées.
+- **Réussite.** Note sur 20, puis « Voir mon certificat ».
+- **Projet absent.** Explication, et lien vers la carte du donjon.
+- `FinalExamProject` garde son nom et ses paramètres, et affiche le nouveau composant (`components/dashboardCandidat/projet`).
+
+**Vérification** :
+- tests de l'API, et suite complète ;
+- API locale, avec chaque état :
+  - accueil ;
+  - démarrage, saisie et enregistrement ;
+  - enregistrement en échec ;
+  - champ invalide ;
+  - fichier refusé, puis accepté et remplacé ;
+  - confirmation, puis envoi ;
+  - correction par l'admin en échec, attente de 24 h, nouvelle tentative ;
+  - grâce, puis envoi automatique ;
+  - copie blanche ;
+  - tentatives épuisées ;
+  - réussite, puis certificat ;
+- horloge du navigateur décalée d'une heure : la tentative n'est pas perdue ;
+- clavier ; 375 px, 1280 px et animations réduites ;
+- pas de régression sur le boss en QCM, les salles et les donjons.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -602,6 +679,9 @@ Repères à confirmer :
 - D24 (lot 3a) : la carte n'affiche que le plan du donjon. Le contenu des leçons et les quiz restent dans l'espace de formation, après inscription (lot 3b). L'API ne renvoie donc plus qu'un résumé par module.
 - D25 (lot 3a) : les types gardent les noms de l'administration (Standard, Logistique, Expert), chacun expliqué en une phrase. Le jeune doit savoir avant d'entrer si la formation demande un kit livré ou un projet final.
 - D26 (lot 3a) : les seuils (80 % pour un quiz, 75 % pour l'examen final), le délai de 24 h et les 2 tentatives du projet viennent de l'API (constantes de `CourseWorkspaceController` et `UserExamSession`). Le front ne les recopie pas.
+- D27 (lot 3b-B2) : les critères de notation du jury sont montrés au candidat avant et pendant le projet. L'API les renvoyait déjà. Savoir ce qui est noté aide à réussir, et ne donne aucune réponse.
+- D28 (lot 3b-B2) : le chrono du projet suit l'heure du serveur, et non celle du téléphone. L'API refuse l'envoi automatique et la copie blanche avant la fin de la grâce. Un téléphone mal réglé ne fait donc plus perdre de tentative.
+- D29 (lot 3b-B2) : le brouillon gardé dans le navigateur est propre à chaque tentative (une clé par session et par numéro de tentative). Le brouillon enregistré par l'API reste la référence, et le brouillon local ne sert que s'il est vide.
 
 ## Avancement
 
