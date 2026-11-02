@@ -366,6 +366,75 @@ Le lot est découpé en deux parties, chacune de taille M :
   - signaler son arrivée, puis déclarer la mission terminée après la confirmation de présence par l'entreprise.
 - Erreurs affichées. À 375 px, à 1280 px et avec animations réduites. Pas de régression sur les écrans précédents.
 
+## Lot 3a : les donjons, catalogue et carte des modules (plan détaillé du 27/10/2026)
+
+**Objectif.** Avant d'entrer dans une formation, le jeune sait :
+- ce qu'elle lui rapporte (XP, badge, certificat) ;
+- ce qu'elle lui demande : nombre de modules, quiz, examen final ou projet, kit de matériel ;
+- où il en est.
+
+Les leçons, les quiz et l'examen restent dans l'espace de formation (lot 3b).
+
+**Constats.**
+- **Catalogue** (`formations/page.tsx`) :
+  - la progression d'une formation commencée n'est pas affichée, alors que l'API la donne (`progress_percentage`) ;
+  - les filtres affichent des codes techniques (STANDARD, LOGISTIQUE, EXPERT) sans dire ce qu'ils impliquent ;
+  - le bouton inscrit tout de suite, sans prévenir qu'une formation demande un kit livré ou un projet final à deux tentatives ;
+  - la recherche tient compte des accents ;
+  - « Réessayer » recharge toute la page.
+- **Page des modules** (`formations/{id}/modules`) :
+  - aucune page n'y mène ;
+  - elle reprend du code d'administration en commentaire (suppression d'un module) ;
+  - elle affiche un module par page.
+- **API.** `GET /get_modules/{id}` renvoie à tout candidat connecté, inscrit ou non :
+  - le contenu complet des leçons ;
+  - les questions des quiz **avec les bonnes réponses** (`correct_answers`).
+
+  Or `submitQuiz` ne montre les corrections qu'après un quiz réussi : cette route contourne la règle.
+
+**API**, branche `fix/api-carte-modules`, depuis `main` :
+- `GET /get_modules/{id}` renvoie un **résumé** par module : titre, description, ordre, nombre de leçons, durée totale, nombre de questions du quiz.
+  - Pour un candidat inscrit, il ajoute aussi les leçons terminées et l'état du quiz (réussi ou non).
+  - Il ne renvoie plus ni contenu de leçon ni question.
+- Réponse 404 pour une formation désactivée que le candidat ne suit pas, avec la même règle que le catalogue.
+- Tests : pas de contenu ni de réponse dans la réponse, progression exacte d'un inscrit, formation désactivée, ordre des modules.
+
+**Front.**
+- **Catalogue : les donjons d'entraînement.**
+  - En tête, les donjons en cours du candidat : progression réelle et prochaine étape.
+  - Filtres avec les noms de l'administration, chacun expliqué en une phrase :
+    - Standard : quiz et examen en ligne ;
+    - Logistique : avec un kit de matériel livré ;
+    - Expert : projet pratique final.
+  - **Cartes.** Chacune montre :
+    - le type, le titre et une description courte ;
+    - le nombre de salles (modules) ;
+    - la récompense (+XP, badge) ;
+    - l'état réel : nouveau, en cours avec %, kit en attente, boss prêt, en correction, certifié, non validé ;
+    - l'action « Voir le donjon ».
+  - Recherche sans accents.
+- **Carte du donjon** (`formations/{id}/modules`, l'adresse existante). Elle présente :
+  - l'entrée : pour une formation avec kit, le matériel doit être livré avant la première salle ;
+  - les salles (modules) dans l'ordre, avec leurs leçons, leur durée et leur quiz. Chaque salle est franchie, en cours ou à venir : le parcours est séquentiel, comme dans l'espace de formation ;
+  - le boss, avec ses vraies règles :
+    - Standard et Logistique : examen final en QCM, nouvelle tentative 24 h après un échec ;
+    - Expert : projet pratique, 2 tentatives au plus, avec 24 h d'écart ;
+  - le trésor : XP, badge, certificat vérifiable.
+
+  L'action suit l'état : « Entrer dans le donjon » (inscription, puis l'espace de formation), « Continuer », « Suivre la livraison du kit », « Affronter le boss », « Voir mon certificat ».
+
+**Vérification.**
+- Tests PHPUnit de l'API.
+- API locale avec des formations des trois types et un candidat dans chaque état : non inscrit, en cours, kit en attente, boss prêt, certifié, non validé.
+- Contrôles :
+  - états des salles conformes aux leçons terminées et aux quiz réussis ;
+  - aucune réponse de quiz dans les échanges réseau ;
+  - inscription réelle depuis la carte ;
+  - erreurs affichées ;
+  - focus au clavier ;
+  - 375 px, 1280 px et animations réduites ;
+  - pas de régression sur le QG.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -461,6 +530,10 @@ Repères à confirmer :
 - D20 (lot 2c) : les messages de refus de l'API des offres vouvoient le candidat (« Vous avez déjà répondu à cette offre. ») et le suivi répond « Action impossible ». Le front affiche ses propres messages selon le code de la réponse (409, 410, 403) au lieu de les recopier.
 - D21 (lot 2c) : le journal de quêtes n'a plus de recherche ni de pagination. Un candidat a peu de missions confirmées, et les missions terminées sont listées en version compacte. À revoir si les listes s'allongent.
 - D22 (lot 2c) : l'ancien hook `useCountdown` n'est plus utilisé, mais il n'est pas supprimé (même principe que D16).
+- D23 (lot 3a) : la carte du donjon reprend l'adresse existante `/formations/{id}/modules`, une page à laquelle rien ne menait (hypothèse 5 : les adresses ne changent pas). On y arrive depuis le catalogue.
+- D24 (lot 3a) : la carte n'affiche que le plan du donjon. Le contenu des leçons et les quiz restent dans l'espace de formation, après inscription (lot 3b). L'API ne renvoie donc plus qu'un résumé par module.
+- D25 (lot 3a) : les types gardent les noms de l'administration (Standard, Logistique, Expert), chacun expliqué en une phrase. Le jeune doit savoir avant d'entrer si la formation demande un kit livré ou un projet final.
+- D26 (lot 3a) : les seuils (80 % pour un quiz, 75 % pour l'examen final), le délai de 24 h et les 2 tentatives du projet viennent de l'API (constantes de `CourseWorkspaceController` et `UserExamSession`). Le front ne les recopie pas.
 
 ## Avancement
 
@@ -472,10 +545,12 @@ Repères à confirmer :
 | B1 | Fusionné le 18/10/2026 (back seul) | #8 | 8 tests ajoutés (`RankProgressionTest` et `ProfileRankTest`), qui échouent sans le changement. Suite complète : 97 tests |
 | Date limite | Fusionné le 18/10/2026 (back seul) | #7 | 5 tests ajoutés (`ApplicationDeadlineTest`) : les 3 cas de refus échouent sans la règle. `MissionFactory` corrigée (sa date figée au 31/10/2026 aurait fait échouer les tests à partir de novembre). Suite complète : 94 tests |
 | 2a | Fusionné le 18/10/2026 | #10 | Types, lint et build verts. Règles testées sur des cas types. API locale avec 12 missions (rangs E à B, CDI et CDD, missions passées), deux comptes. Vérifié : verrous et manques d'XP exacts, recherche sans accents, règle CDI/CDD, missions passées masquées. Détail au clavier : focus gardé, Échap, retour du focus sur le bouton. Pas de « Postuler » sur un portail verrouillé. L'épreuve d'entrée mène à la candidature. À 375 px : aucun débordement, fenêtre à 16 px des bords. Aucune erreur dans la console, aucun lien cassé |
-| 2b | Prêt sur `design/lot-2b-epreuve` (après le lot 2a) | — | Types, lint et build verts. API locale, 3 comptes (rangs D, E, C), notation en file d'attente. 24 contrôles automatiques réussis : 3 parcours complets (rang D en mission ponctuelle, rang C en mission ponctuelle, rang C en CDD) ; 4 refus d'avance (verrou, date passée, déjà postulé, reprise d'un brouillon) ; réponses retrouvées après rechargement ; refus 410 et coupure réseau affichés, réponses gardées, « Réessayer » qui fonctionne ; focus au titre de chaque étape ; statut « en attente » en base après l'envoi ; brouillons effacés. À 375 px et avec animations réduites : aucun débordement, aucune erreur dans la console. Pas de régression sur le QG ni sur les portails |
-| Réponse aux propositions | Prêt sur `feat/api-reponse-propositions` (back seul, la correction des propositions est déjà dans `main`, PR #6) | — | 8 tests ajoutés (`CandidatProposalResponseTest`) : acceptation, refus, autre candidat, double réponse, mission fermée, liste qui indique la mission fermée, liens de l'e-mail. Tous échouent sans le changement. Suite complète : 100 tests |
-| 2c | Prêt sur `design/lot-2c-invitations-journal` (après le lot 2b) | — | Types, lint et build verts. API locale réunie (4 branches d'API) et un compte dédié. 81 contrôles automatiques réussis : invitations acceptées et déclinées pour de vrai, mission fermée (pas d'« Accepter », refus possible), quêtes du jour dans le bon ordre ; offre acceptée, déclinée avec confirmation, expirée, introuvable ; journal à cinq étapes avec arrivée signalée, présence confirmée par l'entreprise via la vraie route (contrat généré et téléchargé), puis travail terminé ; montants nets exacts ; erreurs 403, 409, 410 et coupures réseau affichées ; focus rendu au bon endroit (Échap, Annuler, après chaque réponse) ; statuts vérifiés en base. À 375 px et avec animations réduites : aucun débordement, aucune animation en boucle, aucune erreur dans la console. Pas de régression sur le QG ni sur les missions |
+| 2b | Fusionné le 25/10/2026 | #11 | Types, lint et build verts. API locale, 3 comptes (rangs D, E, C), notation en file d'attente. 24 contrôles automatiques réussis : 3 parcours complets (rang D en mission ponctuelle, rang C en mission ponctuelle, rang C en CDD) ; 4 refus d'avance (verrou, date passée, déjà postulé, reprise d'un brouillon) ; réponses retrouvées après rechargement ; refus 410 et coupure réseau affichés, réponses gardées, « Réessayer » qui fonctionne ; focus au titre de chaque étape ; statut « en attente » en base après l'envoi ; brouillons effacés. À 375 px et avec animations réduites : aucun débordement, aucune erreur dans la console. Pas de régression sur le QG ni sur les portails |
+| Réponse aux propositions | Fusionné le 25/10/2026 (back seul) | #12 | 8 tests ajoutés (`CandidatProposalResponseTest`) : acceptation, refus, autre candidat, double réponse, mission fermée, liste qui indique la mission fermée, liens de l'e-mail. Tous échouent sans le changement. Suite complète : 100 tests |
+| 2c | Fusionné le 25/10/2026 | #13 | Types, lint et build verts. API locale réunie (4 branches d'API) et un compte dédié. 81 contrôles automatiques réussis : invitations acceptées et déclinées pour de vrai, mission fermée (pas d'« Accepter », refus possible), quêtes du jour dans le bon ordre ; offre acceptée, déclinée avec confirmation, expirée, introuvable ; journal à cinq étapes avec arrivée signalée, présence confirmée par l'entreprise via la vraie route (contrat généré et téléchargé), puis travail terminé ; montants nets exacts ; erreurs 403, 409, 410 et coupures réseau affichées ; focus rendu au bon endroit (Échap, Annuler, après chaque réponse) ; statuts vérifiés en base. À 375 px et avec animations réduites : aucun débordement, aucune animation en boucle, aucune erreur dans la console. Pas de régression sur le QG ni sur les missions |
 | API réunie | Les 4 branches d'API fusionnées localement, à titre de vérification | — | 113 tests, aucun conflit |
+| Carte des modules | Prêt sur `fix/api-carte-modules` (back seul, depuis `main`) | — | 6 tests ajoutés (`CourseMapTest`) : pas de contenu ni de réponse de quiz, résumé dans l'ordre, avancement d'un inscrit, quiz raté, formation désactivée, boss Expert. Tous échouent sans le changement. Suite complète : 119 tests |
+| 3a | Prêt sur `design/lot-3a-donjons` (depuis `main`) | — | Types, lint et build verts. API locale avec 8 formations des trois types et un candidat dans chaque état. 50 contrôles automatiques réussis : donjons en cours triés par urgence, formations désactivées (suivie visible, jamais suivie absente), recherche sans accents ni tiret, filtres ; carte : salles franchie, en cours et à venir conformes aux leçons et aux quiz, seuils et règles du boss venus de l'API, kit en livraison, certifié, boss prêt, non vaincu, introuvable ; inscription réelle (Expert numérique, Expert avec kit) et erreur simulée ; aucune réponse de quiz ni contenu de leçon dans les 8 réponses de la carte reçues. À 375 px et avec animations réduites : aucun débordement, aucune animation en boucle, aucune erreur dans la console. Pas de régression sur le QG |
 
 Constat pour Gloria (lot 2b) : les questions de secours de l'API, servies quand l'IA est indisponible, vouvoient le candidat (« Qu'est-ce qui vous motive… »), alors que l'interface le tutoie. À harmoniser dans `ApplicationAIService` si elle le souhaite.
 
