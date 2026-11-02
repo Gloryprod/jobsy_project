@@ -435,6 +435,39 @@ Les leçons, les quiz et l'examen restent dans l'espace de formation (lot 3b).
   - 375 px, 1280 px et animations réduites ;
   - pas de régression sur le QG.
 
+## Lot 3b : l'espace de formation (plan détaillé du 01/11/2026)
+
+L'espace de formation compte environ 2 400 lignes : apprentissage, examen final, projet pratique, certificat, attente du kit. Le lot est donc découpé en deux parties :
+- **3b-A, les salles** : les leçons et les quiz de module ;
+- **3b-B, le boss** : l'examen final, le projet pratique, le certificat et l'attente du kit.
+
+### 3b-A : les salles
+
+**Constats** (`LearningPage.tsx`) :
+- après un quiz raté, chaque question est marquée « ✗ Incorrect », même les bonnes. L'API ne renvoie la correction qu'en cas de réussite : l'écran affiche donc une information fausse ;
+- le candidat ne sait pas si une question attend une ou plusieurs réponses, alors que la notation en dépend. Deux cases cochées sur une question à réponse unique valent zéro ;
+- le seuil de 80 % n'est annoncé qu'après un échec ;
+- la liste des leçons est faite de `div` cliquables : elle n'est pas utilisable au clavier ;
+- les messages passent par des toasts qui disparaissent ;
+- un `console.log` est resté, et l'indicateur de chargement ne tourne pas ;
+- un score de 0 % s'affiche « 0 » seul.
+
+**API**, branche `feat/api-salles-quiz`, empilée sur `fix/api-carte-modules` (constantes) :
+- l'espace de formation indique pour chaque question de quiz si plusieurs réponses sont attendues (`is_multiple`, comme l'examen final), et renvoie le seuil du quiz ;
+- une leçon ne peut pas être marquée terminée tant que le kit n'est pas livré (même règle que le quiz) ;
+- tests.
+
+**Front** :
+- l'écran d'une salle : la leçon en cours sur fond clair, lisible, et le plan des salles à côté, avec un bouton par leçon et la raison du verrou ;
+- le quiz devient un combat du Système :
+  - choix unique ou multiple annoncé pour chaque question (boutons radio ou cases) ;
+  - seuil annoncé avant ;
+  - après un échec, seulement le score et la règle. Après une réussite, la correction ;
+- messages dans la page, focus sur le titre de chaque nouvelle leçon ;
+- lien vers la carte du donjon.
+
+**Vérification** : tests PHPUnit ; API locale ; parcours d'une salle complète (leçons, quiz raté puis réussi) ; verrous ; clavier ; 375 px, 1280 px et animations réduites.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -551,6 +584,8 @@ Repères à confirmer :
 | API réunie | Les 4 branches d'API fusionnées localement, à titre de vérification | — | 113 tests, aucun conflit |
 | Carte des modules | Prêt sur `fix/api-carte-modules` (back seul, depuis `main`) | — | 6 tests ajoutés (`CourseMapTest`) : pas de contenu ni de réponse de quiz, résumé dans l'ordre, avancement d'un inscrit, quiz raté, formation désactivée, boss Expert. Tous échouent sans le changement. Suite complète : 119 tests |
 | 3a | Prêt sur `design/lot-3a-donjons` (depuis `main`) | — | Types, lint et build verts. API locale avec 8 formations des trois types et un candidat dans chaque état. 50 contrôles automatiques réussis : donjons en cours triés par urgence, formations désactivées (suivie visible, jamais suivie absente), recherche sans accents ni tiret, filtres ; carte : salles franchie, en cours et à venir conformes aux leçons et aux quiz, seuils et règles du boss venus de l'API, kit en livraison, certifié, boss prêt, non vaincu, introuvable ; inscription réelle (Expert numérique, Expert avec kit) et erreur simulée ; aucune réponse de quiz ni contenu de leçon dans les 8 réponses de la carte reçues. À 375 px et avec animations réduites : aucun débordement, aucune animation en boucle, aucune erreur dans la console. Pas de régression sur le QG |
+| Salles (API) | Prêt sur `feat/api-salles-quiz` (back seul, après `fix/api-carte-modules`) | — | 3 tests ajoutés (`CourseRoomsTest`) : choix multiple annoncé sans les réponses, seuil, leçon fermée tant que le kit n'est pas livré. Les 2 premiers échouent sans le changement. Suite complète : 122 tests |
+| 3b-A | Prêt sur `design/lot-3b-salles` (après le lot 3a) | — | Types, lint et build verts. API locale. 31 contrôles automatiques réussis : ouverture sur la première étape non terminée, étape fermée expliquée, leçons texte et PDF (fichier réel), focus au titre de chaque étape, combat (seuil annoncé, choix unique ou multiple), réponses manquantes, échec sans fausse correction, retenter, victoire avec correction, le dernier combat mène au boss sans bascule automatique, formation à 100 % en base, coupure réseau. À 375 px et avec animations réduites : aucun débordement, aucune animation en boucle, plan atteignable au clavier, aucune erreur dans la console. Lot 3a toujours à 50 contrôles sur 50 |
 
 Constat pour Gloria (lot 2b) : les questions de secours de l'API, servies quand l'IA est indisponible, vouvoient le candidat (« Qu'est-ce qui vous motive… »), alors que l'interface le tutoie. À harmoniser dans `ApplicationAIService` si elle le souhaite.
 

@@ -50,6 +50,7 @@ interface ApiResponse {
     time_remaining: number | 0;
     attempts_count: number | 0;
     is_permanently_blocked: boolean;
+    quiz_passing_score?: number;
   };
 }
 
@@ -115,7 +116,7 @@ export default function FormationStandardDetail({ params }: { params: { id: stri
   switch (status) {
 
     case "learning":
-      return <LearningPage validation_mode={validation_mode} courseId={params.id} courseTitle={course_title} capsuleCurrent={currentCapsule} sections={sections} progress_percentage={progress_percentage} allCapsulesOrdered={allCapsulesOrdered} onMutate={mutate} />;
+      return <LearningPage quiz_passing_score={data?.data.quiz_passing_score} validation_mode={validation_mode} courseId={params.id} courseTitle={course_title} capsuleCurrent={currentCapsule} sections={sections} progress_percentage={progress_percentage} allCapsulesOrdered={allCapsulesOrdered} onMutate={mutate} />;
 
     case "evaluation_ready" : 
       // L'écran d'accueil du grand test final
@@ -140,7 +141,7 @@ export default function FormationStandardDetail({ params }: { params: { id: stri
             ) : (
               <FinalExamIntro courseId={params.id} courseTitle={course_title} onExamFinished={mutate} />
             )}
-              <LearningPage validation_mode={validation_mode} courseId={params.id} courseTitle={course_title} capsuleCurrent={currentCapsule} sections={sections} progress_percentage={progress_percentage} allCapsulesOrdered={allCapsulesOrdered} onMutate={mutate} />
+              <LearningPage quiz_passing_score={data?.data.quiz_passing_score} validation_mode={validation_mode} courseId={params.id} courseTitle={course_title} capsuleCurrent={currentCapsule} sections={sections} progress_percentage={progress_percentage} allCapsulesOrdered={allCapsulesOrdered} onMutate={mutate} />
           </div>
         )
       }
