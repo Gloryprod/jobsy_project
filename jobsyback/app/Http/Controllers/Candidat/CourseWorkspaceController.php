@@ -18,6 +18,15 @@ use Carbon\Carbon;
 
 class CourseWorkspaceController extends Controller
 {
+    /** Note minimale (en %) pour réussir le quiz d'un module. Reprise par la carte des modules (CourseCatalogueController). */
+    public const SEUIL_QUIZ_MODULE = 80;
+
+    /** Note minimale (en %) pour réussir l'examen final en QCM. */
+    public const SEUIL_EXAMEN_FINAL = 75;
+
+    /** Délai entre un échec à l'examen final (QCM ou projet) et la tentative suivante. */
+    public const DELAI_NOUVELLE_TENTATIVE_HEURES = 24;
+
     public function getCourse(Request $request, Int $courseId){
         $course = Course::where('id', $courseId)
         ->select('validation_mode')
@@ -137,7 +146,7 @@ class CourseWorkspaceController extends Controller
             if ($course->validation_mode === 'C') {
 
                 // A. Vérification du blocage définitif (2 tentatives consommées OU indicateur is_blocked actif)
-                if ($attemptsCount >= 2 || ($session && $session->is_blocked)) {
+                if ($attemptsCount >= UserExamSession::MAX_ATTEMPTS || ($session && $session->is_blocked)) {
                     $can_retry = false;
                     $isPermanentlyBlocked = true;
                     $timeRemaining = 0;
@@ -145,7 +154,7 @@ class CourseWorkspaceController extends Controller
                 // B. Première tentative échouée -> Vérification du délai des 24h
                 else {
                     $updatedAt = $finalExamScore->updated_at;
-                    $liberationDate = $updatedAt->copy()->addHours(24);
+                    $liberationDate = $updatedAt->copy()->addHours(self::DELAI_NOUVELLE_TENTATIVE_HEURES);
                     $now = Carbon::now();
 
                     $diffInSeconds = $now->diffInSeconds($liberationDate, false);
@@ -164,7 +173,7 @@ class CourseWorkspaceController extends Controller
             else {
                 // Tentatives illimitées, mais obligation de respecter le délai de 24h après chaque échec
                 $updatedAt = $finalExamScore->updated_at;
-                $liberationDate = $updatedAt->copy()->addHours(24);
+                $liberationDate = $updatedAt->copy()->addHours(self::DELAI_NOUVELLE_TENTATIVE_HEURES);
                 $now = Carbon::now();
 
                 $diffInSeconds = $now->diffInSeconds($liberationDate, false);
@@ -383,7 +392,7 @@ class CourseWorkspaceController extends Controller
 
         // Calcul du pourcentage final
         $scorePercentage = ($totalPoints > 0) ? ($earnedPoints / $totalPoints) * 100 : 0;
-        $isPassed = $scorePercentage >= 80; // Note de passage à 80% pour Jobsy
+        $isPassed = $scorePercentage >= self::SEUIL_QUIZ_MODULE;
 
         // 4. Enregistrement ou mise à jour de la tentative en base de données
         $moduleResult = ModuleResult::updateOrCreate(
@@ -413,7 +422,7 @@ class CourseWorkspaceController extends Controller
                 'corrections' => $isPassed ? $corrections : [],
                 'message'     => $isPassed 
                     ? 'Félicitations ! Vous avez validé ce module avec succès.' 
-                    : 'Score insuffisant (minimum 80%). Prenez le temps de relire le cours et réessayez !'
+                    : 'Score insuffisant (minimum ' . self::SEUIL_QUIZ_MODULE . '%). Prenez le temps de relire le cours et réessayez !'
             ]
         ]);
     }
@@ -446,7 +455,7 @@ class CourseWorkspaceController extends Controller
 
         if ($lastResult && !$lastResult->is_passed) {
             $updatedAt = $lastResult->updated_at;
-            $liberationDate = $updatedAt->copy()->addHours(24);
+            $liberationDate = $updatedAt->copy()->addHours(self::DELAI_NOUVELLE_TENTATIVE_HEURES);
             // $liberationDate = "2026-06-10 21:46:07";
             $now = Carbon::now();
             $timeRemaining = $now->diffInSeconds($liberationDate, false);
@@ -506,7 +515,7 @@ class CourseWorkspaceController extends Controller
 
         if ($lastResult && !$lastResult->is_passed) {
             $updatedAt = $lastResult->updated_at;
-            $liberationDate = $updatedAt->copy()->addHours(24);
+            $liberationDate = $updatedAt->copy()->addHours(self::DELAI_NOUVELLE_TENTATIVE_HEURES);
             // $liberationDate = "2026-06-10 21:46:07";
             $now = Carbon::now();
             $timeRemaining = $now->diffInSeconds($liberationDate, false);
@@ -590,8 +599,8 @@ class CourseWorkspaceController extends Controller
         // 4. Calcul du score final en pourcentage
         $scorePercentage = $totalPoints > 0 ? round(($earnedPoints / $totalPoints) * 100) : 0;
         
-        // Seuil de réussite fixé à 75% (tu peux le rendre dynamique sur ton modèle Course si besoin)
-        $seuilReussite = 75; 
+        // Seuil de réussite (tu peux le rendre dynamique sur ton modèle Course si besoin)
+        $seuilReussite = self::SEUIL_EXAMEN_FINAL;
         $isPassed = $scorePercentage >= $seuilReussite;
 
         // 5. Enregistrement ou mise à jour du score en base de données
