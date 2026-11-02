@@ -22,6 +22,8 @@ type Props = {
   /** Étape proposée au chargement (la première non terminée) */
   etapeInitiale: Capsule | null;
   seuilQuiz: number | null;
+  /** Sous l'écran du boss (délai après un échec) : pas d'en-tête en double, un simple intertitre */
+  revision?: boolean;
   /** Recharge l'espace de formation ; résout quand les données sont à jour */
   onMiseAJour: () => Promise<unknown>;
 };
@@ -32,7 +34,7 @@ const LIBELLES_TYPE: Record<Capsule["type"], string> = { text: "Leçon à lire",
  * L'écran d'une salle : la leçon en cours, lisible sur fond clair, et le plan des salles à côté.
  * Le quiz du module est un combat du Système. Les étapes s'ouvrent dans l'ordre, comme le vérifie l'API.
  */
-export function EcranSalle({ courseId, courseTitle, validationMode, progression, sections, etapes, etapeInitiale, seuilQuiz, onMiseAJour }: Props) {
+export function EcranSalle({ courseId, courseTitle, validationMode, progression, sections, etapes, etapeInitiale, seuilQuiz, onMiseAJour, revision = false }: Props) {
   const [choisie, setChoisie] = useState<string | null>(etapeInitiale?.id ?? null);
   const [envoi, setEnvoi] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -97,29 +99,33 @@ export function EcranSalle({ courseId, courseTitle, validationMode, progression,
 
   return (
     <div className="grid gap-6 p-2 font-lisible text-slate-900 sm:p-4">
-      <header className="grid gap-2">
-        <Link
-          href={lienCarte(Number(courseId))}
-          className="inline-flex min-h-11 items-center gap-2 justify-self-start text-sm font-bold text-[#000080] hover:underline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#000080]"
-        >
-          <ArrowLeft aria-hidden="true" className="size-4" />
-          Carte du donjon
-        </Link>
-        <p className="text-sm font-bold text-[#000080]">Donjon {type.nom}</p>
-        <h1 className="font-systeme text-2xl leading-tight font-bold text-balance text-[#000080] sm:text-3xl">{courseTitle}</h1>
-        <div className="grid max-w-md gap-1">
-          <div className="flex justify-between text-sm text-slate-600">
-            <span>Progression</span>
-            <span className="font-semibold tabular-nums">
-              {pourcentage}
-              {POURCENT}
-            </span>
+      {revision ? (
+        <h2 className="font-systeme text-xl font-bold text-[#000080]">Revoir les salles</h2>
+      ) : (
+        <header className="grid gap-2">
+          <Link
+            href={lienCarte(Number(courseId))}
+            className="inline-flex min-h-11 items-center gap-2 justify-self-start text-sm font-bold text-[#000080] hover:underline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#000080]"
+          >
+            <ArrowLeft aria-hidden="true" className="size-4" />
+            Carte du donjon
+          </Link>
+          <p className="text-sm font-bold text-[#000080]">Donjon {type.nom}</p>
+          <h1 className="font-systeme text-2xl leading-tight font-bold text-balance text-[#000080] sm:text-3xl">{courseTitle}</h1>
+          <div className="grid max-w-md gap-1">
+            <div className="flex justify-between text-sm text-slate-600">
+              <span>Progression</span>
+              <span className="font-semibold tabular-nums">
+                {pourcentage}
+                {POURCENT}
+              </span>
+            </div>
+            <div role="progressbar" aria-label="Progression dans la formation" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pourcentage} className="h-2 overflow-hidden rounded-full bg-slate-200">
+              <div className="h-full rounded-full bg-[#000080]" style={{ width: `${pourcentage}%` }} />
+            </div>
           </div>
-          <div role="progressbar" aria-label="Progression dans la formation" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pourcentage} className="h-2 overflow-hidden rounded-full bg-slate-200">
-            <div className="h-full rounded-full bg-[#000080]" style={{ width: `${pourcentage}%` }} />
-          </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <section aria-label="Étape en cours" className="grid gap-4">

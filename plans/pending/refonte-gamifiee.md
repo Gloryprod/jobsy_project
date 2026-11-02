@@ -468,6 +468,41 @@ L'espace de formation compte environ 2 400 lignes : apprentissage, examen final,
 
 **Vérification** : tests PHPUnit ; API locale ; parcours d'une salle complète (leçons, quiz raté puis réussi) ; verrous ; clavier ; 375 px, 1280 px et animations réduites.
 
+### 3b-B : le boss
+
+Le projet pratique (`FinalExamProject`, 892 lignes) forme une partie à lui seul. Le boss est donc découpé à son tour :
+- **3b-B1** : l'examen final en QCM, le certificat et l'attente du kit ;
+- **3b-B2** : le projet pratique.
+
+**Constats du 3b-B1.**
+- **Examen final** (`FinalExamIntro.tsx`) :
+  - après une réussite, le message annonce « Vous pouvez retenter le test pour atteindre les 100 % », alors que l'API refuse tout nouvel essai une fois l'examen réussi ;
+  - un envoi pendant le délai de 24 h reçoit une réponse « bloquée » avec le code 200 : l'écran plante sur `data.is_passed` ;
+  - le compteur « répondues » compte aussi une question dont on a décoché toutes les cases ;
+  - les choix sont des boutons sans rôle de case ni de bouton radio ;
+  - le résultat passe par un toast, et l'écran bascule aussitôt sans le laisser lire ;
+  - le compte à rebours clignote en boucle.
+- **Certificat** (`CertifiedScreen.tsx`) : 130 lignes de code mis en commentaire, et la copie du lien échoue sans message si le presse-papiers est refusé.
+- **Attente du kit** (`LogisticHoldScreen.tsx`) :
+  - animations en boucle ;
+  - phrase coupée par des espaces (« to        ute préoccupation ») ;
+  - le bouton « Valider la réception » est proposé avant même que l'admin ait marqué le kit comme livré.
+
+**Front (sans changement d'API).**
+- **Le boss : l'examen final.** Les règles réelles de la carte (seuil, délai) sont annoncées avant. Chaque question est un choix unique ou multiple.
+  - Après une victoire : le score, puis « Voir mon certificat ».
+  - Après un échec : le score, la règle et l'heure de la prochaine tentative, puis « Revoir les salles ».
+  - Pendant le délai : le compte à rebours réel.
+  - Une réponse « bloquée » est gérée.
+- **Le trésor : le certificat.** XP et badge gagnés, lien de vérification public (copié, ou affiché s'il ne peut pas l'être), téléchargement du PDF.
+- **L'entrée : le kit.** Chaque étape est écrite en toutes lettres.
+  - Tant que le kit n'est pas livré : explication et « Vérifier à nouveau ».
+  - Une fois livré : « J'ai reçu mon kit ».
+  - Lien vers le profil pour le téléphone et l'adresse de livraison.
+- Les questions du combat et de l'examen partagent un même composant.
+
+**Vérification** : API locale ; examen raté puis bloqué, puis réussi ; certificat (lien, PDF) ; kit en livraison puis livré ; clavier ; 375 px, 1280 px et animations réduites ; pas de régression sur les salles ni sur les donjons.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -586,6 +621,7 @@ Repères à confirmer :
 | 3a | Prêt sur `design/lot-3a-donjons` (depuis `main`) | — | Types, lint et build verts. API locale avec 8 formations des trois types et un candidat dans chaque état. 50 contrôles automatiques réussis : donjons en cours triés par urgence, formations désactivées (suivie visible, jamais suivie absente), recherche sans accents ni tiret, filtres ; carte : salles franchie, en cours et à venir conformes aux leçons et aux quiz, seuils et règles du boss venus de l'API, kit en livraison, certifié, boss prêt, non vaincu, introuvable ; inscription réelle (Expert numérique, Expert avec kit) et erreur simulée ; aucune réponse de quiz ni contenu de leçon dans les 8 réponses de la carte reçues. À 375 px et avec animations réduites : aucun débordement, aucune animation en boucle, aucune erreur dans la console. Pas de régression sur le QG |
 | Salles (API) | Prêt sur `feat/api-salles-quiz` (back seul, après `fix/api-carte-modules`) | — | 3 tests ajoutés (`CourseRoomsTest`) : choix multiple annoncé sans les réponses, seuil, leçon fermée tant que le kit n'est pas livré. Les 2 premiers échouent sans le changement. Suite complète : 122 tests |
 | 3b-A | Prêt sur `design/lot-3b-salles` (après le lot 3a) | — | Types, lint et build verts. API locale. 31 contrôles automatiques réussis : ouverture sur la première étape non terminée, étape fermée expliquée, leçons texte et PDF (fichier réel), focus au titre de chaque étape, combat (seuil annoncé, choix unique ou multiple), réponses manquantes, échec sans fausse correction, retenter, victoire avec correction, le dernier combat mène au boss sans bascule automatique, formation à 100 % en base, coupure réseau. À 375 px et avec animations réduites : aucun débordement, aucune animation en boucle, plan atteignable au clavier, aucune erreur dans la console. Lot 3a toujours à 50 contrôles sur 50 |
+| 3b-B1 | Prêt sur `design/lot-3b-boss` (après le lot 3b-A) | — | Types, lint et build verts. Aucun changement d'API. API locale. 32 contrôles automatiques : accueil du boss avec les règles de la carte, choix unique, réponses manquantes, réponse « bloquée » sans plantage, compteur exact, échec (score, règle, prochaine tentative, plus de fausse promesse), délai (compte à rebours réel, un seul en-tête, salles à réviser, aucune animation en boucle), échec vieilli de 25 h puis victoire, certificat (XP, lien public copié, copie refusée, PDF téléchargé, page de vérification), boss fermé (403), kit en préparation puis livré par l'admin et réception confirmée. 375 px sans débordement. Salles (31) et donjons (50) toujours verts. Deux exécutions se sont arrêtées sur une attente au même endroit avant deux exécutions complètes : la page était correcte au diagnostic, cause non prouvée (lenteur du serveur de test) |
 
 Constat pour Gloria (lot 2b) : les questions de secours de l'API, servies quand l'IA est indisponible, vouvoient le candidat (« Qu'est-ce qui vous motive… »), alors que l'interface le tutoie. À harmoniser dans `ApplicationAIService` si elle le souhaite.
 

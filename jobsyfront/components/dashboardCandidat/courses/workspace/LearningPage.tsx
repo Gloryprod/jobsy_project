@@ -13,6 +13,8 @@ interface LearningPageProps {
   validation_mode: string;
   /** Seuil de réussite des quiz renvoyé par l'API */
   quiz_passing_score?: number | null;
+  /** Affichée sous l'écran du boss, pendant le délai après un échec */
+  revision?: boolean;
   onMutate: () => unknown;
 }
 
@@ -27,6 +29,7 @@ export default function LearningPage({
   sections,
   validation_mode,
   quiz_passing_score,
+  revision,
 }: LearningPageProps) {
   return (
     <EcranSalle
@@ -38,6 +41,7 @@ export default function LearningPage({
       etapes={allCapsulesOrdered}
       etapeInitiale={capsuleCurrent}
       seuilQuiz={quiz_passing_score ?? null}
+      revision={revision}
       onMiseAJour={async () => {
         await onMutate();
       }}

@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { Check } from "lucide-react";
 import api from "@/lib/api";
 import { messageErreur } from "@/lib/erreurs";
 import { BoutonSysteme, FenetreSysteme } from "@/components/systeme";
 import { Alerte } from "../epreuve/Alerte";
 import { POURCENT } from "../donjons/regles";
+import { basculerReponse, ListeQuestions, nombreRepondues, type Reponses } from "./ListeQuestions";
 import type { Capsule, ResultatQuiz } from "./types";
 
 type Props = {
@@ -34,7 +34,7 @@ type Props = {
  */
 export function CombatQuiz({ capsule, courseId, seuil, titreRef, onContinuer, aUneSuite, onVictoire, onSuivant }: Props) {
   const questions = capsule.questions ?? [];
-  const [reponses, setReponses] = useState<Record<number, string[]>>({});
+  const [reponses, setReponses] = useState<Reponses>({});
   const [envoi, setEnvoi] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [resultat, setResultat] = useState<ResultatQuiz | null>(null);
@@ -45,15 +45,10 @@ export function CombatQuiz({ capsule, courseId, seuil, titreRef, onContinuer, aU
     if (resultat) resultatRef.current?.focus();
   }, [resultat]);
 
-  const choisir = (questionId: number, option: string, multiple: boolean) => {
-    setReponses((avant) => {
-      const actuelles = avant[questionId] ?? [];
-      if (!multiple) return { ...avant, [questionId]: [option] };
-      return { ...avant, [questionId]: actuelles.includes(option) ? actuelles.filter((o) => o !== option) : [...actuelles, option] };
-    });
-  };
+  const choisir = (questionId: number, option: string, multiple: boolean) =>
+    setReponses((avant) => basculerReponse(avant, questionId, option, multiple));
 
-  const repondues = questions.filter((q) => (reponses[q.id]?.length ?? 0) > 0).length;
+  const repondues = nombreRepondues(questions, reponses);
 
   const envoyer = async () => {
     if (repondues < questions.length) {
@@ -147,52 +142,7 @@ export function CombatQuiz({ capsule, courseId, seuil, titreRef, onContinuer, aU
         </div>
       )}
 
-      <div className="grid gap-4">
-        {questions.map((question, index) => {
-          const multiple = !!question.is_multiple;
-          const choisies = reponses[question.id] ?? [];
-          const correction = corrections[question.id];
-          const verrouille = !!resultat;
-          return (
-            <fieldset key={question.id} className="grid gap-2 rounded-[3px] border border-systeme-lueur/25 p-4">
-              <legend className="px-1 font-semibold text-systeme-texte">
-                Question {index + 1} : {question.question_text}
-              </legend>
-              <p className="text-sm text-systeme-attenue">{multiple ? "Plusieurs réponses possibles." : "Une seule réponse."}</p>
-              <div className="grid gap-2">
-                {question.options.map((option) => {
-                  const coche = choisies.includes(option);
-                  const attendue = correction?.correct_answers?.includes(option);
-                  return (
-                    <label
-                      key={option}
-                      className={`flex min-h-11 items-center gap-3 rounded-[3px] border px-3 py-2 ${
-                        coche ? "border-systeme-lueur bg-systeme-lueur/12" : "border-systeme-lueur/20"
-                      } ${verrouille ? "cursor-default" : "cursor-pointer hover:bg-systeme-lueur/8"}`}
-                    >
-                      <input
-                        type={multiple ? "checkbox" : "radio"}
-                        name={`question-${question.id}`}
-                        checked={coche}
-                        disabled={verrouille}
-                        onChange={() => choisir(question.id, option, multiple)}
-                        className="size-4 shrink-0 accent-[#56D8FF]"
-                      />
-                      <span className="flex-1 text-systeme-texte">{option}</span>
-                      {attendue && (
-                        <span className="inline-flex items-center gap-1 text-xs font-bold text-systeme-or">
-                          <Check aria-hidden="true" className="size-3.5" />
-                          Réponse attendue
-                        </span>
-                      )}
-                    </label>
-                  );
-                })}
-              </div>
-            </fieldset>
-          );
-        })}
-      </div>
+      <ListeQuestions questions={questions} reponses={reponses} onChange={choisir} verrouille={!!resultat} corrections={corrections} />
 
       <Alerte message={erreur} />
 

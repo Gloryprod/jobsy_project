@@ -141,7 +141,7 @@ export default function FormationStandardDetail({ params }: { params: { id: stri
             ) : (
               <FinalExamIntro courseId={params.id} courseTitle={course_title} onExamFinished={mutate} />
             )}
-              <LearningPage quiz_passing_score={data?.data.quiz_passing_score} validation_mode={validation_mode} courseId={params.id} courseTitle={course_title} capsuleCurrent={currentCapsule} sections={sections} progress_percentage={progress_percentage} allCapsulesOrdered={allCapsulesOrdered} onMutate={mutate} />
+              <LearningPage revision quiz_passing_score={data?.data.quiz_passing_score} validation_mode={validation_mode} courseId={params.id} courseTitle={course_title} capsuleCurrent={currentCapsule} sections={sections} progress_percentage={progress_percentage} allCapsulesOrdered={allCapsulesOrdered} onMutate={mutate} />
           </div>
         )
       }

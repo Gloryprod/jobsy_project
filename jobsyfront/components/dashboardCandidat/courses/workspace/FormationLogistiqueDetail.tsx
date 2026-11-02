@@ -120,7 +120,7 @@ export default function FormationLogistiqueDetail({ params }: { params: { id: st
   switch (status) {
 
     case "waiting_kit":
-      return <LogisticHoldScreen enrollment_id = {enrollment_id}  course_title={course_title} delivery_status={delivery_status} logistic_type={logistic_type} onRefresh={() => mutate()}/>;
+      return <LogisticHoldScreen courseId={params.id} enrollment_id = {enrollment_id}  course_title={course_title} delivery_status={delivery_status} logistic_type={logistic_type} onRefresh={() => mutate()}/>;
 
     case "learning":
         return <LearningPage quiz_passing_score={data?.data.quiz_passing_score} validation_mode={validation_mode} courseId={params.id} courseTitle={course_title} capsuleCurrent={currentCapsule} sections={sections} progress_percentage={progress_percentage} allCapsulesOrdered={allCapsulesOrdered} onMutate={mutate} />;
@@ -147,7 +147,7 @@ export default function FormationLogistiqueDetail({ params }: { params: { id: st
               ) : (
                 <FinalExamIntro courseId={params.id} courseTitle={course_title} onExamFinished={mutate} />
               )}
-                <LearningPage quiz_passing_score={data?.data.quiz_passing_score} validation_mode={validation_mode} courseId={params.id} courseTitle={course_title} capsuleCurrent={currentCapsule} sections={sections} progress_percentage={progress_percentage} allCapsulesOrdered={allCapsulesOrdered} onMutate={mutate} />
+                <LearningPage revision quiz_passing_score={data?.data.quiz_passing_score} validation_mode={validation_mode} courseId={params.id} courseTitle={course_title} capsuleCurrent={currentCapsule} sections={sections} progress_percentage={progress_percentage} allCapsulesOrdered={allCapsulesOrdered} onMutate={mutate} />
             </div>
           )
         }
