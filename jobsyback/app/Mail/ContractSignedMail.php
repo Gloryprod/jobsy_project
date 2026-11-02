@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\MissionOffers;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Attachment;
@@ -24,7 +25,7 @@ class ContractSignedMail extends Mailable implements ShouldQueue
     /**
      * Create a new message instance.
      *
-     * @param string $contractPath chemin du PDF sur le disque « public » (ex. contrats/contrat_12.pdf)
+     * @param string $contractPath chemin du PDF sur le disque privé des contrats (ex. contrats/contrat_12.pdf)
      */
     public function __construct($application, string $contractPath)
     {
@@ -63,7 +64,7 @@ class ContractSignedMail extends Mailable implements ShouldQueue
     public function attachments(): array
     {
         return [
-            Attachment::fromStorageDisk('public', $this->contractPath)
+            Attachment::fromStorageDisk(MissionOffers::CONTRACT_DISK, $this->contractPath)
                 ->as('Contrat_Jobsy.pdf')
                 ->withMime('application/pdf'),
         ];

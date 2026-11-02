@@ -1,8 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Download } from "lucide-react";
-import api, { STORAGE_URL } from "@/lib/api";
+import { Download, Loader2 } from "lucide-react";
+import api from "@/lib/api";
+import { telechargerContrat } from "@/lib/contrats";
 import { messageErreur, statutErreur } from "@/lib/erreurs";
 import { formaterFcfa } from "@/lib/formats";
 import { COMMISSION_AFFICHEE, partageRecompense, XP_MISSION_VALIDEE } from "@/lib/recompense";
@@ -19,23 +20,70 @@ const ANNONCES: Record<string, string> = {
   work_finished: "Mission déclarée terminée. L'entreprise vérifie ton travail avant de valider.",
 };
 
-/** Lien du contrat, seulement s'il a été généré (à la confirmation de présence). */
-export function LienContrat({ chemin, className }: { chemin: string | null | undefined; className?: string }) {
-  if (!chemin) return null;
+/**
+ * Téléchargement du contrat, seulement s'il a été généré (à la confirmation de présence).
+ * Le PDF est protégé : il passe par l'API avec la session, et une erreur s'affiche sous le bouton.
+ */
+export function BoutonContrat({
+  offreId,
+  disponible,
+  className,
+  classeErreur,
+}: {
+  offreId: number;
+  disponible: boolean;
+  className?: string;
+  classeErreur?: string;
+}) {
+  const [chargement, setChargement] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
+
+  if (!disponible) return null;
+
+  const telecharger = async () => {
+    setChargement(true);
+    setErreur(null);
+    try {
+      await telechargerContrat(offreId);
+    } catch (e) {
+      const code = statutErreur(e);
+      setErreur(
+        code === 404
+          ? "Le contrat n'est pas disponible pour l'instant. Réessaie plus tard."
+          : code === 403
+            ? "Ce contrat ne t'est pas accessible."
+            : messageErreur(e, "Le contrat n'a pas pu être téléchargé. Réessaie."),
+      );
+    } finally {
+      setChargement(false);
+    }
+  };
+
   return (
-    <a
-      href={`${STORAGE_URL}/${chemin}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={
-        className ??
-        "inline-flex min-h-11 items-center gap-2 justify-self-start font-bold text-systeme-lueur underline-offset-4 hover:underline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-systeme-lueur"
-      }
-    >
-      <Download aria-hidden="true" className="size-4" />
-      Télécharger mon contrat
-      <span className="sr-only"> (s&apos;ouvre dans un nouvel onglet)</span>
-    </a>
+    <div className="grid justify-items-start gap-1">
+      <button
+        type="button"
+        onClick={telecharger}
+        disabled={chargement}
+        aria-busy={chargement || undefined}
+        className={
+          className ??
+          "inline-flex min-h-11 cursor-pointer items-center gap-2 font-bold text-systeme-lueur underline-offset-4 hover:underline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-systeme-lueur disabled:cursor-wait disabled:opacity-60"
+        }
+      >
+        {chargement ? (
+          <Loader2 aria-hidden="true" className="size-4 animate-spin motion-reduce:animate-none" />
+        ) : (
+          <Download aria-hidden="true" className="size-4" />
+        )}
+        Télécharger mon contrat
+      </button>
+      {erreur && (
+        <p role="alert" className={classeErreur ?? "text-sm text-systeme-alerte"}>
+          {erreur}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -106,7 +154,7 @@ export function CarteMissionConfirmee({ offre, onMiseAJour }: { offre: OffreDeta
           <p className="text-systeme-attenue">L&apos;entreprise doit confirmer ta présence sur place. Ton contrat sera généré à ce moment-là.</p>
         )}
 
-        {(statut === "in_progress" || statut === "work_finished") && <LienContrat chemin={offre.contract_path} />}
+        {(statut === "in_progress" || statut === "work_finished") && <BoutonContrat offreId={offre.id} disponible={!!offre.contract_path} />}
 
         {statut === "work_finished" && (
           <p className="text-systeme-attenue">

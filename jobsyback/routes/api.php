@@ -17,6 +17,7 @@ use App\Http\Controllers\Candidat\CandidatureController;
 use App\Http\Controllers\Candidat\CourseCatalogueController;
 use App\Http\Controllers\Candidat\CourseWorkspaceController;
 use App\Http\Controllers\Candidat\ProfileController;
+use App\Http\Controllers\ContractController;
 use App\Http\Controllers\Entreprise\EntrepriseController;
 use App\Http\Controllers\GeneralController;
 use App\Http\Controllers\Candidat\MissionsController as CandidatMissionController;
@@ -97,6 +98,8 @@ Route::middleware(['auth:sanctum', 'access.token'])->get('/user', [AuthControlle
 Route::middleware(['auth:sanctum' , 'access.token'])->group(function() {
     Route::get('/getFilterData', [GeneralController::class, 'getFilterData']);
     Route::post('/mission-offers/{id}/update-status', [MissionTrackingController::class, 'updateStatus']);
+    // Contrat PDF (disque privé) : candidat de l'offre ou entreprise de la mission uniquement
+    Route::get('/mission-offers/{id}/contract', [ContractController::class, 'download']);
 
     // Notifications de l'utilisateur connecté, quel que soit son rôle (candidat, entreprise, admin)
     Route::get('/notifications', [NotificationController::class, 'index']);

@@ -304,7 +304,9 @@ import { Dialog } from 'primereact/dialog';
 import { Rating } from 'primereact/rating';
 import { InputTextarea } from 'primereact/inputtextarea';
 import useSWR, { mutate } from "swr";
-import api, { STORAGE_URL } from "@/lib/api";
+import api from "@/lib/api";
+import { telechargerContrat } from "@/lib/contrats";
+import { statutErreur } from "@/lib/erreurs";
 import { CheckCircle, Download, XCircle, Star, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ThreeDots } from 'react-loader-spinner';
@@ -498,6 +500,20 @@ export default function EnterpriseTrackingPage({ params }: { params: Promise<{ i
         }
     };
 
+    // Le contrat n'est plus public : il se télécharge par l'API, avec la session de l'entreprise
+    const handleContract = async (offerId: number) => {
+        try {
+            await telechargerContrat(offerId);
+        } catch (err) {
+            const code = statutErreur(err);
+            toast.error(
+                code === 404 ? "Le contrat n'est pas encore disponible."
+                : code === 403 ? "Ce contrat ne vous est pas accessible."
+                : "Le téléchargement du contrat a échoué. Veuillez réessayer."
+            );
+        }
+    };
+
     const itemTemplate = (offer: MissionOffer) => {
         const isExpanded = expandedId === offer.id;
         const candidat = offer.application.candidat;
@@ -527,13 +543,14 @@ export default function EnterpriseTrackingPage({ params }: { params: Promise<{ i
                         <p className="text-xs text-slate-400 font-medium">Sur la mission : <span className="text-indigo-600">{mission.title}</span></p>
                     </div>
 
-                    {offer.started_at && (
-                        <a href={`${STORAGE_URL}/${offer.contract_path}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex text-green-500 items-center border-b border-[#000080] rounded-xl p-2 gap-2">
+                    {offer.started_at && offer.contract_path && (
+                        <button
+                            type="button"
+                            // La ligne entière ouvre le détail : le clic sur le contrat ne doit pas la déplier
+                            onClick={(e) => { e.stopPropagation(); void handleContract(offer.id); }}
+                            className="cursor-pointer flex text-green-500 items-center border-b border-[#000080] rounded-xl p-2 gap-2">
                             <Download size={18} /> Contrat de travail
-                        </a>
+                        </button>
                     )}
 
                     <div className="hidden md:block">
