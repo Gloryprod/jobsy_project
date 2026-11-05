@@ -141,6 +141,7 @@ class ExamSubmissionController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
+                'message' => $validator->errors()->first(),
                 'errors' => $validator->errors()
             ], 422);
         }
@@ -176,6 +177,17 @@ class ExamSubmissionController extends Controller
             ], 403);
         }
 
+        $enrollment = Enrollment::where('course_id', $courseId)
+                ->where('candidat_id', $candidat->id)
+                ->first();
+
+        // Le sujet du projet n'est montré qu'aux inscrits de la formation
+        if (!$enrollment) {
+            return response()->json([
+                'message' => "Inscrivez-vous à la formation pour voir son projet final."
+            ], 403);
+        }
+
         // Récupérer le projet d'examen demandé
         $project = ExamProjects::where('course_id', $courseId)->first();
 
@@ -183,15 +195,21 @@ class ExamSubmissionController extends Controller
             ? UserExamSession::where('candidat_id', $candidat->id)->where('exam_project_id', $project->id)->first()
             : null;
 
-        $enrollment = Enrollment::where('course_id', $courseId)
-                ->where('candidat_id', $candidat->id)
-                ->first();
+        // Échéances calculées par le serveur : le chrono du navigateur se règle sur server_time,
+        // pour qu'un téléphone mal réglé ne termine pas l'épreuve trop tôt
+        $enCours = $project && $session && $session->status === 'in_progress'
+            && $project->time_limit_minutes && $session->started_at;
 
         return response()->json([
             'status' => 'success',
             'project' => $project,
             'session' => $session,
-            'enrollment' => $enrollment
+            'enrollment' => $enrollment,
+            'server_time' => now()->toISOString(),
+            'grace_minutes' => UserExamSession::GRACE_MINUTES,
+            'max_attempts' => UserExamSession::MAX_ATTEMPTS,
+            'ends_at' => $enCours ? $session->started_at->copy()->addMinutes($project->time_limit_minutes)->toISOString() : null,
+            'grace_ends_at' => $enCours ? $this->graceEnd($session, $project)->toISOString() : null,
         ], 200);
     }
 
@@ -323,6 +341,13 @@ class ExamSubmissionController extends Controller
             ], 422);
         }
 
+        if ($this->isBeforeGraceEnd($session, $project)) {
+            return response()->json([
+                'message' => "Le temps imparti n'est pas écoulé : continuez votre projet, puis soumettez-le.",
+                'grace_ends_at' => $this->graceEnd($session, $project)->toISOString(),
+            ], 422);
+        }
+
         $answers = $session->submitted_data ?? [];
 
         if (!$this->isPastDeadline($session, $project)) {
@@ -363,6 +388,15 @@ class ExamSubmissionController extends Controller
         if ($session->status !== 'in_progress') {
             return response()->json([
                 'message' => 'Cette session n\'est plus en cours.',
+                'session' => $session
+            ], 422);
+        }
+
+        // Une copie blanche suppose un temps imparti écoulé : avant, la tentative n'est pas perdue
+        $project = $session->examProject;
+        if (!$project->time_limit_minutes || $this->isBeforeGraceEnd($session, $project)) {
+            return response()->json([
+                'message' => "Le temps imparti n'est pas écoulé : la tentative continue.",
                 'session' => $session
             ], 422);
         }
@@ -422,7 +456,7 @@ class ExamSubmissionController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json(['message' => $validator->errors()->first(), 'errors' => $validator->errors()], 422);
         }
 
         if ($request->hasFile('file') && $request->file('file')->isValid()) {
@@ -492,6 +526,23 @@ class ExamSubmissionController extends Controller
                 $project->time_limit_minutes + UserExamSession::GRACE_MINUTES + self::NETWORK_TOLERANCE_MINUTES
             )
         );
+    }
+
+    /**
+     * Fin de la période de grâce (temps imparti + grâce), sans la marge réseau.
+     */
+    private function graceEnd(UserExamSession $session, ExamProjects $project): Carbon
+    {
+        return $session->started_at->copy()->addMinutes($project->time_limit_minutes + UserExamSession::GRACE_MINUTES);
+    }
+
+    /**
+     * Projet chronométré dont la période de grâce n'est pas terminée.
+     */
+    private function isBeforeGraceEnd(UserExamSession $session, ExamProjects $project): bool
+    {
+        return $project->time_limit_minutes && $session->started_at
+            && now()->lessThan($this->graceEnd($session, $project));
     }
 
     /**
