@@ -580,6 +580,56 @@ Le boss des formations Expert (mode C) : un projet noté sur 20 par un jury. Le 
 - clavier ; 375 px, 1280 px et animations réduites ;
 - pas de régression sur le boss en QCM, les salles et les donjons.
 
+## Lot 4a : la fenêtre de statut (plan détaillé du 10/11/2026)
+
+La page `/dashboard/candidats/profile` montre le personnage du candidat, et lui permet de tenir son dossier à jour. Aucun changement d'API.
+
+**Constats** (`ProfileDetailPage.tsx`, 626 lignes).
+- **Fausses informations.**
+  - « Profil vérifié par la guilde » et une coche verte s'affichent même quand l'équipe n'a pas validé le profil.
+  - Le CV annonce PDF et DOC. L'API n'accepte que le PDF, jusqu'à 2 Mo.
+- **Adresse impossible à saisir.** L'écran d'attente du kit envoie le candidat au profil pour vérifier son adresse de livraison. Le profil ne permet ni de la voir ni de la modifier.
+- **Champs incohérents.**
+  - La nationalité et l'e-mail secondaire sont affichés, mais ne se modifient pas.
+  - Le sexe et la date de naissance se modifient, mais ne sont pas affichés.
+  - WhatsApp n'apparaît nulle part.
+- **Vocabulaire qui gêne.** « Cristal de contact », « parchemin », « Réinitialiser le document » pour supprimer un CV.
+- **Actions dangereuses ou muettes.**
+  - Suppression d'un CV, d'un diplôme ou d'un certificat sans confirmation.
+  - Modification sans bouton « Annuler ».
+  - Après le choix d'un CV, rien n'indique quel fichier est retenu.
+  - Pour changer de CV, il faut d'abord le supprimer, alors que l'API sait le remplacer.
+  - Les mots de passe restent dans le formulaire après le changement.
+- **Erreurs illisibles.** Tout refus de l'API donne un message générique (intitulé déjà utilisé, lien invalide, fichier trop lourd). Les messages de validation de l'API sont en anglais.
+- **Accessibilité.** Étiquettes non liées aux champs, boutons sans nom, texte de 9 à 10 px, marge de 32 px sur téléphone.
+- **Bio.** Texte d'attente avec des fautes, affiché en italique entre apostrophes.
+
+**Statistiques (zone floue du plan, tranchée en D30).** Toutes viennent de données réelles, déjà renvoyées par l'API :
+
+| Ligne | Source | Sans donnée |
+|---|---|---|
+| Missions validées | Candidatures au statut `validated` ou `completed` | 0 |
+| Réputation | Moyenne de `mission_offers.rating` (note sur 5 donnée par l'entreprise à la validation), et nombre de notes | « Pas encore de note » |
+| Ponctualité | `mission_offers.is_on_time` (renseigné par l'entreprise à l'arrivée) : à l'heure, sur le nombre de missions renseignées | « Pas encore de mission » |
+| Savoir | Formations au statut `certified` | 0 |
+| Série et vitalité | `profile-elements` | Ligne masquée |
+
+**Front** (`components/dashboardCandidat/statut`).
+- **La fenêtre de statut.** Nom, rang, progression vers le rang suivant (même bloc que le QG), classe, statistiques, compétences, titres équipés avec un lien vers l'inventaire.
+- **La reconnaissance du profil.**
+  - Validé : dit clairement.
+  - Sinon : les trois étapes réelles (CV déposé, diplôme ajouté, vérification par l'équipe).
+- **Couche réalité : le dossier**, avec des mots simples.
+  - Informations : ville, adresse, nationalité, sexe, date de naissance, présentation.
+  - Contact : e-mail du compte (lecture seule), téléphone, WhatsApp, e-mail secondaire, LinkedIn.
+  - Chaque carte se modifie sur place, avec « Annuler », le focus au bon endroit et une erreur sous chaque champ.
+- **CV.** Formats réels annoncés et vérifiés, envoi dès le choix du fichier, remplacement direct, annonce de l'analyse en cours, suppression avec confirmation.
+- **Diplômes et certifications.** Formulaire d'ajout avec étiquettes, nom du fichier choisi, formats annoncés, suppression avec confirmation.
+- **Mot de passe.** Étiquettes, vérification avant l'envoi, erreur sous le bon champ, champs vidés après le succès.
+- `ProfileDetailPage` garde son nom et affiche le nouveau composant.
+
+**Vérification** : API locale ; candidat neuf, en attente de validation, puis validé ; modification et annulation de chaque carte ; refus de chaque champ ; CV déposé, refusé, remplacé, supprimé ; diplôme en double ; certificat ; mot de passe faux, puis changé pour de vrai ; statistiques comparées à la base ; clavier ; 375 px, 1280 px et animations réduites ; pas de régression sur le QG.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -682,6 +732,9 @@ Repères à confirmer :
 - D27 (lot 3b-B2) : les critères de notation du jury sont montrés au candidat avant et pendant le projet. L'API les renvoyait déjà. Savoir ce qui est noté aide à réussir, et ne donne aucune réponse.
 - D28 (lot 3b-B2) : le chrono du projet suit l'heure du serveur, et non celle du téléphone. L'API refuse l'envoi automatique et la copie blanche avant la fin de la grâce. Un téléphone mal réglé ne fait donc plus perdre de tentative.
 - D29 (lot 3b-B2) : le brouillon gardé dans le navigateur est propre à chaque tentative (une clé par session et par numéro de tentative). Le brouillon enregistré par l'API reste la référence, et le brouillon local ne sert que s'il est vide.
+- D30 (lot 4a) : les statistiques de la fenêtre de statut sont la réputation (note moyenne des entreprises), la ponctualité (arrivées à l'heure) et le savoir (formations certifiées), calculées dans le front à partir des candidatures et des inscriptions déjà chargées. Sans donnée, elles le disent, au lieu d'afficher un chiffre inventé.
+- D31 (lot 4a) : les titres équipés s'affichent sans leur « bonus » (« +15 % Confiance Recruteur ») : rien dans l'API ne l'applique, ce serait une promesse fausse. L'inventaire et l'équipement restent au lot 4b.
+- D32 (lot 4a) : le dossier reste dans la couche réalité, avec des mots simples (téléphone, CV), car un jeune doit savoir exactement ce qu'il remplit.
 
 ## Avancement
 
