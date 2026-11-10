@@ -630,6 +630,41 @@ La page `/dashboard/candidats/profile` montre le personnage du candidat, et lui 
 
 **Vérification** : API locale ; candidat neuf, en attente de validation, puis validé ; modification et annulation de chaque carte ; refus de chaque champ ; CV déposé, refusé, remplacé, supprimé ; diplôme en double ; certificat ; mot de passe faux, puis changé pour de vrai ; statistiques comparées à la base ; clavier ; 375 px, 1280 px et animations réduites ; pas de régression sur le QG.
 
+## Lot 4b : l'inventaire (plan détaillé du 10/11/2026)
+
+La page `/dashboard/candidats/inventaire` rassemble les titres (badges) du candidat et ses documents. Aucun changement d'API.
+
+**Constats** (`Inventory.tsx`, 720 lignes).
+- **Promesses fausses.**
+  - « Boost Visibilité : +X % » additionne les bonus des badges débloqués, et chaque badge affiche le sien (« +5 % Proactivité »). Rien dans l'API ne les applique (décision D31).
+  - Chaque diplôme porte l'étiquette « Diplôme Validé », même quand l'équipe n'a rien vérifié.
+  - Un certificat Jobsy sans XP renseignée affiche « +100 XP ».
+- **Chiffres faux.**
+  - « Missions » ne compte que le statut `completed`, alors que le QG et la fenêtre de statut comptent aussi `validated`, le statut où l'XP est accordée.
+  - « Formations » compte toutes les inscriptions, même celles à peine commencées.
+  - La jauge d'XP est rapportée à 10 000 XP, un plafond qui n'existe nulle part.
+- **Certificats Jobsy sans lien.** Ils ne mènent ni à la page de vérification publique ni au PDF.
+- **Données répétées.** L'écran reconstitue diplômes et certifications à partir de copies répétées dans chaque badge.
+- **Retours muets.** Équiper ou retirer un titre passe par un toast. Le bouton change de liste sans que le focus suive. La limite de 5 titres n'est expliquée qu'après coup.
+- **Animations en boucle** (flamme qui pulse) et textes de 10 à 11 px.
+
+**Ce que voient les entreprises.** La fiche candidat d'une entreprise (`MatchingController`) montre les titres équipés, les diplômes, les certifications externes et les certificats Jobsy. L'inventaire le dit.
+
+**Front** (`components/dashboardCandidat/inventaire`).
+- **Couche Système : les titres.**
+  - Titres équipés, avec le compteur (5 au plus) et « Retirer ».
+  - Titres débloqués, avec « Équiper ». Quand la limite est atteinte, l'écran le dit avant l'envoi.
+  - Titres à débloquer, avec leur condition et leur progression réelle (« 1 sur 5 »).
+  - Rareté affichée, bonus retirés (D31).
+  - Le focus suit le titre dans sa nouvelle liste, et le résultat est annoncé.
+- **Couche réalité : les documents.**
+  - Certificats Jobsy : formation, date, XP réelle, lien vers la page de vérification publique.
+  - Diplômes et certifications externes : fichier consultable, sans étiquette « validé ».
+  - Lien vers le profil pour les ajouter ou les supprimer.
+- `Inventory.tsx` garde son nom et affiche le nouveau composant.
+
+**Vérification** : API locale ; candidat neuf (aucun titre), candidat avec titres débloqués et à débloquer ; équiper, retirer, limite de 5 (avant l'envoi et refus de l'API), erreur réseau ; certificats Jobsy et lien de vérification ; documents comparés à la base ; clavier ; 375 px, 1280 px et animations réduites ; pas de régression sur la fenêtre de statut.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -735,6 +770,8 @@ Repères à confirmer :
 - D30 (lot 4a) : les statistiques de la fenêtre de statut sont la réputation (note moyenne des entreprises), la ponctualité (arrivées à l'heure) et le savoir (formations certifiées), calculées dans le front à partir des candidatures et des inscriptions déjà chargées. Sans donnée, elles le disent, au lieu d'afficher un chiffre inventé.
 - D31 (lot 4a) : les titres équipés s'affichent sans leur « bonus » (« +15 % Confiance Recruteur ») : rien dans l'API ne l'applique, ce serait une promesse fausse. L'inventaire et l'équipement restent au lot 4b.
 - D32 (lot 4a) : le dossier reste dans la couche réalité, avec des mots simples (téléphone, CV), car un jeune doit savoir exactement ce qu'il remplit.
+- D33 (lot 4b) : l'inventaire lit les titres dans `/candidate/inventory`, les diplômes et certifications externes dans `/candidat/profile`, et les certificats Jobsy dans `/courses/my-learnings`, qui donne le lien de vérification. Les copies des documents répétées dans chaque badge ne sont plus utilisées.
+- D34 (lot 4b) : la limite de 5 titres équipés est recopiée dans le front, comme la commission en D19 : l'API la fixe dans `BadgeController` sans la renvoyer. Si elle change, `inventaire/regles.ts` doit suivre. Le refus de l'API reste affiché.
 
 ## Avancement
 
