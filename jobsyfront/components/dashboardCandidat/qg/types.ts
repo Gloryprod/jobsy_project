@@ -55,6 +55,7 @@ export type Inscription = {
   progress_percentage?: number | null;
   status: string;
   certificate_hash?: string | null;
+  certified_at?: string | null;
   course: { id: number; title: string; reward_xp?: number | null } | null;
 };
 
