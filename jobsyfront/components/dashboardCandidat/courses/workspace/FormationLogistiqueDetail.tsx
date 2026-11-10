@@ -127,7 +127,7 @@ export default function FormationLogistiqueDetail({ params }: { params: { id: st
     
     case "evaluation_ready" : 
         if (validation_mode === "C") {
-          return <FinalExamProject courseId={params.id} attempts_count={attempts_count} is_permanently_blocked={is_permanently_blocked} can_retry={can_retry} time_remaining={time_remaining} onMutate={mutate} />;
+          return <FinalExamProject courseId={params.id} courseTitle={course_title} attempts_count={attempts_count} is_permanently_blocked={is_permanently_blocked} can_retry={can_retry} time_remaining={time_remaining} onMutate={mutate} />;
         } else {
           return <FinalExamIntro courseId={params.id} courseTitle={course_title} onExamFinished={mutate} />;
         }
@@ -135,7 +135,7 @@ export default function FormationLogistiqueDetail({ params }: { params: { id: st
     case "failed" : 
         if (can_retry){
           if (validation_mode === "C") {
-            return <FinalExamProject courseId={params.id} attempts_count={attempts_count} is_permanently_blocked={is_permanently_blocked} can_retry={can_retry} time_remaining={time_remaining} onMutate={mutate} />;
+            return <FinalExamProject courseId={params.id} courseTitle={course_title} attempts_count={attempts_count} is_permanently_blocked={is_permanently_blocked} can_retry={can_retry} time_remaining={time_remaining} onMutate={mutate} />;
           } else {
             return <FinalExamIntro courseId={params.id} courseTitle={course_title} onExamFinished={mutate} />;
           }
@@ -143,7 +143,7 @@ export default function FormationLogistiqueDetail({ params }: { params: { id: st
           return (
             <div>
               {validation_mode === "C" ? (
-                <FinalExamProject courseId={params.id} attempts_count={attempts_count} is_permanently_blocked={is_permanently_blocked} can_retry={can_retry} time_remaining={time_remaining} onMutate={mutate} />
+                <FinalExamProject courseId={params.id} courseTitle={course_title} attempts_count={attempts_count} is_permanently_blocked={is_permanently_blocked} can_retry={can_retry} time_remaining={time_remaining} onMutate={mutate} />
               ) : (
                 <FinalExamIntro courseId={params.id} courseTitle={course_title} onExamFinished={mutate} />
               )}
