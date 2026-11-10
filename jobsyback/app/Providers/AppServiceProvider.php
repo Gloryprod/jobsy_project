@@ -9,7 +9,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
-
+use Illuminate\Support\Facades\Schema;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -27,6 +27,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         MissionOffers::observe(MissionOffersObserver::class);
+
+        Schema::defaultStringLength(191);
 
         RateLimiter::for('login', function (Request $request) {
         $key = Str::lower($request->input('email')).'|'.$request->ip();
