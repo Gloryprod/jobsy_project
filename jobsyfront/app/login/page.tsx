@@ -9,6 +9,7 @@ import { z } from "zod";
 import api from "@/lib/api";
 import Swal from "sweetalert2";
 import { toast } from 'react-hot-toast';
+import { RenvoiConfirmation } from '@/components/forms/RenvoiConfirmation';
 
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -21,6 +22,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [errorMsg, setErrorMsg] = useState("");
+  // Compte non confirmé : on propose de renvoyer l'e-mail à l'adresse saisie
+  const [emailAConfirmer, setEmailAConfirmer] = useState<string | null>(null);
 
 /**
  * Handle login form submission
@@ -30,6 +33,7 @@ export default function LoginPage() {
     e.preventDefault();
     setErrors({});
     setErrorMsg("");
+    setEmailAConfirmer(null);
 
     const formValues = {
       email: e.target.email.value,
@@ -73,6 +77,7 @@ export default function LoginPage() {
     } catch (error: any) {
       const msg = error?.response?.data?.message || "Une erreur est survenue lors de la connexion. Veuillez réessayer" ;
       setErrorMsg(msg);
+      if (error?.response?.status === 403) setEmailAConfirmer(formValues.email);
 
       // Swal.fire({
       //   icon: "error",
@@ -126,6 +131,7 @@ export default function LoginPage() {
           {errorMsg && (
             <p className="text-red-400 text-center mb-3 font-semibold">{errorMsg}</p>
           )}
+          {emailAConfirmer && <RenvoiConfirmation email={emailAConfirmer} />}
 
           <form onSubmit={handleLogin}>
 
