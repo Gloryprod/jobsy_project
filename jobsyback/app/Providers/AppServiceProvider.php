@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\BrevoTransport;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,6 +31,9 @@ class AppServiceProvider extends ServiceProvider
         MissionOffers::observe(MissionOffersObserver::class);
 
         Schema::defaultStringLength(191);
+
+        // MAIL_MAILER=brevo : envoi par l'API HTTP de Brevo (voir BrevoTransport)
+        Mail::extend('brevo', fn (array $config) => new BrevoTransport((string) ($config['key'] ?? ''), (int) ($config['timeout'] ?? 15)));
 
         RateLimiter::for('login', function (Request $request) {
         $key = Str::lower($request->input('email')).'|'.$request->ip();

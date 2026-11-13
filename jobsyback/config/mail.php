@@ -45,7 +45,8 @@ return [
             'port' => env('MAIL_PORT', 2525),
             'username' => env('MAIL_USERNAME'),
             'password' => env('MAIL_PASSWORD'),
-            'timeout' => null,
+            // Sans délai, un port SMTP bloqué (Render gratuit) faisait attendre l'inscription une minute avant l'échec
+            'timeout' => env('MAIL_TIMEOUT', 15),
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
 
@@ -63,6 +64,13 @@ return [
 
         'resend' => [
             'transport' => 'resend',
+        ],
+
+        // API HTTP de Brevo (App\Mail\BrevoTransport) : passe là où les ports SMTP sont bloqués
+        'brevo' => [
+            'transport' => 'brevo',
+            'key' => env('BREVO_API_KEY'),
+            'timeout' => env('MAIL_TIMEOUT', 15),
         ],
 
         'sendmail' => [

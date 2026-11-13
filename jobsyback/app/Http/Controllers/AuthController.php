@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;  
 use Illuminate\Support\Facades\Hash;                    
 use App\Models\Entreprise; 
+use Throwable;
 
 
 class AuthController extends Controller
@@ -27,14 +28,24 @@ class AuthController extends Controller
     public function register(RegisterRequest $request)
     {
         $user = $this->authService->register($request->validated());
-        event(new Registered($user));
+        // Le compte existe désormais : un envoi raté ne doit pas faire échouer l'inscription. Sinon le jeune
+        // voyait une erreur, et sa nouvelle tentative était refusée car l'adresse était déjà prise.
+        try {
+            event(new Registered($user));
+            $envoye = true;
+        } catch (Throwable $e) {
+            report($e);
+            $envoye = false;
+        }
 
-        return apiResponse(
-            $user,
-            'Inscription réussie',
-            'success', 
-            201
-        );
+        return response()->json([
+            'status' => 'success',
+            'message' => $envoye
+                ? 'Inscription réussie'
+                : "Votre compte est créé, mais l'e-mail de confirmation n'a pas pu partir. Demandez un nouvel envoi depuis la page de connexion.",
+            'data' => $user,
+            'verification_email_sent' => $envoye,
+        ], 201);
     }
 
     public function login(LoginRequest $request)

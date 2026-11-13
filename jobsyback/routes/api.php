@@ -86,7 +86,14 @@ Route::post('/auth/resend-verification', function (Request $request) {
     $user = User::where('email', $request->email)->first();
 
     if ($user && !$user->hasVerifiedEmail()) {
-        $user->sendEmailVerificationNotification();
+        try {
+            $user->sendEmailVerificationNotification();
+        } catch (\Throwable $e) {
+            report($e);
+
+            // Le service d'envoi est en panne : mieux vaut le dire que promettre un e-mail qui n'arrivera pas
+            return response()->json(['message' => "Le service d'e-mail ne répond pas pour le moment. Réessayez dans quelques minutes."], 503);
+        }
     }
 
     // Même réponse dans tous les cas : ce formulaire ne doit pas révéler quels emails sont inscrits
