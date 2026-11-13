@@ -1,6 +1,9 @@
 // Formes des réponses de l'API utilisées par le QG candidat (voir les contrôleurs cités).
 import type { Rang } from "@/lib/progression";
 
+/** Statuts d'une offre dont la mission est validée : l'XP est accordée à « validated ». */
+export const STATUTS_MISSION_VALIDEE = ["validated", "completed"];
+
 /** GET /candidat/profile-elements (ProfileController::setProfileElements) */
 export type ProfilCandidat = {
   id: number;
@@ -20,6 +23,10 @@ export type OffreMission = {
   accepted_at?: string | null;
   declined_at?: string | null;
   start_date?: string | null;
+  /** Note sur 5 donnée par l'entreprise à la validation */
+  rating?: number | null;
+  /** Renseigné par l'entreprise à l'arrivée du candidat */
+  is_on_time?: boolean | null;
 };
 
 export type MissionResume = {
@@ -48,6 +55,7 @@ export type Inscription = {
   progress_percentage?: number | null;
   status: string;
   certificate_hash?: string | null;
+  certified_at?: string | null;
   course: { id: number; title: string; reward_xp?: number | null } | null;
 };
 
