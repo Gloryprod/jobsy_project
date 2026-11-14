@@ -126,4 +126,23 @@ class RegistrationEmailTest extends TestCase
         $this->expectExceptionMessage("BREVO_API_KEY n'est pas renseignée");
         Mail::raw('Test', fn ($m) => $m->to('a@example.com')->subject('Test'));
     }
+
+    public function test_l_inscription_et_le_renvoi_ont_chacun_leur_limite(): void
+    {
+        Notification::fake();
+
+        // Inscription, puis nouvelle tentative avec la même adresse : avant, ces deux appels
+        // consommaient le compteur commun et le renvoi suivant était refusé
+        $this->inscription()->assertCreated();
+        $this->inscription()->assertStatus(422);
+
+        foreach (range(1, 3) as $essai) {
+            $this->postJson('/api/auth/resend-verification', ['email' => 'nouveau@example.com'])->assertOk();
+        }
+        $this->postJson('/api/auth/resend-verification', ['email' => 'nouveau@example.com'])->assertStatus(429);
+
+        // Une autre adresse n'est pas bloquée par la première
+        $this->postJson('/api/auth/resend-verification', ['email' => 'autre@example.com'])->assertOk();
+        $this->inscription('autre@example.com')->assertCreated();
+    }
 }
