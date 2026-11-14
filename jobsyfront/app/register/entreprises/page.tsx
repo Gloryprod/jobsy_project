@@ -17,7 +17,8 @@ const registerEntrepriseSchema = z.object({
   password: z.string()
     .min(8, "Le mot de passe doit contenir au moins 8 caractères.")
     .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+      // Même règle que l'API (RegisterRequest) : tout caractère hors lettres et chiffres compte comme spécial
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/,
       "Le mot de passe doit contenir une majuscule, une minuscule, un chiffre et un caractère spécial."
     ),
   password_confirmation: z.string(),
