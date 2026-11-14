@@ -10,12 +10,11 @@ import { JournalQuetes } from "./JournalQuetes";
 import { Donjons } from "./Donjons";
 import { Invitations } from "./Invitations";
 import { quetesDuJour } from "./quetes";
-import type { Candidature, Inscription, ProfilCandidat, Proposition } from "./types";
+import { STATUTS_MISSION_VALIDEE, type Candidature, type Inscription, type ProfilCandidat, type Proposition } from "./types";
 
 // Toutes ces routes répondent { data: ... }
 const lireDonnees = (url: string) => api.get(url).then((reponse) => reponse.data.data);
 
-const STATUTS_MISSION_VALIDEE = ["validated", "completed"];
 
 /**
  * Le QG du candidat (tableau de bord) : statut et quêtes du jour dans la couche Système,
