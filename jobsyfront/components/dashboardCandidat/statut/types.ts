@@ -39,4 +39,7 @@ export type TitreInventaire = {
   rarity: string;
   equipped: boolean;
   unlocked: boolean;
+  description?: string | null;
+  /** Progression réelle vers le déblocage (BadgeEvaluatorService) */
+  progress?: { current: number; max: number } | null;
 };

@@ -630,6 +630,41 @@ La page `/dashboard/candidats/profile` montre le personnage du candidat, et lui 
 
 **Vérification** : API locale ; candidat neuf, en attente de validation, puis validé ; modification et annulation de chaque carte ; refus de chaque champ ; CV déposé, refusé, remplacé, supprimé ; diplôme en double ; certificat ; mot de passe faux, puis changé pour de vrai ; statistiques comparées à la base ; clavier ; 375 px, 1280 px et animations réduites ; pas de régression sur le QG.
 
+## Lot 4b : l'inventaire (plan détaillé du 10/11/2026)
+
+La page `/dashboard/candidats/inventaire` rassemble les titres (badges) du candidat et ses documents. Aucun changement d'API.
+
+**Constats** (`Inventory.tsx`, 720 lignes).
+- **Promesses fausses.**
+  - « Boost Visibilité : +X % » additionne les bonus des badges débloqués, et chaque badge affiche le sien (« +5 % Proactivité »). Rien dans l'API ne les applique (décision D31).
+  - Chaque diplôme porte l'étiquette « Diplôme Validé », même quand l'équipe n'a rien vérifié.
+  - Un certificat Jobsy sans XP renseignée affiche « +100 XP ».
+- **Chiffres faux.**
+  - « Missions » ne compte que le statut `completed`, alors que le QG et la fenêtre de statut comptent aussi `validated`, le statut où l'XP est accordée.
+  - « Formations » compte toutes les inscriptions, même celles à peine commencées.
+  - La jauge d'XP est rapportée à 10 000 XP, un plafond qui n'existe nulle part.
+- **Certificats Jobsy sans lien.** Ils ne mènent ni à la page de vérification publique ni au PDF.
+- **Données répétées.** L'écran reconstitue diplômes et certifications à partir de copies répétées dans chaque badge.
+- **Retours muets.** Équiper ou retirer un titre passe par un toast. Le bouton change de liste sans que le focus suive. La limite de 5 titres n'est expliquée qu'après coup.
+- **Animations en boucle** (flamme qui pulse) et textes de 10 à 11 px.
+
+**Ce que voient les entreprises.** La fiche candidat d'une entreprise (`MatchingController`) montre les titres équipés, les diplômes, les certifications externes et les certificats Jobsy. L'inventaire le dit.
+
+**Front** (`components/dashboardCandidat/inventaire`).
+- **Couche Système : les titres.**
+  - Titres équipés, avec le compteur (5 au plus) et « Retirer ».
+  - Titres débloqués, avec « Équiper ». Quand la limite est atteinte, l'écran le dit avant l'envoi.
+  - Titres à débloquer, avec leur condition et leur progression réelle (« 1 sur 5 »).
+  - Rareté affichée, bonus retirés (D31).
+  - Le focus suit le titre dans sa nouvelle liste, et le résultat est annoncé.
+- **Couche réalité : les documents.**
+  - Certificats Jobsy : formation, date, XP réelle, lien vers la page de vérification publique.
+  - Diplômes et certifications externes : fichier consultable, sans étiquette « validé ».
+  - Lien vers le profil pour les ajouter ou les supprimer.
+- `Inventory.tsx` garde son nom et affiche le nouveau composant.
+
+**Vérification** : API locale ; candidat neuf (aucun titre), candidat avec titres débloqués et à débloquer ; équiper, retirer, limite de 5 (avant l'envoi et refus de l'API), erreur réseau ; certificats Jobsy et lien de vérification ; documents comparés à la base ; clavier ; 375 px, 1280 px et animations réduites ; pas de régression sur la fenêtre de statut.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -735,6 +770,8 @@ Repères à confirmer :
 - D30 (lot 4a) : les statistiques de la fenêtre de statut sont la réputation (note moyenne des entreprises), la ponctualité (arrivées à l'heure) et le savoir (formations certifiées), calculées dans le front à partir des candidatures et des inscriptions déjà chargées. Sans donnée, elles le disent, au lieu d'afficher un chiffre inventé.
 - D31 (lot 4a) : les titres équipés s'affichent sans leur « bonus » (« +15 % Confiance Recruteur ») : rien dans l'API ne l'applique, ce serait une promesse fausse. L'inventaire et l'équipement restent au lot 4b.
 - D32 (lot 4a) : le dossier reste dans la couche réalité, avec des mots simples (téléphone, CV), car un jeune doit savoir exactement ce qu'il remplit.
+- D33 (lot 4b) : l'inventaire lit les titres dans `/candidate/inventory`, les diplômes et certifications externes dans `/candidat/profile`, et les certificats Jobsy dans `/courses/my-learnings`, qui donne le lien de vérification. Les copies des documents répétées dans chaque badge ne sont plus utilisées.
+- D34 (lot 4b) : la limite de 5 titres équipés est recopiée dans le front, comme la commission en D19 : l'API la fixe dans `BadgeController` sans la renvoyer. Si elle change, `inventaire/regles.ts` doit suivre. Le refus de l'API reste affiché.
 
 ## Avancement
 
@@ -756,8 +793,9 @@ Repères à confirmer :
 | 3b-A | Fusionné le 02/11/2026 | #18 | Types, lint et build verts. API locale. 31 contrôles automatiques réussis : ouverture sur la première étape non terminée, étape fermée expliquée, leçons texte et PDF (fichier réel), focus au titre de chaque étape, combat (seuil annoncé, choix unique ou multiple), réponses manquantes, échec sans fausse correction, retenter, victoire avec correction, le dernier combat mène au boss sans bascule automatique, formation à 100 % en base, coupure réseau. À 375 px et avec animations réduites : aucun débordement, aucune animation en boucle, plan atteignable au clavier, aucune erreur dans la console. Lot 3a toujours à 50 contrôles sur 50 |
 | 3b-B1 | Fusionné le 02/11/2026 | #19 | Types, lint et build verts. Aucun changement d'API. API locale. 32 contrôles automatiques : accueil du boss avec les règles de la carte, choix unique, réponses manquantes, réponse « bloquée » sans plantage, compteur exact, échec (score, règle, prochaine tentative, plus de fausse promesse), délai (compte à rebours réel, un seul en-tête, salles à réviser, aucune animation en boucle), échec vieilli de 25 h puis victoire, certificat (XP, lien public copié, copie refusée, PDF téléchargé, page de vérification), boss fermé (403), kit en préparation puis livré par l'admin et réception confirmée. 375 px sans débordement. Salles (31) et donjons (50) toujours verts. Deux exécutions se sont arrêtées sur une attente au même endroit avant deux exécutions complètes : la page était correcte au diagnostic, cause non prouvée (lenteur du serveur de test) |
 | Projet pratique (API) | Fusionné le 05/11/2026 (back seul) | #20 | 6 tests ajoutés (`ProjectDeadlineTest`) : sujet réservé aux inscrits, échéances et heure du serveur, copie blanche refusée avant la fin de la grâce et sans limite de temps, envoi automatique refusé avant la fin de la grâce, message lisible sur un refus de validation. Tous échouent sans le changement. Suite complète : 119 tests. Se fusionne sans conflit avec les autres branches d'API |
-| 3b-B2 | Prêt sur `design/lot-3b-projet` (après le lot 3b-B1 et l'API du projet) | #21 (ouverte) | Types, lint et build verts. API locale réunie (salles + projet). 63 contrôles automatiques : accueil (règles, livrables, critères, XP), démarrage, chrono, focus ; brouillon enregistré, échec annoncé puis « Réessayer » ; livrables manquants, focus sur le premier ; fichier refusé (format, taille, refus de l'API), envoyé, consultable et remplacé, bouton atteint au clavier ; refus de l'API sous le bon livrable ; confirmation et Échap ; copie chez le jury ; correction en échec par l'admin (vraie route), compte à rebours, délai vieilli, 2e et dernière tentative avec des livrables vides, réussite et certificat ; grâce puis envoi automatique du brouillon ; copie blanche ; tentatives épuisées ; projet absent ; coupure réseau ; horloge du navigateur en avance d'une heure sans tentative perdue. 375 px et animations réduites : aucun débordement, aucune animation en boucle, aucune erreur dans la console. Boss en QCM (32), salles (31) et donjons (50) toujours verts |
+| 3b-B2 | Fusionné le 10/11/2026 | #21 | Types, lint et build verts. API locale réunie (salles + projet). 63 contrôles automatiques : accueil (règles, livrables, critères, XP), démarrage, chrono, focus ; brouillon enregistré, échec annoncé puis « Réessayer » ; livrables manquants, focus sur le premier ; fichier refusé (format, taille, refus de l'API), envoyé, consultable et remplacé, bouton atteint au clavier ; refus de l'API sous le bon livrable ; confirmation et Échap ; copie chez le jury ; correction en échec par l'admin (vraie route), compte à rebours, délai vieilli, 2e et dernière tentative avec des livrables vides, réussite et certificat ; grâce puis envoi automatique du brouillon ; copie blanche ; tentatives épuisées ; projet absent ; coupure réseau ; horloge du navigateur en avance d'une heure sans tentative perdue. 375 px et animations réduites : aucun débordement, aucune animation en boucle, aucune erreur dans la console. Boss en QCM (32), salles (31) et donjons (50) toujours verts |
 | 4a | Prêt sur `design/lot-4a-statut` (après le lot 3b-B2) | — | Types, lint et build verts. Aucun changement d'API. API locale (code de `main`), 2 comptes. 64 contrôles automatiques : statistiques comparées à la base (missions, réputation, ponctualité, formations), aucune statistique inventée pour un candidat neuf, pas de fausse validation, puis validation réelle de l'admin ; informations et contact modifiés, annulés, refusés (avant l'envoi et par l'API), coupure réseau, enregistrés en base ; CV refusé, envoyé, remplacé, supprimé ; diplôme en double, ajout et suppression ; certification ; mot de passe trop court, faux, changé, puis connexion réelle ; focus à chaque étape, boutons de fichier au clavier. 375 px et animations réduites : aucun débordement, aucune animation en boucle, champs en 16 px, aucune erreur dans la console. QG contrôlé après le partage du bloc de rang |
+| 4b | Prêt sur `design/lot-4b-inventaire` (après le lot 4a) | — | Types, lint et build verts. Aucun changement d'API. API locale (code de `main`), 2 comptes, titres de test supprimés après la vérification. 36 contrôles automatiques : candidat neuf (aucun titre, conditions et progression, documents vides, aucun bonus) ; candidat avec 6 titres débloqués : équiper, limite de 5 expliquée sans requête, retirer, clavier, refus de l'API et coupure réseau sans changement en base, focus qui suit le titre ; titres, progression et documents comparés à la base ; fichiers consultables ; page de vérification du certificat ouverte ; inventaire indisponible. 375 px et animations réduites : aucun débordement, aucune animation en boucle, aucun texte sous 14 px, aucune erreur dans la console. Fenêtre de statut toujours à 64 contrôles sur 64 |
 
 Constat pour Gloria (lot 2b) : les questions de secours de l'API, servies quand l'IA est indisponible, vouvoient le candidat (« Qu'est-ce qui vous motive… »), alors que l'interface le tutoie. À harmoniser dans `ApplicationAIService` si elle le souhaite.
 

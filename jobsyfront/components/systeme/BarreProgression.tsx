@@ -20,7 +20,7 @@ export function BarreProgression({ libelle, valeur, min = 0, max, detail, classN
     <div className={cn("grid gap-1.5", className)}>
       <div className="flex justify-between gap-3 text-sm text-systeme-attenue">
         <span>{libelle}</span>
-        {detail && <b className="font-semibold text-systeme-texte tabular-nums">{detail}</b>}
+        {detail && <b className="shrink-0 font-semibold whitespace-nowrap text-systeme-texte tabular-nums">{detail}</b>}
       </div>
       <div
         role="progressbar"
