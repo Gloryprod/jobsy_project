@@ -5,6 +5,7 @@ import api from "@/lib/api";
 import { useUser } from "@/context/UserProvider";
 import { BoutonSysteme, FenetreSysteme, useMaintenant } from "@/components/systeme";
 import { FenetreStatut } from "./FenetreStatut";
+import { Reevaluation } from "./Reevaluation";
 import { QuetesDuJour } from "./QuetesDuJour";
 import { JournalQuetes } from "./JournalQuetes";
 import { Donjons } from "./Donjons";
@@ -67,6 +68,7 @@ export function QGCandidat() {
   return (
     <div className="grid gap-6 p-2 font-lisible sm:p-4">
       <h1 className="sr-only">Tableau de bord</h1>
+      <Reevaluation />
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <FenetreStatut
