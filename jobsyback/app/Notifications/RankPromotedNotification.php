@@ -3,14 +3,14 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
 /**
  * Le candidat change de rang grâce à son expérience réelle (« réévaluation » dans le tableau de bord).
  * Stockée en base uniquement : elle apparaît dans les notifications du candidat, sans email.
+ * Sans file d'attente : une simple ligne en base, qui ne doit pas dépendre d'un worker (absent sur Render).
  */
-class RankPromotedNotification extends Notification implements ShouldQueue
+class RankPromotedNotification extends Notification
 {
     use Queueable;
 

@@ -145,6 +145,8 @@ Route::middleware(['auth:sanctum', 'role:JEUNE', 'access.token'])->group(functio
 
     Route::get('/candidat/notifications', [NotificationController::class, 'index']);
     Route::patch('/candidat/notifications/mark-as-read', [NotificationController::class, 'markAsRead']);
+    // Une seule notification (la réévaluation de rang se ferme sans marquer les autres comme lues)
+    Route::patch('/candidat/notifications/{id}/read', [NotificationController::class, 'markOneAsRead']);
 
     Route::get('/candidat/notifications/unread', [NotificationController::class, 'unread']);
     Route::get('/candidat/my-confirmed-missions', [CandidatMissionController::class, 'myconfirmedmissions']);

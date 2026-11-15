@@ -33,6 +33,14 @@ class NotificationController extends Controller
         );
     }
 
+    public function markOneAsRead(Request $request, string $id)
+    {
+        // Uniquement parmi ses propres notifications : celle d'un autre utilisateur répond 404
+        $request->user()->notifications()->findOrFail($id)->markAsRead();
+
+        return apiResponse(null, 'Notification marquée comme lue', 'success', 200);
+    }
+
     public function markAsRead(Request $request)
     {
         // Une seule requête UPDATE, quel que soit le nombre de notifications
