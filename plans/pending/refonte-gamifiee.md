@@ -130,6 +130,8 @@ Un lot n'est terminé qu'une fois fusionné, déployé par Vercel et vérifié s
 | 3b | **Combat et boss** : leçons, quiz, examen final, projet, certification | M | 3a |
 | 4a | **Fenêtre de statut** : page profil | M | Lot 1 |
 | 4b | **Inventaire** : documents et titres | S | 4a |
+| Réévaluation (API) | Prêt sur `fix/api-reevaluation` (back seul, depuis `main`) | — | 3 tests ajoutés (`RankReevaluationTest`) : promotion enregistrée sans file d'attente, une seule notification lue, notification d'un autre introuvable. Les 2 premiers échouent sans le changement. Suite complète : 138 tests |
+| 4c | Prêt sur `design/lot-4c-reevaluation` (après l'API de réévaluation) | — | Types, lint et build verts. API locale. 13 contrôles automatiques : aucune fenêtre sans promotion, promotion réelle par l'XP, contenu de la fenêtre, focus gardé, « Continuer » (promotion lue, autre notification intacte), pas de retour au rechargement, double promotion en une fenêtre, Échap, lecture en échec, « Voir les missions ». 375 px et animations réduites : fenêtre dans l'écran, aucune animation en boucle, aucune erreur dans la console |
 | 4c | **Réévaluation de rang** | S | 4a, lot B1 si la décision 3 est acceptée |
 | 5 | **Trésor et messages du Système** : gains, notifications, cloche | M | Lot 0 |
 | 6a | **L'Éveil** : inscription, connexion, premiers pas | M | Lot 0 |
