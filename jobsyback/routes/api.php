@@ -41,14 +41,14 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Models\User;
 
-Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:inscription');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
-Route::post('/refresh', [RefreshTokenController::class, 'refresh'])->middleware('throttle:10,1');
-Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:3,1');
-Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:5,1');
+Route::post('/refresh', [RefreshTokenController::class, 'refresh'])->middleware('throttle:10,1,refresh');
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:oubli');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:reinitialisation');
 Route::post('logout', [AuthController::class, 'logout'])->middleware(['auth:sanctum', 'access.token']);
 Route::post('/webhooks/kkiapay', [WebhookController::class, 'handleKkiaPay']);
-Route::post('/webhooks/kkiapay/payouts', [WebhookController::class, 'handleKkiaPayPayouts'])->middleware('throttle:60,1');
+Route::post('/webhooks/kkiapay/payouts', [WebhookController::class, 'handleKkiaPayPayouts'])->middleware('throttle:60,1,webhook');
 Route::post('/webhooks/kkiapay/deposits', [WebhookController::class, 'depositWebhook']);
 Route::get('/public_missions', [PublicMissionController::class, 'index']);
 Route::get('/certificates/verify/{hash}', [CertificateVerificationController::class, 'verify']);
@@ -86,12 +86,19 @@ Route::post('/auth/resend-verification', function (Request $request) {
     $user = User::where('email', $request->email)->first();
 
     if ($user && !$user->hasVerifiedEmail()) {
-        $user->sendEmailVerificationNotification();
+        try {
+            $user->sendEmailVerificationNotification();
+        } catch (\Throwable $e) {
+            report($e);
+
+            // Le service d'envoi est en panne : mieux vaut le dire que promettre un e-mail qui n'arrivera pas
+            return response()->json(['message' => "Le service d'e-mail ne répond pas pour le moment. Réessayez dans quelques minutes."], 503);
+        }
     }
 
     // Même réponse dans tous les cas : ce formulaire ne doit pas révéler quels emails sont inscrits
     return response()->json(['message' => 'Si un compte non vérifié correspond à cette adresse, un nouveau lien vient d\'être envoyé.']);
-})->middleware('throttle:3,1');
+})->middleware('throttle:verification');
 
 Route::middleware(['auth:sanctum', 'access.token'])->get('/user', [AuthController::class, 'userProfile']);
 

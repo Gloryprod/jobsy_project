@@ -8,6 +8,7 @@ import { ArrowRight , ArrowLeft} from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import Swal from "sweetalert2";
+import { RenvoiConfirmation } from "@/components/forms/RenvoiConfirmation";
 
 
 const registerSchema = z.object({
@@ -17,7 +18,8 @@ const registerSchema = z.object({
   password: z.string()
     .min(8, "Le mot de passe doit contenir au moins 8 caractères.")
     .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+      // Même règle que l'API (RegisterRequest) : tout caractère hors lettres et chiffres compte comme spécial
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/,
       "Le mot de passe doit contenir une majuscule, une minuscule, un chiffre et un caractère spécial."
     ),
   password_confirmation: z.string(),
@@ -30,11 +32,14 @@ export default function RegisterJeunePage() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [errorMsg, setErrorMsg] = useState("");
+  // Compte créé sans e-mail parti, ou adresse déjà inscrite : on propose de renvoyer le lien de confirmation
+  const [emailAConfirmer, setEmailAConfirmer] = useState<string | null>(null);
 
   const handleRegister = async (e: any) => {
     e.preventDefault();
     setErrors({});
     setErrorMsg("");
+    setEmailAConfirmer(null);
 
     const formValues = {
       prenom: e.target.prenom.value,
@@ -59,10 +64,24 @@ export default function RegisterJeunePage() {
     setLoading(true);
 
     try {
-      await api.post("/register", {
+      const reponse = await api.post("/register", {
         ...formValues,
         role: "JEUNE",
       });
+
+      // L'API répond 201 même si l'e-mail n'a pas pu partir : le compte existe, il faut redemander l'e-mail
+      if (reponse.data?.verification_email_sent === false) {
+        setEmailAConfirmer(formValues.email);
+        Swal.fire({
+          icon: "warning",
+          title: "Compte créé",
+          text: reponse.data.message,
+          confirmButtonText: "OK",
+          confirmButtonColor: "#000080",
+        });
+        setLoading(false);
+        return;
+      }
 
       Swal.fire({
         icon: "success",
@@ -84,6 +103,7 @@ export default function RegisterJeunePage() {
     } catch (error: any) {
       if (error.response) {
         setErrorMsg(error.response.data.message || "Une erreur est survenue.");
+        if (error.response.status === 422 && error.response.data?.errors?.email) setEmailAConfirmer(formValues.email);
 
         Swal.fire({
           icon: "error",
@@ -138,6 +158,7 @@ export default function RegisterJeunePage() {
         {errorMsg && (
           <p className="text-red-500 text-center mb-3 font-semibold">{errorMsg}</p>
         )}
+        {emailAConfirmer && <RenvoiConfirmation email={emailAConfirmer} />}
 
         <form className="space-y-3" onSubmit={handleRegister}>
 
