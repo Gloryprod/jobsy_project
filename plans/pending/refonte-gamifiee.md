@@ -130,8 +130,8 @@ Un lot n'est terminé qu'une fois fusionné, déployé par Vercel et vérifié s
 | 3b | **Combat et boss** : leçons, quiz, examen final, projet, certification | M | 3a |
 | 4a | **Fenêtre de statut** : page profil | M | Lot 1 |
 | 4b | **Inventaire** : documents et titres | S | 4a |
-| Réévaluation (API) | Prêt sur `fix/api-reevaluation` (back seul, depuis `main`) | — | 3 tests ajoutés (`RankReevaluationTest`) : promotion enregistrée sans file d'attente, une seule notification lue, notification d'un autre introuvable. Les 2 premiers échouent sans le changement. Suite complète : 138 tests |
-| 4c | Prêt sur `design/lot-4c-reevaluation` (après l'API de réévaluation) | — | Types, lint et build verts. API locale. 13 contrôles automatiques : aucune fenêtre sans promotion, promotion réelle par l'XP, contenu de la fenêtre, focus gardé, « Continuer » (promotion lue, autre notification intacte), pas de retour au rechargement, double promotion en une fenêtre, Échap, lecture en échec, « Voir les missions ». 375 px et animations réduites : fenêtre dans l'écran, aucune animation en boucle, aucune erreur dans la console |
+| Réévaluation (API) | Fusionné le 15/11/2026 (back seul) | #27 | 3 tests ajoutés (`RankReevaluationTest`) : promotion enregistrée sans file d'attente, une seule notification lue, notification d'un autre introuvable. Les 2 premiers échouent sans le changement. Suite complète : 138 tests |
+| 4c | Fusionné le 15/11/2026 | #28 | Types, lint et build verts. API locale. 13 contrôles automatiques : aucune fenêtre sans promotion, promotion réelle par l'XP, contenu de la fenêtre, focus gardé, « Continuer » (promotion lue, autre notification intacte), pas de retour au rechargement, double promotion en une fenêtre, Échap, lecture en échec, « Voir les missions ». 375 px et animations réduites : fenêtre dans l'écran, aucune animation en boucle, aucune erreur dans la console |
 | 4c | **Réévaluation de rang** | S | 4a, lot B1 si la décision 3 est acceptée |
 | 5 | **Trésor et messages du Système** : gains, notifications, cloche | M | Lot 0 |
 | 6a | **L'Éveil** : inscription, connexion, premiers pas | M | Lot 0 |
@@ -689,6 +689,55 @@ Quand le rang change vraiment, le candidat le voit : une fenêtre du Système s'
 - Seule animation : le balayage du kit, coupé quand l'appareil demande moins d'animations.
 
 **Vérification** : tests de l'API ; API locale : promotion réelle (XP qui passe un seuil), fenêtre ouverte une seule fois, autres notifications intactes, double promotion, Échap, échec de la lecture ; clavier ; 375 px et animations réduites ; pas de régression sur le QG.
+
+## Lot 5 : le Trésor et les messages du Système (plan détaillé du 16/11/2026)
+
+Les gains (`/dashboard/candidats/loot`), les notifications (`/dashboard/candidats/notifications`) et la cloche de l'en-tête. Aucun changement d'API.
+
+**Comment circule l'argent** (`WalletService`).
+- Quand l'entreprise finance une mission, une opération `transfer` en attente (`pending`) apparaît chez le candidat : c'est la récompense **scellée**, nette de la commission de 10 %.
+- À la validation, elle passe à `completed` et le solde du candidat augmente.
+- Si la mission est arrêtée, elle passe à `cancelled`.
+- Un retrait retire tout de suite le montant du solde (`withdrawal`, `pending`). Il passe à `processing` pendant le virement, puis `completed`. S'il échoue (`failed`), le montant est rendu.
+
+**Constats.**
+- **Statuts faux.** Tout ce qui n'est pas `completed` s'affiche « En cours », avec un « + » : une récompense annulée et un retrait refusé (montant rendu) passent pour des gains à venir.
+- **Libellés en anglais.** Un retrait s'appelle « Withdrawal » (nom technique de l'opération).
+- **Montants.** Ils sont formatés selon la langue du téléphone (« 1,000 F »).
+- **Retrait.**
+  - Le bouton s'ouvre même avec un solde à 0.
+  - Le minimum de l'API (100 FCFA) n'est pas annoncé.
+  - Les réseaux ne sont pas des choix accessibles.
+  - La fenêtre n'a ni focus gardé ni Échap.
+  - Les messages parlent de « conseil » et de « mages ».
+- **Notifications.**
+  - Le message est coupé à deux lignes, sans moyen de le lire en entier.
+  - Seule l'offre d'une entreprise mène quelque part.
+  - « Tout marquer comme lu » ne met pas à jour la cloche, qui garde son compteur pendant une minute.
+  - Le chargement prend tout l'écran.
+- **La cloche.** Son compteur clignote en boucle et n'est pas plafonné.
+
+**Front.**
+- **Le Trésor** (`components/dashboardCandidat/tresor`).
+  - Couche Système : disponible, scellé (en séquestre, versé à la validation de la mission) et total gagné, en FCFA exacts.
+  - Bouton « Retirer » seulement si un retrait est possible.
+- **Le retrait.** Fenêtre accessible :
+  - montant, avec le solde et le minimum annoncés ;
+  - réseau en boutons radio ;
+  - numéro avec un exemple ;
+  - vérification avant l'envoi avec les règles de l'API ;
+  - refus de l'API affiché ;
+  - résultat annoncé.
+- **L'historique.** Couche réalité : chaque opération avec un libellé clair, la mission, la date, le montant signé et son vrai statut.
+- **Messages du Système** (`components/dashboardCandidat/notifications`).
+  - Regroupés par jour, message complet.
+  - Lien selon le type : offre reçue, relance d'offre, promotion de rang.
+  - Non lus signalés en texte, pas seulement par la couleur.
+  - « Tout marquer comme lu » partage le cache de la cloche.
+- **La cloche.** Plus de clignotement, compteur plafonné à « 9+ ».
+- Les pages gardent leur adresse et affichent les nouveaux composants.
+
+**Vérification** : API locale, compte avec récompense scellée, récompense versée, récompense annulée, retraits en attente, versé et refusé ; retrait refusé avant l'envoi, refusé par l'API et réussi pour de vrai (solde en base) ; notifications de chaque type ; tout marquer comme lu et la cloche à jour ; clavier ; 375 px et animations réduites ; pas de régression sur le QG.
 
 ## Décisions prises le 17/10/2026
 
