@@ -859,6 +859,44 @@ L'espace entreprise compte environ 5 700 lignes. Il est découpé en cinq lots, 
 
 **Vérification** : tests de l'API ; API locale avec une entreprise qui a des missions ouvertes, désactivées et clôturées, des candidatures, une mission terminée et des mouvements ; recharge (montants refusés, refus de l'API, ouverture du paiement) ; historique en erreur ; clavier ; 375 px et animations réduites.
 
+### Lot 7b : les missions de la Guilde (plan détaillé du 18/11/2026)
+
+**Constats.**
+- **Création impossible.** L'API exige l'urgence de la mission, mais le formulaire ne l'envoie pas : toute nouvelle mission est refusée, avec un message en anglais dans une bulle qui disparaît. La durée, montrée aux candidats, n'est pas demandée non plus.
+- **Formulaire.**
+  - Les étiquettes ne sont pas liées aux champs, et aucun champ n'est marqué obligatoire.
+  - Les erreurs ne s'affichent pas sous le bon champ.
+  - « Rémunération » n'a pas d'unité, et les exemples sont étrangers au Bénin (« Paris / Remote »).
+  - Une mission relancée reprend sa date limite passée, que l'API refuse.
+  - La page de création appelle `/missions/null` quand elle ne relance rien.
+- **Listes.**
+  - Un tableau à 6 colonnes déborde sur téléphone.
+  - Le nombre de candidatures compte aussi les brouillons.
+  - Toutes les actions sont cachées dans un menu « ⋯ » sans nom.
+- **Actions.**
+  - Après une suppression, la mission reste affichée jusqu'au rechargement.
+  - Le message de désactivation est inversé : « Mission activée » quand on désactive.
+  - Les confirmations passent par des fenêtres SweetAlert.
+- **Notifications.** À la clôture, la notification et l'e-mail aux candidats non retenus partent en file d'attente, que rien ne traite en production. Ils n'arrivent jamais. C'est le cas de cinq notifications, dont celle du candidat retenu.
+
+**API (`fix/api-notifications-immediates`, depuis `main`).** La notification dans l'application part tout de suite (`viaConnections`). Seul l'e-mail reste en file : il ne peut plus faire échouer la requête. Cela couvre cinq notifications : mission clôturée, candidat retenu, proposition acceptée, relances du candidat et de l'entreprise. 1 test.
+
+**Front** (`components/dashboardEntreprise/missions`).
+- **Des cartes de quête** à la place des tableaux, pour les missions ouvertes comme pour les missions clôturées. Chaque carte montre :
+  - le statut écrit en toutes lettres et le rang minimum ;
+  - la récompense et la date limite ;
+  - les candidatures envoyées, sans les brouillons, et les recrutés ;
+  - les actions en clair : candidatures, invitations, modifier, puis désactiver, clôturer ou supprimer, avec une confirmation accessible.
+- **Recherche et filtre** (toutes, ouvertes, désactivées). La suppression groupée est gardée.
+- **Le formulaire.**
+  - Étiquettes liées, champs obligatoires marqués, règles de l'API vérifiées avant l'envoi, erreurs sous chaque champ.
+  - Ajout de l'urgence et de la durée.
+  - Nom de l'entreprise prérempli.
+  - Avertissement quand un CDD ou un CDI est réservé aux rangs E ou D, qui ne voient que les missions ponctuelles.
+  - Date limite à choisir de nouveau pour une relance.
+
+**Vérification** : tests de l'API ; API locale : création réelle (refus de chaque champ, puis réussite), modification, relance d'une mission terminée, désactivation et réactivation, clôture (candidatures rejetées, notification enregistrée), suppression simple et groupée, refus d'une suppression de mission engagée ; recherche et filtre ; clavier ; 375 px et animations réduites.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
