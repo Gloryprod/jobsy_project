@@ -778,6 +778,38 @@ Le parcours d'entrée : choix du profil, inscription, confirmation de l'adresse,
 
 **Vérification** : tests de l'API ; API locale : inscriptions candidat et entreprise réelles, refus de chaque champ, adresse déjà prise, connexion (identifiants faux, compte non confirmé, puis réussie), mot de passe oublié, réinitialisation réelle par le lien du journal, lien expiré ; clavier ; 375 px et animations réduites.
 
+## Lot 6b : l'accueil public (plan détaillé du 17/11/2026)
+
+La page d'accueil (`/`), avec l'en-tête et le pied de page communs aux pages publiques.
+
+**Constats.**
+- **Chiffres inventés.** « +2 400 jeunes actifs », « 92 % des inscrits gagnent leur premier salaire en moins de 7 jours », « 380 entreprises locales », « 7 jeunes diplômés sur 10 ». Aucun ne vient de la base.
+- **Faux témoignages.** Trois jeunes, des montants et un CDI chez une vraie entreprise, notés cinq étoiles.
+- **Logos de vraies entreprises.** MTN, Moov, SBEE, La Poste et Sobebra sont présentées comme clientes. Les images n'existent pas dans le dépôt : la section affiche six cadres vides.
+- **Promesses fausses.** « Payé le jour même », « virement instantané », « Télécharge l'app », « Résultat garanti ». La récompense est en réalité versée à la validation de la mission, et il n'y a pas d'application mobile.
+- **Pied de page.** Un numéro factice (+229 67 00 00 00), des réseaux sociaux qui mènent à `#`, et trois liens vers des pages qui n'existent pas (`/profil`, `/recrutement`, `/tarifs`).
+- **En-tête.** Le bouton du menu mobile n'a pas de nom pour les lecteurs d'écran, et l'inscription n'est accessible que par la page de connexion.
+- **Poids.** Une photo plein écran sur téléphone, et des animations à l'apparition de chaque bloc, même quand l'appareil demande moins d'animations.
+
+**Front** (`components/accueil`).
+- **« Le Système recrute. »** Une fenêtre du Système sur fond de nuit. Une phrase dit ce qu'est Jobsy, puis trois entrées : « Je cherche des missions », « Je recrute » et « Se connecter ».
+- **Le jeu en quatre étapes**, toutes réelles :
+  1. l'Éveil : le CV donne le rang de départ ;
+  2. les donjons : formations, quiz, examen final et certificat, avec de l'XP ;
+  3. les portails : missions ouvertes selon le rang, épreuve d'entrée ;
+  4. le Trésor : récompense mise sous séquestre par l'entreprise, versée à la validation, retrait Mobile Money.
+- **Les rangs, de E à S.** Le diplôme fixe le rang de départ, et l'XP fait monter.
+- **Les dernières missions ouvertes**, tirées de `GET /public_missions` (trois au plus) : rang requis, entreprise, lieu et récompense. S'il n'y en a aucune, ou si l'API ne répond pas, un message le dit sans bloquer la page.
+- **Pour les entreprises** : publier une mission, recevoir des candidats classés par rang et par score d'épreuve, déposer la récompense, valider la mission.
+- **L'en-tête public** : le logo, les pages existantes, « Se connecter » et « Créer un compte ». Le menu mobile a un nom accessible.
+- **Le pied de page** : seulement les pages qui existent, et le lien vers la page de contact.
+- Plus de photo ni d'animation à l'apparition. Le balayage des fenêtres du Système reste, et il est coupé quand l'appareil demande moins d'animations.
+- Les six sections remplacées sont supprimées.
+
+**Hors lot.** Les pages publiques Missions, Formations, Entreprises et Contact gardent leur contenu, avec le nouvel en-tête et le nouveau pied de page. La page de contact affiche elle aussi des numéros factices et une adresse à confirmer. Gloria doit fournir les vraies coordonnées.
+
+**Vérification** : API locale avec des missions réelles, puis sans mission, puis API arrêtée. Liens vers chaque entrée. Clavier et menu mobile. Pages Missions, Formations, Entreprises et Contact toujours lisibles sous l'en-tête. 375 px et animations réduites. Aucune erreur dans la console.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -888,6 +920,7 @@ Repères à confirmer :
 - D35 (lot 4c) : la réévaluation réutilise la notification `rank_promoted` du lot B1 au lieu d'un nouvel état en base : la fenêtre s'ouvre tant que cette notification n'est pas lue. La fenêtre vit sur le QG seulement, la page où le candidat arrive.
 - D36 (lot 6a) : les pages de connexion et de mot de passe servent aussi aux entreprises : elles vouvoient, comme avant. L'inscription du candidat aussi, pour rester cohérente avec la connexion.
 - D37 (lot 6a) : le lot 6a passe avant les jetons (J1 à J4), dont le barème et les prix attendent Gloria. La « révélation du rang » de l'Éveil reste la quête du CV et la réévaluation (lot 4c). Une notification de rang après l'analyse du CV et la validation viendra plus tard.
+- D38 (lot 6b) : l'accueil ne montre ni chiffre, ni témoignage, ni logo d'entreprise tant qu'ils ne viennent pas de la base ou d'un accord écrit. Les coordonnées de contact du pied de page sont retirées en attendant les vraies, que Gloria doit fournir.
 
 ## Avancement
 
