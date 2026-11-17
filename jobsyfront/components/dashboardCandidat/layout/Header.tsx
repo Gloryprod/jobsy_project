@@ -179,7 +179,7 @@ export default function Header() {
             {/* Logo */}
             <Link href="/dashboard/candidats" className="flex items-center space-x-2.5 group">
                 <div className="bg-white/10 p-2 rounded-xl group-hover:bg-white/20 transition-all">
-                    <Briefcase className="w-5 h-5 text-white animate-pulse" strokeWidth={2.5} />
+                    <Briefcase className="w-5 h-5 text-white" strokeWidth={2.5} />
                 </div>
                 <span className="text-white text-xl font-black tracking-tight">Jobsy</span>
             </Link>

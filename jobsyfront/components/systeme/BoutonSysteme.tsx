@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ComponentProps } from "react";
+import type { ButtonHTMLAttributes, ComponentProps, Ref } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,8 @@ type PropsBouton = ButtonHTMLAttributes<HTMLButtonElement> & {
   variante?: Variante;
   /** Désactive le bouton et affiche un indicateur pendant une action en cours. */
   chargement?: boolean;
+  /** React 19 : la ref est une prop comme une autre, transmise au bouton (pour y rendre le focus). */
+  ref?: Ref<HTMLButtonElement>;
 };
 
 export function BoutonSysteme({ variante = "plein", chargement = false, className, children, disabled, type = "button", ...reste }: PropsBouton) {
