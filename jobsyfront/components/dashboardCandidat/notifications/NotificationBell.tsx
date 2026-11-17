@@ -9,14 +9,14 @@ export function NotificationBell() {
   const { unreadCount } = useNotifications();
 
   return (
-    <Link href="/dashboard/candidats/notifications" className="relative block" aria-label={`Notifications (${unreadCount} non lues)`}>
+    <Link href="/dashboard/candidats/notifications" className="relative block" aria-label={unreadCount > 0 ? `Notifications : ${unreadCount} non lue${unreadCount > 1 ? "s" : ""}` : "Notifications"}>
       <div className="w-6 h-6">
         <Bell className="w-6 h-6 text-white hover:text-slate-300 transition-colors duration-150" />
       </div>
 
       {unreadCount > 0 && (
-        <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-semibold rounded-full h-4 min-w-4 px-1 flex items-center justify-center animate-pulse">
-          {unreadCount}
+        <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-semibold rounded-full h-4 min-w-4 px-1 flex items-center justify-center">
+          {unreadCount > 9 ? "9+" : unreadCount}
         </span>
       )}
     </Link>
