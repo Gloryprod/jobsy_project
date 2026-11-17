@@ -14,6 +14,17 @@ class MissionClosedNotification extends Notification implements ShouldQueue
     protected Mission $mission;
 
     /**
+     * La notification dans l'application part tout de suite ; seul l'e-mail passe par la file d'attente.
+     * Sans traitement de file en production, tout restait sinon bloqué, et un e-mail en échec ne doit pas faire échouer la requête.
+     *
+     * @return array<string, string>
+     */
+    public function viaConnections(): array
+    {
+        return ['database' => 'sync'];
+    }
+
+    /**
      * Create a new notification instance.
      */
     public function __construct(Mission $mission)
