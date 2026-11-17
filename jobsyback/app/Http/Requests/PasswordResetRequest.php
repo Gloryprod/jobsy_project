@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use App\Support\PasswordPolicy;
 
 class PasswordResetRequest extends FormRequest
 {
@@ -26,15 +27,13 @@ class PasswordResetRequest extends FormRequest
         return [
             'token' => 'required',
             'email' => 'required|email',
-            'password' => [
-                'required',
-                'confirmed',
-                'min:8',
-                'regex:/[A-Z]/',      // majuscule
-                'regex:/[0-9]/',      // chiffre
-                'regex:/[^a-zA-Z0-9]/'// caractère spécial
-            ],
+            'password' => ['required', 'confirmed', ...PasswordPolicy::rules()],
         ];
+    }
+
+    public function messages(): array
+    {
+        return PasswordPolicy::messages('password');
     }
 
      public function failedValidation(Validator $validator)

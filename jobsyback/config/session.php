@@ -169,7 +169,9 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    // Vide dans le .env (valeur "") = non défini : AuthCookies déduit alors le drapeau Secure de la requête (HTTPS).
+    // Sans cette conversion, "" était lu comme false et les cookies d'authentification partaient sans Secure.
+    'secure' => env('SESSION_SECURE_COOKIE') === '' ? null : env('SESSION_SECURE_COOKIE'),
 
     /*
     |--------------------------------------------------------------------------
