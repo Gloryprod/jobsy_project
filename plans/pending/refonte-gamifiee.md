@@ -740,6 +740,47 @@ Les gains (`/dashboard/candidats/loot`), les notifications (`/dashboard/candidat
 
 **Vérification** : API locale, compte avec récompense scellée, récompense versée, récompense annulée, retraits en attente, versé et refusé ; retrait refusé avant l'envoi, refusé par l'API et réussi pour de vrai (solde en base) ; notifications de chaque type ; tout marquer comme lu et la cloche à jour ; clavier ; 375 px et animations réduites ; pas de régression sur le QG.
 
+## Lot 6a : l'Éveil, inscription et connexion (plan détaillé du 17/11/2026)
+
+Le parcours d'entrée : choix du profil, inscription, confirmation de l'adresse, connexion, mot de passe oublié et réinitialisation.
+
+**Constats.**
+- **Pas d'étiquettes.** Les champs n'ont qu'un texte d'exemple, qui disparaît pendant la saisie. Les erreurs ne sont pas liées aux champs.
+- **Mot de passe.**
+  - La règle diffère d'un écran à l'autre. La réinitialisation n'exige pas de minuscule.
+  - Le profil accepte un mot de passe de 8 caractères sans autre règle, côté écran comme côté API.
+  - Seule la connexion permet d'afficher le mot de passe saisi.
+- **Messages.**
+  - Les résultats passent par des fenêtres d'alerte (SweetAlert).
+  - Les refus de l'API arrivent en anglais (« The email has already been taken. »).
+  - Un lien de réinitialisation expiré donne une erreur sans issue.
+- **Après l'inscription.** Le parcours s'arrête sur « vérifiez votre boîte mail », sans dire ce qui vient ensuite.
+- **Chargement.** « Loading... » en anglais pendant le chargement de la réinitialisation.
+
+**API (`fix/api-politique-mot-de-passe`, depuis `main`).** Reprend un travail resté en local depuis l'audit :
+- `PasswordPolicy` : une seule règle, avec des messages en français, pour l'inscription, la réinitialisation et le changement depuis le profil (candidat et entreprise) ;
+- trois réglages lus correctement quand leur valeur est vide dans le `.env` : `CORS_ALLOWED_ORIGINS`, `SESSION_SECURE_COOKIE` et `KKIAPAY_API_URL`.
+
+**Front** (`components/auth`).
+- **Un cadre commun** : une fenêtre du Système sur fond de nuit, le lien de retour et le titre. Plus de photo de fond, qui pesait lourd en 3G et rendait le texte difficile à lire.
+- **Des champs complets** : étiquette, aide, erreur liée au champ, autocomplétion. Le mot de passe s'affiche ou se masque, et ses règles se cochent pendant la saisie (`lib/password.ts`, même règle que l'API).
+- **Le choix du profil** : « Je cherche des missions » ou « Je recrute », chacun avec une phrase d'explication.
+- **L'inscription.**
+  - Erreurs de l'API traduites sous le bon champ.
+  - Adresse déjà inscrite : renvoi de l'e-mail de confirmation proposé.
+  - Après l'envoi, la suite en trois étapes : compte créé, adresse à confirmer (avec le renvoi), puis connexion et CV.
+- **La connexion.**
+  - Message clair pour des identifiants faux, un compte non confirmé (avec le renvoi) et trop de tentatives.
+  - Redirection selon le rôle.
+- **Le mot de passe oublié** : message affiché dans la page.
+- **La réinitialisation.**
+  - Lien incomplet ou expiré : explication et lien pour en demander un nouveau.
+  - Réussite : lien vers la connexion.
+- **L'adresse confirmée** : les prochaines étapes.
+- Le changement de mot de passe du profil (lot 4a) suit la même règle.
+
+**Vérification** : tests de l'API ; API locale : inscriptions candidat et entreprise réelles, refus de chaque champ, adresse déjà prise, connexion (identifiants faux, compte non confirmé, puis réussie), mot de passe oublié, réinitialisation réelle par le lien du journal, lien expiré ; clavier ; 375 px et animations réduites.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -848,6 +889,8 @@ Repères à confirmer :
 - D33 (lot 4b) : l'inventaire lit les titres dans `/candidate/inventory`, les diplômes et certifications externes dans `/candidat/profile`, et les certificats Jobsy dans `/courses/my-learnings`, qui donne le lien de vérification. Les copies des documents répétées dans chaque badge ne sont plus utilisées.
 - D34 (lot 4b) : la limite de 5 titres équipés est recopiée dans le front, comme la commission en D19 : l'API la fixe dans `BadgeController` sans la renvoyer. Si elle change, `inventaire/regles.ts` doit suivre. Le refus de l'API reste affiché.
 - D35 (lot 4c) : la réévaluation réutilise la notification `rank_promoted` du lot B1 au lieu d'un nouvel état en base : la fenêtre s'ouvre tant que cette notification n'est pas lue. La fenêtre vit sur le QG seulement, la page où le candidat arrive.
+- D36 (lot 6a) : les pages de connexion et de mot de passe servent aussi aux entreprises : elles vouvoient, comme avant. L'inscription du candidat aussi, pour rester cohérente avec la connexion.
+- D37 (lot 6a) : le lot 6a passe avant les jetons (J1 à J4), dont le barème et les prix attendent Gloria. La « révélation du rang » de l'Éveil reste la quête du CV et la réévaluation (lot 4c). Une notification de rang après l'analyse du CV et la validation viendra plus tard.
 
 ## Avancement
 
