@@ -31,13 +31,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             isCollapsed ? "md:pl-20" : "md:pl-60"
                         }`}
                     >
-                        {/* Ton Header */}
-                        <header className="h-18 flex items-center sticky top-0 z-10">
-                            <Header /> 
-                        </header>
+                        {/* L'en-tête est fixe et porte lui-même la balise header : ce bloc réserve sa hauteur */}
+                        <div className="h-18 shrink-0">
+                            <Header />
+                        </div>
 
                         {/* Contenu principal */}
-                        <main className="flex-1 overflow-y-auto p-8 no-scrollbar">
+                        <main className="flex-1 overflow-y-auto p-4 md:p-8 no-scrollbar">
                             <div className="w-full mx-auto">
                                 <Toaster
                                     position="top-right"
