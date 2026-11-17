@@ -810,6 +810,55 @@ La page d'accueil (`/`), avec l'en-tête et le pied de page communs aux pages pu
 
 **Vérification** : API locale avec des missions réelles, puis sans mission, puis API arrêtée. Liens vers chaque entrée. Clavier et menu mobile. Pages Missions, Formations, Entreprises et Contact toujours lisibles sous l'en-tête. 375 px et animations réduites. Aucune erreur dans la console.
 
+## Lot 7 : la Guilde, l'espace entreprise (plan du 18/11/2026)
+
+L'espace entreprise compte environ 5 700 lignes. Il est découpé en cinq lots, chacun avec sa PR. Ils gardent tous la version sobre (décision 2) : les rangs et les fenêtres du Système servent de repères, sans effet de jeu.
+
+| Lot | Contenu |
+|---|---|
+| 7a | Tableau de bord, en-tête, navigation, portefeuille (recharge et historique) |
+| 7b | Missions : listes ouvertes et clôturées, création, modification, actions |
+| 7c | Candidatures et matching : liste des candidats d'une mission, profil, invitations |
+| 7d | Suivi des recrutés : offre, séquestre, validation et paiement |
+| 7e | Profil de l'entreprise |
+
+### Lot 7a : le tableau de bord de la Guilde (plan détaillé)
+
+**Constats.**
+- **Rang absent.** L'API ne chargeait pas le rang des candidats : toutes les candidatures affichaient « Rang Nouveau ». En revanche, elle renvoyait leur fiche complète, avec l'adresse et la date de naissance.
+- **Chiffre faux.** « N talents ont été recrutés » affichait en réalité le nombre de candidatures.
+- **Recharge.**
+  - Un montant vide ou de moins de 100 FCFA partait quand même vers l'API, et la fenêtre se fermait avant la réponse.
+  - La fenêtre n'avait ni étiquette liée au champ, ni Échap, ni focus gardé.
+  - Après le paiement, rien n'indique que le solde se met à jour à la confirmation.
+- **Page entière en erreur** si l'historique ne se charge pas.
+- **Historique.** Tout ce qui n'est pas terminé s'affiche « Échoué ». Une récompense versée s'affiche avec un montant négatif sans explication.
+- **Décor trompeur.** Une puce « VIP » sur la carte du portefeuille.
+- **En-tête.**
+  - Le logo mène à `/dashboard/entreprise`, une page qui n'existe pas (404).
+  - Le menu mobile mène à `/dashboard/entreprises/listCandidateProfile`, qui n'existe pas non plus.
+  - La cloche et le menu du compte n'ont pas de nom accessible et ne s'ouvrent pas au clavier.
+  - L'icône du logo clignote sans fin.
+- **Navigation.** Le bouton qui réduit le menu n'a pas de nom accessible, et la page en cours n'est pas annoncée. Faute de frappe : « Clotûrées ».
+
+**API (`fix/api-tableau-guilde`, depuis `main`).** Pour les candidatures à traiter, l'API renvoie le rang, le nom, la ville et le titre de la mission, et rien d'autre. Pour les missions terminées, elle ajoute `hired_count`, le nombre de candidats recrutés. 2 tests.
+
+**Front.**
+- **Le tableau de bord.**
+  - Les quatre compteurs de missions, chacun avec un libellé clair et un lien vers sa liste.
+  - Les candidatures à traiter, avec l'emblème du rang.
+  - Le portefeuille en FCFA exacts, avec les derniers mouvements dans la page.
+  - Les missions terminées à relancer, avec le vrai nombre de recrutés.
+- **La recharge.**
+  - Une fenêtre accessible, qui vérifie le montant comme l'API (de 100 à 10 000 000 FCFA, nombre entier).
+  - Les refus de l'API sont affichés.
+  - Après l'ouverture du paiement, un message dit que le solde sera mis à jour dès la confirmation, avec un bouton pour l'actualiser.
+- **Un historique qui ne se charge pas** ne bloque plus que son propre bloc.
+- **L'en-tête** : liens réparés, cloche et menu du compte accessibles, plus d'animation en boucle, menu mobile dans une fenêtre accessible.
+- **La navigation** : nom du bouton de réduction, page en cours annoncée (`aria-current`), libellés corrigés.
+
+**Vérification** : tests de l'API ; API locale avec une entreprise qui a des missions ouvertes, désactivées et clôturées, des candidatures, une mission terminée et des mouvements ; recharge (montants refusés, refus de l'API, ouverture du paiement) ; historique en erreur ; clavier ; 375 px et animations réduites.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -921,6 +970,7 @@ Repères à confirmer :
 - D36 (lot 6a) : les pages de connexion et de mot de passe servent aussi aux entreprises : elles vouvoient, comme avant. L'inscription du candidat aussi, pour rester cohérente avec la connexion.
 - D37 (lot 6a) : le lot 6a passe avant les jetons (J1 à J4), dont le barème et les prix attendent Gloria. La « révélation du rang » de l'Éveil reste la quête du CV et la réévaluation (lot 4c). Une notification de rang après l'analyse du CV et la validation viendra plus tard.
 - D38 (lot 6b) : l'accueil ne montre ni chiffre, ni témoignage, ni logo d'entreprise tant qu'ils ne viennent pas de la base ou d'un accord écrit. Les coordonnées de contact du pied de page sont retirées en attendant les vraies, que Gloria doit fournir.
+- D39 (lot 7) : l'espace entreprise est découpé en cinq lots (7a à 7e), un par écran ou groupe d'écrans, chacun avec sa PR, comme les lots 2 et 3.
 
 ## Avancement
 
