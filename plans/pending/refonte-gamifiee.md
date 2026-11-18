@@ -897,6 +897,53 @@ L'espace entreprise compte environ 5 700 lignes. Il est découpé en cinq lots, 
 
 **Vérification** : tests de l'API ; API locale : création réelle (refus de chaque champ, puis réussite), modification, relance d'une mission terminée, désactivation et réactivation, clôture (candidatures rejetées, notification enregistrée), suppression simple et groupée, refus d'une suppression de mission engagée ; recherche et filtre ; clavier ; 375 px et animations réduites.
 
+### Lot 7c : les candidatures et le matching (plan détaillé du 18/11/2026)
+
+Environ 2 000 lignes, découpées en deux PR :
+- **7c-A** : la page des candidatures d'une mission (candidatures reçues, prise de service, candidats suggérés) et le dossier du candidat ;
+- **7c-B** : le profil ouvert depuis les suggestions, l'envoi d'une invitation et la page des invitations.
+
+#### 7c-A : les candidatures (plan détaillé)
+
+**Constats.**
+- **Page des candidatures.**
+  - 330 lignes de code mort commenté.
+  - La mission n'est pas nommée.
+  - Le statut de chaque candidature (en attente, retenue, refusée) n'est pas affiché, et un candidat déjà retenu peut être coché de nouveau.
+  - Les rangs E et D sont rebaptisés par des titres inventés (« Apprenti Junior », « Agent Certifié »).
+  - Une candidature sans évaluation affiche un score vide. Les points forts et faibles de l'épreuve ne sont jamais montrés.
+- **Prise de service.**
+  - Le formulaire n'a ni étiquettes liées ni vérification. La validité de l'offre peut dépasser la date de prise de service.
+  - Les invitations partent en boucle : si la deuxième échoue, la première est déjà envoyée, et la page ne dit pas laquelle a échoué. La liste n'est pas rechargée.
+- **Candidats suggérés.**
+  - L'API proposait des candidats d'un rang trop bas pour postuler, et des candidats qui avaient déjà postulé.
+  - Les compétences communes ne s'affichaient jamais : la page lisait un champ qui n'existe pas (`matching_skills` au lieu de `matched`).
+  - L'icône clignote sans fin.
+- **Dossier du candidat.**
+  - La page plante si le candidat n'a pas d'analyse de CV ou pas de rang.
+  - Elle masque les expériences et les diplômes des rangs E et D.
+  - Le bouton « Contacter » ne fait rien. Les coordonnées, visibles une fois que le candidat a postulé, ne sont jamais affichées.
+  - « Failed to load » en anglais.
+
+**API (`fix/api-matching-rang`, depuis `main`).** Les candidats suggérés sont limités à ceux qui peuvent postuler : la règle de rang est celle de la candidature, et ceux qui ont déjà postulé sont écartés. Chaque suggestion porte le rang. 1 test.
+
+**Front** (`components/dashboardEntreprise/candidatures`).
+- **L'en-tête** : la mission (titre, rang minimum, récompense, date limite) et un retour aux missions.
+- **Les candidatures.**
+  - Chaque carte affiche l'emblème du rang réel, le nom, la ville et le statut en toutes lettres.
+  - Elle montre aussi le score d'épreuve et son niveau, ou « Évaluation en attente ». Le résumé, les points forts et les points faibles sont dans un détail repliable.
+  - Le lien mène au dossier.
+  - Recherche et filtre par statut. Seules les candidatures en attente peuvent être retenues.
+- **La prise de service.**
+  - Une fenêtre accessible, avec les règles de l'API vérifiées avant l'envoi et une validité de l'offre au plus tard le jour de la prise de service.
+  - Le résultat est donné candidat par candidat, et la liste est rechargée.
+- **Les candidats suggérés** : le rang, le pourcentage de correspondance, les compétences communes et manquantes, et le profil complet (inchangé jusqu'au lot 7c-B).
+- **Le dossier du candidat.**
+  - Les sections s'affichent dès qu'elles ont un contenu, quel que soit le rang.
+  - Les coordonnées s'affichent quand l'API les rend visibles. Sinon, la page explique quand elles le deviennent.
+
+**Vérification** : tests de l'API ; API locale : candidatures en attente, retenue et refusée, avec et sans évaluation ; prise de service (refus de chaque champ, validité après la prise de service), envoi réel à deux candidats dont un refusé par l'API ; suggestions (rang trop bas absent, compétences communes) ; dossier avec et sans CV, coordonnées visibles ou non ; clavier ; 375 px et animations réduites.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
