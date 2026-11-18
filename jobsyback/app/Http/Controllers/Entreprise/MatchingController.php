@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Entreprise;
 use App\Http\Controllers\Controller;
 use App\Models\Candidat;
 use App\Models\Mission;
+use App\Models\Rank;
 use App\Services\MatchingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -29,8 +30,14 @@ class MatchingController extends Controller
         // 1. Définition du score minimal (50 par défaut, ou dynamique via URL ?min_score=60)
         $minScore = (int) $request->query('min_score', 50);
 
-        // 2. Chargement des candidats (pensez à inclure 'skills' pour optimiser le matching)
-        $candidates = Candidat::with(['user', 'skills', 'enrollments', 'equippedBadges'])->get();
+        // 2. Seuls les candidats qui peuvent postuler : rang suffisant (même règle que CandidatureController::apply_job)
+        //    et pas encore candidats à cette mission (ils sont déjà dans la liste des candidatures)
+        // shortcut: le score est calculé en PHP pour chaque candidat éligible ; à passer en SQL ou en cache si la base grossit
+        $requiredPoints = (int) (Rank::where('rank', $mission->min_rank_required ?: 'E')->value('points') ?? 0);
+        $candidates = Candidat::with(['user', 'skills', 'enrollments', 'equippedBadges', 'rank'])
+            ->when($requiredPoints > 0, fn ($query) => $query->whereHas('rank', fn ($rank) => $rank->where('points', '>=', $requiredPoints)))
+            ->whereDoesntHave('applications', fn ($application) => $application->where('mission_id', $mission->id)->where('status', '!=', 'draft'))
+            ->get();
 
         // 3. Transformation et filtrage
         $suggested = $candidates
@@ -44,6 +51,7 @@ class MatchingController extends Controller
                     'match_score'      => $matchResult['match_score'],
                     'skills_breakdown' => $matchResult['skills_breakdown'],
                     'equipped_badges'  => $candidate->equippedBadges,
+                    'rank'             => $candidate->rank?->only(['rank', 'label', 'code_hexa']),
                 ];
             })
             // 4. Filtrage strict sur le score minimal (≥ 50)
