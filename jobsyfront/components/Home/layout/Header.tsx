@@ -1,115 +1,89 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { MotionButton } from '@/components/ui/MotionButton';
-import { Menu, X, Search } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetTitle } from '@/components/ui/sheet';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from "react";
+import Link from "next/link";
+import { Menu } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetTitle } from "@/components/ui/sheet";
+import { LienSysteme } from "@/components/systeme";
 
+const LIENS = [
+  { libelle: "Missions", href: "/missions" },
+  { libelle: "Formations", href: "/formations" },
+  { libelle: "Entreprises", href: "/entreprises" },
+  { libelle: "Contact", href: "/contact" },
+];
 
+const FOCUS = "focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-systeme-lueur";
+
+/** En-tête des pages publiques (lot 6b) : les pages qui existent, la connexion et l'inscription. */
 export default function Header() {
-  const [open, setOpen] = useState(false);
-  const router = useRouter();
-
-  const desktopNavLinks = [
-    { label: "Missions", href: "/missions" },
-    { label: "Formations", href: "/formations" },
-    { label: "Entreprises", href: "/entreprises" },
-    { label: "Contact", href: "/contact" },
-  ];
+  const [ouvert, setOuvert] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl shadow-lg border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 text-[#000080] font-black text-2xl tracking-tight">
-          <Search className="w-8 h-8 text-[#F0E68C]" strokeWidth={3} />
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-systeme-lueur/20 bg-systeme-nuit/95 font-lisible text-systeme-texte backdrop-blur">
+      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
+        <Link href="/" className={`font-systeme text-2xl font-black tracking-tight ${FOCUS}`}>
           Jobsy
         </Link>
 
-        <nav className="hidden lg:flex items-center gap-8">
-          {desktopNavLinks.map((link) => (
-            <Link
-              key={link.label}
-              href={link.href}
-              className="text-[#000080] font-medium hover:text-[#F0E68C] transition duration-200"
-            >
-              {link.label}
-            </Link>
-          ))}
+        <nav aria-label="Navigation principale" className="ml-6 hidden lg:block">
+          <ul className="flex items-center gap-6">
+            {LIENS.map((lien) => (
+              <li key={lien.href}>
+                <Link href={lien.href} className={`font-semibold underline-offset-4 hover:text-systeme-lueur hover:underline ${FOCUS}`}>
+                  {lien.libelle}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </nav>
 
-        <div className="flex items-center gap-4 ml-8 pl-8 border-gray-200">
-          <MotionButton variant="secondary" onClick={() => router.push('/login')}>
-            Connexion
-          </MotionButton>
-          {/* <MotionButton variant="primary" onClick={() => router.push('/register')}>
-            Inscription
-          </MotionButton> */}
-        </div>
+        <div className="ml-auto flex items-center gap-3">
+          <LienSysteme href="/login" variante="contour" className="hidden sm:inline-flex">
+            Se connecter
+          </LienSysteme>
+          <LienSysteme href="/register" className="hidden sm:inline-flex">
+            Créer un compte
+          </LienSysteme>
 
-        {/* === Menu Mobile (Sheet) === */}
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild className="lg:hidden">
-            <button className="cursor-pointer p-2 rounded-lg hover:bg-gray-100 transition">
-              <Menu className="w-7 h-7 text-[#000080]" />
-            </button>
-          </SheetTrigger>
-
-          <SheetContent side="right" className="w-full max-w-xs bg-white">
-            <div className="flex flex-col h-full">
-
-              {/* En-tête du drawer */}
-              <SheetTitle className="sr-only">Menu de navigation</SheetTitle>
-
-              <div className="flex items-center justify-between pt-6 pb-8 px-6 border-b">
-                <div className="flex items-center gap-2">
-                  <Search className="w-8 h-8 text-[#F0E68C]" />
-                  <span className="text-2xl font-black text-[#000080]">Jobsy</span>
-                </div>                
-              </div>
-
-              {/* Liens mobiles */}
-              <nav className="flex-1 px-6 py-8 space-y-5">
-                {desktopNavLinks.map((link) => (
-                  <SheetClose asChild key={link.label}>
-                    <Link
-                      href={link.href}
-                      className="block text-xl font-medium text-[#000080] hover:text-[#F0E68C] transition py-3 border-b border-gray-100 last:border-0"
-                      onClick={() => setOpen(false)}
-                    >
-                      {link.label}
-                    </Link>
+          <Sheet open={ouvert} onOpenChange={setOuvert}>
+            <SheetTrigger asChild>
+              <button
+                type="button"
+                aria-label="Ouvrir le menu"
+                className={`inline-flex size-11 cursor-pointer items-center justify-center rounded-lg hover:bg-white/10 lg:hidden ${FOCUS}`}
+              >
+                <Menu aria-hidden="true" className="size-6" />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-full max-w-xs border-systeme-lueur/30 bg-systeme-nuit font-lisible text-systeme-texte">
+              <SheetTitle className="px-6 pt-6 font-systeme text-2xl font-black text-systeme-texte">Jobsy</SheetTitle>
+              <nav aria-label="Menu" className="grid gap-6 px-6 pb-8">
+                <ul className="grid">
+                  {LIENS.map((lien) => (
+                    <li key={lien.href} className="border-b border-white/10">
+                      <SheetClose asChild>
+                        <Link href={lien.href} className={`block py-3 text-lg font-semibold hover:text-systeme-lueur ${FOCUS}`}>
+                          {lien.libelle}
+                        </Link>
+                      </SheetClose>
+                    </li>
+                  ))}
+                </ul>
+                <div className="grid gap-3">
+                  <SheetClose asChild>
+                    <LienSysteme href="/register">Créer un compte</LienSysteme>
                   </SheetClose>
-                ))}
-
-                <div className="pt-8 space-y-4">
-                  {/* <Link href="/register">
-                    <MotionButton 
-                      variant="primary" 
-                      className="w-full text-lg py-6 cursor-pointer" 
-                      onClick={() => setOpen(false)}
-                    >
-                      Inscription
-                    </MotionButton>
-                  </Link> */}
-
-                  <Link href="/login">
-                    <MotionButton 
-                      variant="secondary" 
-                      className="w-full text-lg py-6 cursor-pointer" 
-                    >
-                      Connexion
-                    </MotionButton>
-                  </Link>
+                  <SheetClose asChild>
+                    <LienSysteme href="/login" variante="contour">
+                      Se connecter
+                    </LienSysteme>
+                  </SheetClose>
                 </div>
               </nav>
-
-            </div>
-          </SheetContent>
-        </Sheet>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
     </header>
   );

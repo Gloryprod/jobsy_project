@@ -52,7 +52,6 @@ export function lienValide(valeur: string): boolean {
   }
 }
 
-export const LONGUEUR_MIN_MOT_DE_PASSE = 8;
 
 /** Formats et taille validés par l'API (CvRequest, DiplomeRequest, FormationRequest). */
 export type RegleFichier = { accept: string; aide: string; refus: string };
