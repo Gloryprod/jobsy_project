@@ -944,6 +944,53 @@ Environ 2 000 lignes, découpées en deux PR :
 
 **Vérification** : tests de l'API ; API locale : candidatures en attente, retenue et refusée, avec et sans évaluation ; prise de service (refus de chaque champ, validité après la prise de service), envoi réel à deux candidats dont un refusé par l'API ; suggestions (rang trop bas absent, compétences communes) ; dossier avec et sans CV, coordonnées visibles ou non ; clavier ; 375 px et animations réduites.
 
+#### 7c-B : les invitations (plan détaillé du 19/11/2026)
+
+**Constats.**
+- **Le profil ouvert depuis les suggestions.**
+  - Ce n'est pas une vraie fenêtre : le focus n'y reste pas, Échap ne la ferme pas et le bouton de fermeture n'a pas de nom.
+  - Un candidat sans domaine renseigné reçoit le titre inventé « Apprenti Junior Jobsy », et son rang n'est pas affiché.
+  - Si le profil ne se charge pas, la fenêtre reste vide, sans message.
+  - Les certifications Jobsy n'ont pas de lien de vérification, alors que l'API le permet.
+- **L'invitation.**
+  - Les étiquettes du formulaire ne sont pas liées, et les règles de l'API (objet, message de 10 caractères au moins) ne sont pas vérifiées avant l'envoi.
+  - Le message de réussite disparaît seul au bout de 2,5 secondes.
+  - Rien n'indique qu'un candidat est déjà invité : un second envoi est refusé.
+  - L'API accepte une invitation sur une mission désactivée ou clôturée, que le candidat ne pourra pas accepter.
+  - Les retours à la ligne du message disparaissent dans l'espace du candidat, et l'e-mail affiche les apostrophes codées (« l&#039;offre »).
+- **La page des invitations.**
+  - La mission n'est pas nommée. Le statut de l'offre (envoyée, refusée, acceptée) se lit mal, et le bouton principal clignote sans fin.
+  - L'API renvoie l'adresse e-mail de chaque candidat invité, même s'il n'a pas encore répondu ou s'il a refusé.
+  - Le formulaire de prise de service ne vérifie que la date et l'heure. Il n'a pas d'étiquettes liées, et la validité de l'offre peut dépasser la prise de service.
+  - « Modifier » reste proposé quand le candidat a déjà accepté l'offre, ce que l'API refuse.
+  - Messages en bulles qui disparaissent, pagination par 6, jargon (« onboarding »).
+
+**API (`fix/api-invitations`, depuis `main`).**
+- Une invitation sur une mission désactivée ou clôturée est refusée, avec un message clair.
+- La liste des invitations ne donne l'adresse e-mail du candidat qu'une fois l'invitation acceptée, comme les autres coordonnées.
+- L'e-mail d'invitation affiche le message tel qu'il a été écrit (il est déjà nettoyé à l'enregistrement).
+- Les suggestions et le profil complet ne renvoient plus de titre inventé quand le domaine est vide, et donnent le nom prénom d'abord, comme le reste de l'espace entreprise.
+- Tests pour chaque point.
+
+**Front.**
+- **Le profil** : une fenêtre accessible (fenêtre de dialogue, titre, focus rendu au bouton d'origine) qui affiche :
+  - le rang, les compétences et les badges équipés ;
+  - les certifications Jobsy avec leur lien de vérification, les formations externes et les diplômes ;
+  - un message clair avec « Réessayer » si le chargement échoue.
+- **L'invitation** se rédige dans la même fenêtre.
+  - Étiquettes liées et règles de l'API vérifiées avant l'envoi.
+  - Le résultat reste affiché, et un candidat déjà invité est signalé avec la date et l'état de son invitation.
+  - Les candidats suggérés déjà invités portent la mention « Invité ».
+- **La page des invitations.**
+  - Un en-tête avec la mission et un retour aux candidatures.
+  - Des cartes par invitation : statut de l'invitation et de l'offre en toutes lettres, date d'envoi, message envoyé dans un détail repliable, lien vers le dossier.
+  - Le filtre par statut et la recherche par nom.
+  - L'adresse e-mail seulement quand l'API la donne.
+  - La prise de service réutilise la fenêtre du lot 7c-A : mêmes règles, et préremplie quand on corrige une offre encore sans réponse. « Modifier » n'est proposé que dans ce cas, et « Envoyer une nouvelle offre » après un refus.
+- **Côté candidat** : les retours à la ligne du message de l'entreprise sont gardés.
+
+**Vérification** : tests de l'API ; API locale : invitation réelle depuis une suggestion (refus d'un message trop court, invitation enregistrée, mention « Invité », second envoi signalé) ; refus sur une mission clôturée ; page des invitations avec une invitation en attente, une refusée et une acceptée (adresse e-mail visible pour celle-ci seulement) ; prise de service sur l'invitation acceptée (refus de chaque champ, offre en base), modification d'une offre sans réponse ; message à la ligne dans l'espace du candidat ; clavier ; 375 px et animations réduites.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -1092,6 +1139,8 @@ Repères à confirmer :
 | 7b | Prêt sur `design/lot-7b-missions` (empilé sur le lot 7a) | — | Types, lint et build verts. API locale avec l'API 7b et une file en base, comme en production. 34 contrôles automatiques : cartes (candidatures sans brouillon, recrutés, statut), recherche et filtre ; désactivation (confirmation, message juste, focus rendu) et réactivation ; clôture (candidat refusé et prévenu dans l'application) ; suppression d'une mission engagée refusée dans la fenêtre ; suppression groupée avec la mission engagée signalée ; création réelle (refus de chaque champ, avertissement CDD dès le rang E, urgence et durée enregistrées), modification, relance avec une nouvelle date ; cache séparé des missions clôturées ; 375 px et animations réduites ; aucune erreur dans la console. Lot 7a toujours vert (33) |
 | API 7c | Prêt sur `fix/api-matching-rang` (depuis `main`) | — | Candidats suggérés : rang minimum de la candidature appliqué, candidats déjà là écartés, rang renvoyé. 1 test, qui échoue sans la correction. Suite : 147 tests |
 | 7c-A | Prêt sur `design/lot-7c-candidatures` (empilé sur le lot 7b) | — | Types, lint et build verts. API locale avec l'API 7c. 25 contrôles automatiques : en-tête de la mission ; rang réel, score et niveau, évaluation en attente, statuts écrits, plus de titres inventés ; évaluation (résumé, points forts et à surveiller) ; seules les candidatures en attente retenues ; filtre et recherche ; suggestions (rang suffisant, compétences communes, ni rang trop bas ni candidat déjà là) ; profil ouvert puis focus rendu ; prise de service (envoi vide, validité après la prise de service refusée, bilan avec un envoi réel et un refus, focus sur le bilan, offre en base, liste rechargée) ; dossier avec coordonnées, dossier sans lien (coordonnées masquées et expliquées, expériences et formation), dossier introuvable ; 375 px et animations réduites ; aucune erreur dans la console |
+| API 7c-B | Prêt sur `fix/api-invitations` (empilé sur `fix/api-matching-rang`) | — | Invitation refusée sur une mission désactivée ou clôturée ; e-mail du candidat donné seulement après acceptation ; message de l'e-mail sans double échappement ; plus de titre inventé dans les suggestions et le profil, nom donné prénom d'abord comme ailleurs. 4 tests, qui échouent sans la correction. Suite : 151 tests |
+| 7c-B | Prêt sur `design/lot-7c-invitations` (empilé sur le lot 7c-A) | — | Types, lint et build verts. API locale avec l'API 7c-B. 35 contrôles automatiques : suggestions déjà invitées signalées ; profil (fenêtre nommée, rang, compétences, certifications, Échap et focus rendu) ; invitation (préremplie, message trop court refusé, envoi réel, focus sur la confirmation, retours à la ligne gardés en base, mention « Invité », pas de second envoi) ; refus en clair sur une mission clôturée ; page des invitations (mission nommée, e-mail seulement après acceptation, statuts écrits, filtres, recherche, message à la ligne) ; offre envoyée à un invité (refus de chaque champ, offre en base, liste rechargée) ; offre corrigée (préremplie, en base, fenêtre à jour) ; dossier d'un invité avec ses coordonnées ; message à la ligne côté candidat ; 375 px et animations réduites ; aucune erreur dans la console |
 
 Constat pour Gloria (lot 2b) : les questions de secours de l'API, servies quand l'IA est indisponible, vouvoient le candidat (« Qu'est-ce qui vous motive… »), alors que l'interface le tutoie. À harmoniser dans `ApplicationAIService` si elle le souhaite.
 

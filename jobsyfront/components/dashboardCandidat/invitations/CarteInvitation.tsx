@@ -57,7 +57,7 @@ export function InvitationEnAttente({ proposition, enCours, occupe, erreur, onAc
             {proposition.subject && <p className="font-bold break-words text-systeme-texte">{proposition.subject}</p>}
             <SafeHtml
               as="div"
-              className={`text-[0.98rem] leading-relaxed break-words text-systeme-texte/90 ${CLASSES_TEXTE_RICHE}`}
+              className={`text-[0.98rem] leading-relaxed break-words whitespace-pre-line text-systeme-texte/90 ${CLASSES_TEXTE_RICHE}`}
               html={proposition.message}
             />
           </div>
