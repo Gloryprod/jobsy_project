@@ -26,7 +26,7 @@ class PublicCoursesTest extends TestCase
 
         $this->assertSame(['Accueil client'], collect($reponse->json('data'))->pluck('title')->all());
         $this->assertSame(
-            ['id' => $active->id, 'title' => 'Accueil client', 'description' => '<p>Bien recevoir.</p>', 'validation_mode' => 'A',
+            ['id' => $active->id, 'title' => 'Accueil client', 'description' => '<p>Bien recevoir.</p>', 'validation_mode' => 'A', 'type_contenu' => 'Digital',
                 'delivered_skills' => ['accueil', 'caisse'], 'reward_xp' => 150, 'modules_count' => 2],
             $reponse->json('data.0'),
         );
