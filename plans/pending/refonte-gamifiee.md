@@ -944,6 +944,53 @@ Environ 2 000 lignes, découpées en deux PR :
 
 **Vérification** : tests de l'API ; API locale : candidatures en attente, retenue et refusée, avec et sans évaluation ; prise de service (refus de chaque champ, validité après la prise de service), envoi réel à deux candidats dont un refusé par l'API ; suggestions (rang trop bas absent, compétences communes) ; dossier avec et sans CV, coordonnées visibles ou non ; clavier ; 375 px et animations réduites.
 
+#### 7c-B : les invitations (plan détaillé du 19/11/2026)
+
+**Constats.**
+- **Le profil ouvert depuis les suggestions.**
+  - Ce n'est pas une vraie fenêtre : le focus n'y reste pas, Échap ne la ferme pas et le bouton de fermeture n'a pas de nom.
+  - Un candidat sans domaine renseigné reçoit le titre inventé « Apprenti Junior Jobsy », et son rang n'est pas affiché.
+  - Si le profil ne se charge pas, la fenêtre reste vide, sans message.
+  - Les certifications Jobsy n'ont pas de lien de vérification, alors que l'API le permet.
+- **L'invitation.**
+  - Les étiquettes du formulaire ne sont pas liées, et les règles de l'API (objet, message de 10 caractères au moins) ne sont pas vérifiées avant l'envoi.
+  - Le message de réussite disparaît seul au bout de 2,5 secondes.
+  - Rien n'indique qu'un candidat est déjà invité : un second envoi est refusé.
+  - L'API accepte une invitation sur une mission désactivée ou clôturée, que le candidat ne pourra pas accepter.
+  - Les retours à la ligne du message disparaissent dans l'espace du candidat, et l'e-mail affiche les apostrophes codées (« l&#039;offre »).
+- **La page des invitations.**
+  - La mission n'est pas nommée. Le statut de l'offre (envoyée, refusée, acceptée) se lit mal, et le bouton principal clignote sans fin.
+  - L'API renvoie l'adresse e-mail de chaque candidat invité, même s'il n'a pas encore répondu ou s'il a refusé.
+  - Le formulaire de prise de service ne vérifie que la date et l'heure. Il n'a pas d'étiquettes liées, et la validité de l'offre peut dépasser la prise de service.
+  - « Modifier » reste proposé quand le candidat a déjà accepté l'offre, ce que l'API refuse.
+  - Messages en bulles qui disparaissent, pagination par 6, jargon (« onboarding »).
+
+**API (`fix/api-invitations`, depuis `main`).**
+- Une invitation sur une mission désactivée ou clôturée est refusée, avec un message clair.
+- La liste des invitations ne donne l'adresse e-mail du candidat qu'une fois l'invitation acceptée, comme les autres coordonnées.
+- L'e-mail d'invitation affiche le message tel qu'il a été écrit (il est déjà nettoyé à l'enregistrement).
+- Le profil complet ne renvoie plus de titre inventé quand le domaine est vide.
+- Tests pour chaque point.
+
+**Front.**
+- **Le profil** : une fenêtre accessible (fenêtre de dialogue, titre, focus rendu au bouton d'origine) qui affiche :
+  - le rang, les compétences et les badges équipés ;
+  - les certifications Jobsy avec leur lien de vérification, les formations externes et les diplômes ;
+  - un message clair avec « Réessayer » si le chargement échoue.
+- **L'invitation** se rédige dans la même fenêtre.
+  - Étiquettes liées et règles de l'API vérifiées avant l'envoi.
+  - Le résultat reste affiché, et un candidat déjà invité est signalé avec la date et l'état de son invitation.
+  - Les candidats suggérés déjà invités portent la mention « Invité ».
+- **La page des invitations.**
+  - Un en-tête avec la mission et un retour aux candidatures.
+  - Des cartes par invitation : statut de l'invitation et de l'offre en toutes lettres, date d'envoi, message envoyé dans un détail repliable, lien vers le dossier.
+  - Le filtre par statut et la recherche par nom.
+  - L'adresse e-mail seulement quand l'API la donne.
+  - La prise de service réutilise la fenêtre du lot 7c-A : mêmes règles, et préremplie quand on corrige une offre encore sans réponse. « Modifier » n'est proposé que dans ce cas, et « Envoyer une nouvelle offre » après un refus.
+- **Côté candidat** : les retours à la ligne du message de l'entreprise sont gardés.
+
+**Vérification** : tests de l'API ; API locale : invitation réelle depuis une suggestion (refus d'un message trop court, invitation enregistrée, mention « Invité », second envoi signalé) ; refus sur une mission clôturée ; page des invitations avec une invitation en attente, une refusée et une acceptée (adresse e-mail visible pour celle-ci seulement) ; prise de service sur l'invitation acceptée (refus de chaque champ, offre en base), modification d'une offre sans réponse ; message à la ligne dans l'espace du candidat ; clavier ; 375 px et animations réduites.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
