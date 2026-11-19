@@ -991,6 +991,43 @@ Environ 2 000 lignes, découpées en deux PR :
 
 **Vérification** : tests de l'API ; API locale : invitation réelle depuis une suggestion (refus d'un message trop court, invitation enregistrée, mention « Invité », second envoi signalé) ; refus sur une mission clôturée ; page des invitations avec une invitation en attente, une refusée et une acceptée (adresse e-mail visible pour celle-ci seulement) ; prise de service sur l'invitation acceptée (refus de chaque champ, offre en base), modification d'une offre sans réponse ; message à la ligne dans l'espace du candidat ; clavier ; 375 px et animations réduites.
 
+### Lot 7d : les recrutés (plan détaillé du 19/11/2026)
+
+**Constats.**
+- **Le paiement du candidat peut se perdre en route.**
+  - « Valider et démarrer » lance la mission, puis tente de bloquer la récompense.
+  - Si ce blocage échoue (solde disponible trop bas) ou si la fenêtre KkiaPay est fermée, la mission est en cours sans séquestre.
+  - La page ne propose ensuite plus jamais de garantir la récompense, et l'API refuse la validation sans séquestre : le candidat ne peut pas être payé.
+- Le front choisit entre portefeuille et KkiaPay d'après le solde total, alors que l'API compte le solde disponible (le solde moins les fonds déjà bloqués).
+- « Recaler » agit au premier clic, sans confirmation.
+- L'état du paiement (bloqué, payé, rendu) n'est jamais affiché, et les statuts s'affichent en anglais (« service_started », « in_progress »).
+- Les offres sans réponse ou refusées sont mêlées aux recrutés.
+- 295 lignes de code mort commenté ; fenêtres PrimeReact sans titre lié ; étoiles de notation peu accessibles ; messages en bulles qui disparaissent.
+- **API.** La récompense peut être bloquée sur une offre que le candidat n'a pas acceptée, ou déjà terminée : les fonds resteraient bloqués sans moyen de les rendre. Un second paiement KkiaPay peut être lancé pour une récompense déjà bloquée.
+
+**API (`fix/api-sequestre`, depuis `main`).**
+- La récompense ne peut être bloquée que sur une offre acceptée et en cours (acceptée, prise de service, mission en cours, travail terminé), depuis le portefeuille comme après un paiement KkiaPay.
+- Le paiement KkiaPay d'une mission est refusé si l'offre n'est pas en cours, ou si la récompense est déjà bloquée ou payée.
+- Tests pour chaque point.
+
+**Front** (`components/dashboardEntreprise/recrutes`).
+- **L'en-tête** : la mission, un retour aux candidatures et le solde disponible.
+- **Une carte par recruté** (offre acceptée) :
+  - le statut en toutes lettres et la prise de service (date, heure, lieu) ;
+  - la présence signalée, la ponctualité et la note ;
+  - le contrat à télécharger.
+- **Le paiement** est affiché sur chaque carte : non garanti, bloqué, payé (avec la commission) ou rendu. Tant qu'il n'est pas garanti, la carte propose de le garantir :
+  - par un blocage sur le solde disponible, s'il suffit ;
+  - sinon par un paiement KkiaPay, avec un bouton pour actualiser après la confirmation.
+- **Confirmer la prise de service** : une fenêtre demande la ponctualité.
+  - Quand le solde le permet, la récompense est bloquée d'abord. Si ce blocage échoue, rien n'est lancé.
+  - Sinon la mission démarre quand même (le candidat est sur place), et la carte rappelle de garantir la récompense.
+- **Ne pas retenir** : une confirmation qui dit que la récompense bloquée redevient disponible.
+- **Valider le travail** : une note de 1 à 5 (boutons radio) et un avis facultatif de 2 000 caractères au plus. Ce n'est proposé qu'une fois la récompense garantie ; sinon la carte explique pourquoi.
+- **Les offres sans réponse** sont comptées, avec un lien vers les candidatures.
+
+**Vérification** : tests de l'API ; API locale : recrutés dans chaque état ; garantie par le solde (solde et séquestre en base) ; prise de service confirmée (blocage puis démarrage, contrat généré et téléchargé) ; candidat non retenu (séquestre rendu) ; validation avec note et avis (candidat payé, commission, mission terminée) ; validation impossible sans garantie ; paiement KkiaPay ouvert quand le solde ne suffit pas (passerelle simulée), puis séquestre constaté après actualisation ; clavier ; 375 px et animations réduites.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
