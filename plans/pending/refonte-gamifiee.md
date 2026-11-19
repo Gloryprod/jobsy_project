@@ -859,6 +859,44 @@ L'espace entreprise compte environ 5 700 lignes. Il est découpé en cinq lots, 
 
 **Vérification** : tests de l'API ; API locale avec une entreprise qui a des missions ouvertes, désactivées et clôturées, des candidatures, une mission terminée et des mouvements ; recharge (montants refusés, refus de l'API, ouverture du paiement) ; historique en erreur ; clavier ; 375 px et animations réduites.
 
+### Lot 7b : les missions de la Guilde (plan détaillé du 18/11/2026)
+
+**Constats.**
+- **Création impossible.** L'API exige l'urgence de la mission, mais le formulaire ne l'envoie pas : toute nouvelle mission est refusée, avec un message en anglais dans une bulle qui disparaît. La durée, montrée aux candidats, n'est pas demandée non plus.
+- **Formulaire.**
+  - Les étiquettes ne sont pas liées aux champs, et aucun champ n'est marqué obligatoire.
+  - Les erreurs ne s'affichent pas sous le bon champ.
+  - « Rémunération » n'a pas d'unité, et les exemples sont étrangers au Bénin (« Paris / Remote »).
+  - Une mission relancée reprend sa date limite passée, que l'API refuse.
+  - La page de création appelle `/missions/null` quand elle ne relance rien.
+- **Listes.**
+  - Un tableau à 6 colonnes déborde sur téléphone.
+  - Le nombre de candidatures compte aussi les brouillons.
+  - Toutes les actions sont cachées dans un menu « ⋯ » sans nom.
+- **Actions.**
+  - Après une suppression, la mission reste affichée jusqu'au rechargement.
+  - Le message de désactivation est inversé : « Mission activée » quand on désactive.
+  - Les confirmations passent par des fenêtres SweetAlert.
+- **Notifications.** À la clôture, la notification et l'e-mail aux candidats non retenus partent en file d'attente, que rien ne traite en production. Ils n'arrivent jamais. C'est le cas de cinq notifications, dont celle du candidat retenu.
+
+**API (`fix/api-notifications-immediates`, depuis `main`).** La notification dans l'application part tout de suite (`viaConnections`). Seul l'e-mail reste en file : il ne peut plus faire échouer la requête. Cela couvre cinq notifications : mission clôturée, candidat retenu, proposition acceptée, relances du candidat et de l'entreprise. 1 test.
+
+**Front** (`components/dashboardEntreprise/missions`).
+- **Des cartes de quête** à la place des tableaux, pour les missions ouvertes comme pour les missions clôturées. Chaque carte montre :
+  - le statut écrit en toutes lettres et le rang minimum ;
+  - la récompense et la date limite ;
+  - les candidatures envoyées, sans les brouillons, et les recrutés ;
+  - les actions en clair : candidatures, invitations, modifier, puis désactiver, clôturer ou supprimer, avec une confirmation accessible.
+- **Recherche et filtre** (toutes, ouvertes, désactivées). La suppression groupée est gardée.
+- **Le formulaire.**
+  - Étiquettes liées, champs obligatoires marqués, règles de l'API vérifiées avant l'envoi, erreurs sous chaque champ.
+  - Ajout de l'urgence et de la durée.
+  - Nom de l'entreprise prérempli.
+  - Avertissement quand un CDD ou un CDI est réservé aux rangs E ou D, qui ne voient que les missions ponctuelles.
+  - Date limite à choisir de nouveau pour une relance.
+
+**Vérification** : tests de l'API ; API locale : création réelle (refus de chaque champ, puis réussite), modification, relance d'une mission terminée, désactivation et réactivation, clôture (candidatures rejetées, notification enregistrée), suppression simple et groupée, refus d'une suppression de mission engagée ; recherche et filtre ; clavier ; 375 px et animations réduites.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -1003,6 +1041,8 @@ Repères à confirmer :
 | 6b | Prêt sur `design/lot-6b-accueil` (empilé sur le lot 6a) | — | Types, lint et build verts. Aucun changement d'API. API locale. 36 contrôles automatiques : un seul titre, aucun chiffre, témoignage, logo ni promesse inventés, aucune image ; quatre étapes et six rangs ; les trois dernières missions de l'API dans l'ordre, montant exact ; entrées candidat, entreprise et connexion ; 9 liens internes vivants, plus de « # » ; clavier ; Missions, Formations, Entreprises et Contact lisibles sous l'en-tête à 1280 et 375 px ; menu mobile (nom, Échap, focus rendu) ; aucune mission ; API injoignable ; 375 px et animations réduites ; aucune erreur dans la console |
 | API 7a | Prêt sur `fix/api-tableau-guilde` (depuis `main`) | — | Candidatures à traiter : rang chargé, fiche limitée au nom, à la ville et au rang. Missions terminées : `hired_count`. 2 tests, qui échouent sans la correction. Suite : 148 tests |
 | 7a | Prêt sur `design/lot-7a-guilde` (empilé sur le lot 6b) | — | Types, lint et build verts. API locale avec l'API 7a. 33 contrôles automatiques : compteurs conformes à la base ; candidatures envoyées seulement, avec le rang réel, sans adresse ni e-mail dans la réponse ; portefeuille et mouvements exacts (libellés, signes, statuts) ; vrai nombre de recrutés ; navigation (page en cours, menu réduit nommé) ; logo réparé ; cloche et menu du compte au clavier ; 8 liens vivants ; recharge (vide, moins de 100, décimal, plus de 10 000 000 refusés sans appel à l'API ; Échap ; refus de l'API ; montant envoyé ; annonce après l'ouverture du paiement) ; historique en erreur ; 375 px, menu mobile, animations réduites ; entreprise sans activité ; aucune erreur dans la console. Non vérifié : le paiement KkiaPay réel |
+| API 7b | Prêt sur `fix/api-notifications-immediates` (depuis `main`) | — | Cinq notifications : le canal « database » part tout de suite (`viaConnections`), l'e-mail reste en file. 1 test, qui échoue sans la correction. Suite : 147 tests |
+| 7b | Prêt sur `design/lot-7b-missions` (empilé sur le lot 7a) | — | Types, lint et build verts. API locale avec l'API 7b et une file en base, comme en production. 34 contrôles automatiques : cartes (candidatures sans brouillon, recrutés, statut), recherche et filtre ; désactivation (confirmation, message juste, focus rendu) et réactivation ; clôture (candidat refusé et prévenu dans l'application) ; suppression d'une mission engagée refusée dans la fenêtre ; suppression groupée avec la mission engagée signalée ; création réelle (refus de chaque champ, avertissement CDD dès le rang E, urgence et durée enregistrées), modification, relance avec une nouvelle date ; cache séparé des missions clôturées ; 375 px et animations réduites ; aucune erreur dans la console. Lot 7a toujours vert (33) |
 
 Constat pour Gloria (lot 2b) : les questions de secours de l'API, servies quand l'IA est indisponible, vouvoient le candidat (« Qu'est-ce qui vous motive… »), alors que l'interface le tutoie. À harmoniser dans `ApplicationAIService` si elle le souhaite.
 
