@@ -1066,6 +1066,49 @@ Environ 2 000 lignes, découpées en deux PR :
 
 **Vérification** : tests de l'API ; API locale : affichage d'un profil complet et d'un profil vide ; logo refusé (type, taille) puis envoyé ; informations (nom vide et site sans https refusés, enregistrement réel) ; présentation mise en forme ; coordonnées et réseaux (refus, enregistrement, liens) ; mot de passe (règle, confirmation, mot de passe actuel faux, réussite puis connexion avec le nouveau) ; clavier ; 375 px et animations réduites.
 
+### Lot 8 : les finitions (plan du 19/11/2026)
+
+Le lot 8 regroupe quatre chantiers de nature différente. Il est découpé comme le lot 7, une PR par chantier (D40) :
+
+| Sous-lot | Contenu |
+|---|---|
+| 8a | Navigation : en-tête et navigation du candidat (barre du bas de 5 entrées sur téléphone), page en cours annoncée dans les deux espaces |
+| 8b | Accessibilité : passe axe sur chaque écran refait, corrections, lien d'évitement vers le contenu |
+| 8c | Performance : mesure Lighthouse mobile des écrans principaux, corrections (critère : tableau de bord utilisable en moins de 3 secondes en 4G) |
+| 8d | Administration aux couleurs du thème, sans gamification (décision 2) |
+
+#### 8a : la navigation (plan détaillé)
+
+**Constats.** L'en-tête et la navigation du candidat datent d'avant la refonte (D7).
+- **Sur téléphone, deux menus** se superposent : le menu de l'en-tête et la barre du bas.
+  - La barre du bas coupe ses intitulés (texte de 10 px, « Offres confirmées » tronqué).
+  - Elle n'atteint que 5 des 6 pages.
+- **Des pages manquent** : les invitations (D18) et les messages du Système n'y figurent pas. Le Trésor s'appelle encore « Mes Gains ».
+- **La page en cours** n'est pas annoncée. Elle n'est reconnue que sur l'adresse exacte : dans une formation ou une candidature, aucune entrée n'est active.
+- **Clavier et lecteurs d'écran.**
+  - Le bouton qui réduit le menu n'a pas de nom accessible.
+  - La cloche est un lien placé dans un bouton : deux arrêts au clavier pour une seule action.
+  - Le menu du compte ne se ferme pas avec Échap et ne se parcourt pas au clavier.
+- Le solde affiché n'est pas formaté (« 12500 FCFA ») et ne mène pas au Trésor.
+- 245 lignes de code commenté.
+- **Espace entreprise** : le menu mobile n'annonce pas la page en cours.
+
+**Front** (`components/dashboardCandidat/layout`).
+- **Une seule liste des pages** du candidat, partagée par la barre latérale, la barre du bas et le panneau « Plus ». Les intitulés restent ceux de la couche réalité (D9).
+- **Sur ordinateur**, une barre latérale groupée :
+  - Missions : missions, missions confirmées, invitations ;
+  - Progression : formations, inventaire ;
+  - Compte : Trésor, profil, messages.
+  - Elle se réduit avec un bouton nommé. Le solde formaté mène au Trésor, et la déconnexion est en bas.
+- **Sur téléphone**, une barre du bas de 5 entrées aux intitulés entiers : tableau de bord, missions, formations, Trésor, et « Plus » (D41).
+  - « Plus » ouvre un panneau avec toutes les pages, le profil et la déconnexion.
+  - Le menu de l'en-tête disparaît.
+- **L'en-tête** : le logo, la cloche (un seul lien, nommé avec le nombre de messages non lus) et le menu du compte accessible au clavier, comme dans l'espace entreprise.
+- **La page en cours** est annoncée (`aria-current`) et reconnue sur ses sous-pages : une formation active « Formations », une offre de mission active « Missions confirmées ».
+- **Espace entreprise** : la page en cours est annoncée dans le menu mobile.
+
+**Vérification** : à 1 280 px et à 375 px, chaque entrée mène à sa page ; entrée active sur les sous-pages ; barre du bas de 5 entrées sans texte coupé ; panneau « Plus » et menu du compte au clavier (Échap, focus rendu) ; menu réduit nommé ; cloche avec un seul arrêt ; menu mobile de l'entreprise ; aucun débordement, animations réduites, aucune erreur dans la console.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -1178,6 +1221,8 @@ Repères à confirmer :
 - D37 (lot 6a) : le lot 6a passe avant les jetons (J1 à J4), dont le barème et les prix attendent Gloria. La « révélation du rang » de l'Éveil reste la quête du CV et la réévaluation (lot 4c). Une notification de rang après l'analyse du CV et la validation viendra plus tard.
 - D38 (lot 6b) : l'accueil ne montre ni chiffre, ni témoignage, ni logo d'entreprise tant qu'ils ne viennent pas de la base ou d'un accord écrit. Les coordonnées de contact du pied de page sont retirées en attendant les vraies, que Gloria doit fournir.
 - D39 (lot 7) : l'espace entreprise est découpé en cinq lots (7a à 7e), un par écran ou groupe d'écrans, chacun avec sa PR, comme les lots 2 et 3.
+- D40 (lot 8) : le lot 8 est découpé en quatre sous-lots (8a à 8d), un par chantier, chacun avec sa PR.
+- D41 (lot 8a) : la barre du bas du candidat garde les entrées de la boucle principale (tableau de bord, missions, formations, Trésor) et un « Plus » pour le reste. Les missions confirmées et les invitations restent à un geste, depuis « Plus » et depuis les quêtes du jour du tableau de bord. Facile à revoir après le test avec les jeunes (critère 1).
 
 ## Avancement
 
