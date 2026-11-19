@@ -47,7 +47,7 @@ class MatchingController extends Controller
                 return [
                     'id'               => $candidate->id,
                     'full_name'        => trim($candidate->user->nom . " " . $candidate->user->prenom),
-                    'title'            => $candidate->domaine_competence ?: "Apprenti Junior Jobsy",
+                    'title'            => $candidate->domaine_competence ?: null,
                     'match_score'      => $matchResult['match_score'],
                     'skills_breakdown' => $matchResult['skills_breakdown'],
                     'equipped_badges'  => $candidate->equippedBadges,
@@ -100,7 +100,7 @@ class MatchingController extends Controller
             'candidate' => [
                 'id'                => $candidate->id,
                 'full_name'         => $candidate->user->nom . " " . $candidate->user->prenom,
-                'title'             => $candidate->domaine_competence ?: "Apprenti Junior Jobsy",
+                'title'             => $candidate->domaine_competence ?: null,
                 'all_skills'        => $allSkills,
                 'declared_skills'   => $candidate->skills ?? [],
                 'equipped_badges'   => $candidate->equippedBadges,
