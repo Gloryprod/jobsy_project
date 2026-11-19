@@ -1076,6 +1076,7 @@ Le lot 8 regroupe quatre chantiers de nature différente. Il est découpé comme
 | 8b | Accessibilité : passe axe sur chaque écran refait, corrections, lien d'évitement vers le contenu |
 | 8c | Performance : mesure Lighthouse mobile des écrans principaux, corrections (critère : tableau de bord utilisable en moins de 3 secondes en 4G) |
 | 8d | Administration aux couleurs du thème, sans gamification (décision 2) |
+| 8e | Pages publiques Missions, Formations, Entreprises et Contact : contenu honnête (D38) et accessibilité (D42) |
 
 #### 8a : la navigation (plan détaillé)
 
@@ -1108,6 +1109,30 @@ Le lot 8 regroupe quatre chantiers de nature différente. Il est découpé comme
 - **Espace entreprise** : la page en cours est annoncée dans le menu mobile.
 
 **Vérification** : à 1 280 px et à 375 px, chaque entrée mène à sa page ; entrée active sur les sous-pages ; barre du bas de 5 entrées sans texte coupé ; panneau « Plus » et menu du compte au clavier (Échap, focus rendu) ; menu réduit nommé ; cloche avec un seul arrêt ; menu mobile de l'entreprise ; aucun débordement, animations réduites, aucune erreur dans la console.
+
+#### 8b : l'accessibilité (plan détaillé)
+
+**Mesure.** axe-core 4.11 (règles WCAG 2.2 A et AA, et bonnes pratiques) sur 42 écrans et états ouverts : public, candidat, entreprise, à 1 280 px et à 375 px. 31 écrans n'ont aucune violation, dont tous les écrans refaits du candidat.
+
+**Constats.**
+- **Pages d'entrée (lot 6a).**
+  - Connexion, inscriptions et mot de passe oublié n'ont pas de titre de niveau 1 : le titre de la fenêtre est un titre de niveau 2.
+  - Le bouton « Afficher le mot de passe » mesure 20 px : la cible minimale est de 24 px.
+- **Éditeur de texte** (création et modification d'une mission, présentation de l'entreprise) : les menus de la barre d'outils (titre, couleurs, alignement) n'ont pas de nom.
+- **Menus déroulants** (compte, notifications) : ouverts, ils masquent toute la page aux lecteurs d'écran. Ils se comportent comme des fenêtres, alors qu'un menu ne doit pas l'être.
+- **Aucun lien d'évitement** : au clavier, il faut traverser l'en-tête et toute la navigation avant d'atteindre le contenu.
+- **Déconnexion** : les boutons de la fenêtre de confirmation n'ont pas assez de contraste (rouge et bleu clairs sur texte blanc).
+- Les pages publiques Missions, Formations, Entreprises et Contact cumulent les violations. Leur contenu n'a jamais été refait : elles relèvent du sous-lot 8e (D42).
+
+**Front.**
+- Les fenêtres du Système acceptent un titre de niveau 1, et les pages d'entrée l'utilisent.
+- Le bouton « Afficher le mot de passe » passe à 32 px.
+- Les menus de la barre d'outils de l'éditeur sont nommés (titre, couleur du texte, couleur de fond, alignement…), par une fonction commune à tous les éditeurs.
+- Les menus déroulants ne sont plus modaux : le reste de la page reste lisible, Échap et Tab les ferment.
+- Un lien « Aller au contenu » ouvre chaque page des espaces candidat et entreprise.
+- Les boutons de la confirmation de déconnexion prennent des couleurs contrastées.
+
+**Vérification** : la même passe axe, qui doit tomber à zéro violation sur les écrans refaits ; le lien d'évitement au clavier dans les deux espaces ; la fenêtre de déconnexion analysée ouverte ; les vérifications des lots touchés (6a, 7b, 7e, 8a).
 
 ## Décisions prises le 17/10/2026
 
@@ -1223,6 +1248,7 @@ Repères à confirmer :
 - D39 (lot 7) : l'espace entreprise est découpé en cinq lots (7a à 7e), un par écran ou groupe d'écrans, chacun avec sa PR, comme les lots 2 et 3.
 - D40 (lot 8) : le lot 8 est découpé en quatre sous-lots (8a à 8d), un par chantier, chacun avec sa PR.
 - D41 (lot 8a) : la barre du bas du candidat garde les entrées de la boucle principale (tableau de bord, missions, formations, Trésor) et un « Plus » pour le reste. Les missions confirmées et les invitations restent à un geste, depuis « Plus » et depuis les quêtes du jour du tableau de bord. Facile à revoir après le test avec les jeunes (critère 1).
+- D42 (lot 8) : les pages publiques Missions, Formations, Entreprises et Contact n'ont jamais été refaites (le lot 6b n'a repris que l'accueil, l'en-tête et le pied de page). La page Entreprises affiche des chiffres inventés, de faux témoignages attribués à de vraies marques, de faux numéros et un bouton sans effet. Elles forment le sous-lot 8e, traité juste après le 8b, avec la règle de D38.
 
 ## Avancement
 
