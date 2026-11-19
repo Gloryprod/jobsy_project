@@ -72,6 +72,11 @@ class WalletService
                 return $existing;
             }
 
+            // Vaut aussi pour le séquestre lancé par le webhook KkiaPay : le dépôt reste alors sur le solde de l'entreprise
+            if (!$offer->canReceiveEscrow()) {
+                throw new WalletException("Cette offre n'est pas en cours : la récompense ne peut pas y être bloquée.");
+            }
+
             if ($wallet->balance - $wallet->balance_locked < $gross) {
                 throw new WalletException("Solde disponible insuffisant pour garantir cette mission.");
             }
