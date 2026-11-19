@@ -1134,6 +1134,46 @@ Le lot 8 regroupe quatre chantiers de nature différente. Il est découpé comme
 
 **Vérification** : la même passe axe, qui doit tomber à zéro violation sur les écrans refaits ; le lien d'évitement au clavier dans les deux espaces ; la fenêtre de déconnexion analysée ouverte ; les vérifications des lots touchés (6a, 7b, 7e, 8a).
 
+#### 8e : les pages publiques (plan détaillé)
+
+**Constats.** Ces quatre pages datent d'avant la refonte. Le lot 6b n'a repris que l'accueil, l'en-tête et le pied de page.
+- **Missions.**
+  - Les missions sont réelles, mais la page ajoute des chiffres inventés (« +680 missions », « 92 % payées en 24 h », « 2 400+ jeunes », « 380+ entreprises »).
+  - Chaque carte garde une image vide « à remplacer plus tard », et la récompense s'affiche sans unité (« 20000 »).
+  - Les boutons de filtre sont peu lisibles : texte de 10 px, contraste de 2,6:1.
+- **Formations.**
+  - La liste est entièrement inventée : six formations avec leur nombre d'étudiants et des certificats qui n'existent pas.
+  - La page affirme des certificats « reconnus par plus de 380 entreprises partenaires ».
+  - La recherche et les boutons ne font rien.
+- **Entreprises.**
+  - De faux témoignages sont attribués à MTN Bénin, Jumia Bénin et Sobebra.
+  - S'y ajoutent des chiffres inventés, des promesses invérifiables (« 5 à 20 candidatures en moins de 2 heures ») et de faux numéros de téléphone.
+  - Un bouton « Être rappelé en 5 minutes » ne fait rien, et le lien d'inscription mène à une page inexistante (`/register/entreprise`).
+- **Contact.**
+  - Faux numéros, adresse non confirmée, carte Google Maps à l'adresse factice.
+  - « Plus de 2 400 jeunes ont déjà gagné leur salaire » est inventé, et la marche à suivre pour s'inscrire est fausse (« remplis ton numéro »).
+  - Un bouton « Me faire rappeler » ne fait rien.
+- **Accessibilité** : aucune zone principale, titres sautés, contrastes insuffisants, boutons placés dans des liens, carte sans titre (passe axe du 8b).
+
+**API (`fix/api-formations-publiques`, depuis `main`).** `GET /public_courses` : les formations actives, sans compte, avec seulement ce qu'une page publique doit montrer (titre, description, type, compétences, XP, nombre de modules). Test.
+
+**Front** (`components/public`). Les quatre pages prennent le style de l'accueil (fenêtres du Système sur fond de nuit). Chacune a une zone principale, un titre de niveau 1, et un contenu qui vient de la base ou du code (D38).
+- **Missions** : les missions ouvertes, avec une recherche et un filtre par contrat accessibles.
+  - La carte est partagée avec l'accueil : rang requis, entreprise, lieu, récompense en FCFA, date limite.
+  - « Postuler » mène à la création du compte.
+- **Formations** : le vrai catalogue.
+  - Le type de chaque formation est expliqué (Standard, Logistique, Expert, D25), avec ses compétences, son XP et ses modules.
+  - La page dit que les formations sont gratuites et que chaque certificat se vérifie en ligne.
+- **Entreprises** : le fonctionnement réel (publication, candidats classés par rang et par épreuve, invitations, séquestre).
+  - Le coût réel : la récompense fixée par l'entreprise, dont Jobsy retient 10 % au paiement du candidat.
+  - La garantie : la récompense revient sur le solde si le candidat n'est pas retenu.
+  - Liens d'inscription corrects.
+- **Contact** : aucune coordonnée tant que Gloria n'a pas fourni les vraies (D38).
+  - Une foire aux questions exacte (inscription, coût, paiement, premier rang).
+  - Les liens utiles : créer un compte, se connecter, mot de passe oublié.
+
+**Vérification** : tests de l'API ; axe sans violation sur les quatre pages, à 1 280 px et à 375 px ; aucun chiffre, témoignage ou numéro inventé ; vraies missions et vraies formations affichées ; recherche et filtre au clavier ; aucun lien mort ; aucune erreur dans la console.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
