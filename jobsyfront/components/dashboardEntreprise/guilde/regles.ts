@@ -1,4 +1,4 @@
-import { messageErreur, statutErreur } from "@/lib/erreurs";
+import { champsRefuses, messageErreur, statutErreur } from "@/lib/erreurs";
 import type { TonStatut } from "@/components/dashboardCandidat/qg/CarteRealite";
 
 // Réponse de GET /index (Entreprise\DashboardController::index)
@@ -60,7 +60,8 @@ export function decrireMouvement(m: Pick<Mouvement, "type" | "status">): { libel
 /** Message d'erreur vouvoyé (les messages communs du front s'adressent au candidat). */
 export function messageGuilde(erreur: unknown, parDefaut: string): string {
   if (statutErreur(erreur) === null) return "La connexion a été coupée. Vérifiez votre réseau, puis réessayez.";
-  // Les refus de validation de l'API sont en anglais : on garde le message par défaut
-  if (statutErreur(erreur) === 422) return parDefaut;
+  // Les refus champ par champ de l'API sont en anglais : on garde le message par défaut.
+  // Ses autres refus (déjà invité, mission clôturée…) sont écrits en français et restent affichés.
+  if (statutErreur(erreur) === 422 && champsRefuses(erreur).length > 0) return parDefaut;
   return messageErreur(erreur, parDefaut);
 }

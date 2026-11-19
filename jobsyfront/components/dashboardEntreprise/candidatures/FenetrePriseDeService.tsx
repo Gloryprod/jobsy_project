@@ -7,12 +7,17 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } fr
 import { Alerte } from "@/components/dashboardCandidat/epreuve/Alerte";
 import { CLASSES_SAISIE } from "@/components/dashboardCandidat/commun/saisie";
 import { messageGuilde } from "../guilde/regles";
-import { nomCandidat, ORDRE_PRISE, verifierPriseDeService, type CandidatureRecue, type ErreursPrise, type PriseDeService } from "./regles";
+import { ORDRE_PRISE, verifierPriseDeService, type ErreursPrise, type PriseDeService } from "./regles";
 
 export type ResultatEnvoi = { nom: string; envoye: boolean; message?: string };
 
+/** Un destinataire de l'offre et la route qui la lui envoie (candidature retenue ou invitation acceptée). */
+export type CiblePrise = { nom: string; url: string };
+
 type Props = {
-  candidatures: CandidatureRecue[];
+  cibles: CiblePrise[];
+  /** Offre préremplie, pour corriger une offre encore sans réponse */
+  initiales?: PriseDeService;
   ouvert: boolean;
   onFermer: () => void;
   cibleFocus: () => HTMLElement | null;
@@ -30,9 +35,9 @@ const CHAMPS: { id: keyof PriseDeService; libelle: string; type?: string; aide?:
   { id: "expires_at", libelle: "Réponse attendue avant le", type: "date", aide: "Au plus tard le jour de la prise de service." },
 ];
 
-/** Retenir un ou plusieurs candidats : les informations de prise de service, puis un envoi par candidat avec son résultat. */
-export function FenetrePriseDeService({ candidatures, ouvert, onFermer, cibleFocus, onTermine }: Props) {
-  const [v, setV] = useState<PriseDeService>(VIDE);
+/** L'offre de prise de service (candidats retenus, invitation acceptée) : les informations, puis un envoi par candidat avec son résultat. */
+export function FenetrePriseDeService({ cibles, initiales, ouvert, onFermer, cibleFocus, onTermine }: Props) {
+  const [v, setV] = useState<PriseDeService>(initiales ?? VIDE);
   const [erreurs, setErreurs] = useState<ErreursPrise>({});
   const [erreurEnvoi, setErreurEnvoi] = useState<string | null>(null);
   const [envoi, setEnvoi] = useState(false);
@@ -50,12 +55,12 @@ export function FenetrePriseDeService({ candidatures, ouvert, onFermer, cibleFoc
     setEnvoi(true);
     const resultats: ResultatEnvoi[] = [];
     // Un envoi par candidat : un refus n'empêche pas les autres, et chacun a son résultat
-    for (const c of candidatures) {
+    for (const c of cibles) {
       try {
-        await api.post(`/entreprise/applications/${c.id}/select`, { ...v, place: v.place.trim(), contact_person: v.contact_person.trim() });
-        resultats.push({ nom: nomCandidat(c), envoye: true });
+        await api.post(c.url, { ...v, place: v.place.trim(), contact_person: v.contact_person.trim() });
+        resultats.push({ nom: c.nom, envoye: true });
       } catch (err) {
-        resultats.push({ nom: nomCandidat(c), envoye: false, message: messageGuilde(err, "L'offre n'a pas pu être envoyée.") });
+        resultats.push({ nom: c.nom, envoye: false, message: messageGuilde(err, "L'offre n'a pas pu être envoyée.") });
       }
     }
     setEnvoi(false);
@@ -67,7 +72,7 @@ export function FenetrePriseDeService({ candidatures, ouvert, onFermer, cibleFoc
     onTermine(resultats);
   };
 
-  const noms = candidatures.map(nomCandidat).join(", ");
+  const noms = cibles.map((c) => c.nom).join(", ");
 
   return (
     <Dialog open={ouvert} onOpenChange={(estOuvert) => !estOuvert && !envoi && onFermer()}>
@@ -85,7 +90,7 @@ export function FenetrePriseDeService({ candidatures, ouvert, onFermer, cibleFoc
         <FenetreSysteme etiquette="Guilde" balayage={false}>
           <DialogTitle className="font-systeme text-xl font-bold text-systeme-texte">Prise de service</DialogTitle>
           <DialogDescription className="text-systeme-attenue">
-            {candidatures.length > 1 ? "Ces candidats recevront" : "Ce candidat recevra"} une offre avec ces informations : <strong className="text-systeme-texte">{noms}</strong>.
+            {cibles.length > 1 ? "Ces candidats recevront" : "Ce candidat recevra"} une offre avec ces informations : <strong className="text-systeme-texte">{noms}</strong>.
           </DialogDescription>
           <form noValidate onSubmit={envoyer} className="grid gap-4">
             {CHAMPS.map((champ) => {
@@ -134,7 +139,7 @@ export function FenetrePriseDeService({ candidatures, ouvert, onFermer, cibleFoc
             <Alerte message={erreurEnvoi} />
             <div className="flex flex-wrap gap-2.5">
               <BoutonSysteme type="submit" chargement={envoi}>
-                Envoyer {candidatures.length > 1 ? `les ${candidatures.length} offres` : "l'offre"}
+                Envoyer {cibles.length > 1 ? `les ${cibles.length} offres` : "l'offre"}
               </BoutonSysteme>
               <DialogClose asChild>
                 <BoutonSysteme variante="contour" disabled={envoi}>

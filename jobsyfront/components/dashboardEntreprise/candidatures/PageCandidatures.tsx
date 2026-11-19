@@ -7,8 +7,9 @@ import { formaterDateCourte, formaterFcfa } from "@/lib/formats";
 import { EmblemeRang } from "@/components/systeme";
 import { CarteRealite, ErreurSection, LienDiscret, PastilleStatut } from "@/components/dashboardCandidat/qg/CarteRealite";
 import { normaliser } from "@/components/dashboardCandidat/portails/regles";
-import CandidateProfileModal from "@/components/dashboardEntreprise/candidat/CandidateProfileModal";
 import type { MissionGuilde } from "../missions/regles";
+import { FenetreProfil } from "../invitations/FenetreProfil";
+import { statutInvitation, type Invitation } from "../invitations/regles";
 import { FenetrePriseDeService, type ResultatEnvoi } from "./FenetrePriseDeService";
 import { evaluation, nomCandidat, statutCandidature, type CandidatSuggere, type CandidatureRecue } from "./regles";
 
@@ -92,7 +93,7 @@ function CarteCandidature({ c, choisie, onChoix }: { c: CandidatureRecue; choisi
   );
 }
 
-function CarteSuggestion({ s, onProfil }: { s: CandidatSuggere; onProfil: (bouton: HTMLButtonElement) => void }) {
+function CarteSuggestion({ s, invitation, onProfil }: { s: CandidatSuggere; invitation?: Invitation; onProfil: (bouton: HTMLButtonElement) => void }) {
   const communes = s.skills_breakdown?.matched ?? [];
   const manquantes = s.skills_breakdown?.missing ?? [];
   return (
@@ -110,6 +111,13 @@ function CarteSuggestion({ s, onProfil }: { s: CandidatSuggere; onProfil: (bouto
       </div>
       {communes.length > 0 && <p className="text-sm">Compétences attendues qu&apos;il a : {communes.join(", ")}.</p>}
       {manquantes.length > 0 && <p className="text-sm text-slate-600">Compétences manquantes : {manquantes.join(", ")}.</p>}
+      {invitation && (
+        <p className="flex flex-wrap items-center gap-2 text-sm">
+          <PastilleStatut ton={statutInvitation(invitation.status).ton}>Invité</PastilleStatut>
+          {statutInvitation(invitation.status).libelle}
+          {formaterDateCourte(invitation.sent_at) ? `, invitation du ${formaterDateCourte(invitation.sent_at)}` : ""}.
+        </p>
+      )}
       <button
         type="button"
         onClick={(e) => onProfil(e.currentTarget)}
@@ -126,12 +134,16 @@ export function PageCandidatures({ missionId }: { missionId: string }) {
   const mission = useSWR<MissionGuilde>(`/missions/${missionId}`, (url: string) => api.get(url).then((r) => r.data));
   const candidatures = useSWR<CandidatureRecue[]>(`/missions/${missionId}/applications`, (url: string) => api.get(url).then((r) => r.data.data));
   const suggestions = useSWR<{ candidates: CandidatSuggere[] }>(`/missions/${missionId}/suggested-candidates`, (url: string) => api.get(url).then((r) => r.data));
+  const invitations = useSWR<Invitation[]>(`/missions/${missionId}/proposals`, (url: string) => api.get(url).then((r) => r.data.data));
   const [recherche, setRecherche] = useState("");
   const [filtre, setFiltre] = useState<Filtre>("toutes");
   const [choix, setChoix] = useState<number[]>([]);
   const [fenetre, setFenetre] = useState(false);
   const [bilan, setBilan] = useState<ResultatEnvoi[] | null>(null);
-  const [profil, setProfil] = useState<number | null>(null);
+  const [profil, setProfil] = useState<CandidatSuggere | null>(null);
+  const [profilOuvert, setProfilOuvert] = useState(false);
+  // Une fenêtre neuve à chaque ouverture : elle reprend l'invitation à jour
+  const [ouvertureProfil, setOuvertureProfil] = useState(0);
   const boutonRetenir = useRef<HTMLButtonElement>(null);
   const zoneBilan = useRef<HTMLDivElement>(null);
   const declencheurProfil = useRef<HTMLButtonElement | null>(null);
@@ -249,7 +261,7 @@ export function PageCandidatures({ missionId }: { missionId: string }) {
         )}
       </section>
 
-      <CarteRealite titre="Candidats suggérés">
+      <CarteRealite titre="Candidats suggérés" lienPied={<LienDiscret href={`${MISSIONS}/${missionId}/proposals`}>Voir les invitations envoyées</LienDiscret>}>
         <p className="text-sm text-slate-600">
           Des profils qui peuvent postuler à cette mission et qui ont au moins la moitié des compétences attendues. Ils n&apos;ont pas encore postulé.
         </p>
@@ -265,9 +277,12 @@ export function PageCandidatures({ missionId }: { missionId: string }) {
               <li key={s.id} className="grid">
                 <CarteSuggestion
                   s={s}
+                  invitation={invitations.data?.find((inv) => inv.candidat.id === s.id)}
                   onProfil={(bouton) => {
                     declencheurProfil.current = bouton;
-                    setProfil(s.id);
+                    setProfil(s);
+                    setOuvertureProfil((n) => n + 1);
+                    setProfilOuvert(true);
                   }}
                 />
               </li>
@@ -276,19 +291,22 @@ export function PageCandidatures({ missionId }: { missionId: string }) {
         )}
       </CarteRealite>
 
-      {profil !== null && (
-        <CandidateProfileModal
-          candidateId={profil}
+      {profil && (
+        <FenetreProfil
+          key={ouvertureProfil}
+          candidat={profil}
           missionId={missionId}
-          onClose={() => {
-            setProfil(null);
-            requestAnimationFrame(() => declencheurProfil.current?.focus());
-          }}
+          missionTitre={m?.title}
+          invitation={invitations.data?.find((inv) => inv.candidat.id === profil.id)}
+          ouvert={profilOuvert}
+          onFermer={() => setProfilOuvert(false)}
+          cibleFocus={() => declencheurProfil.current}
+          onInvite={() => void invitations.mutate()}
         />
       )}
 
       <FenetrePriseDeService
-        candidatures={retenues}
+        cibles={retenues.map((c) => ({ nom: nomCandidat(c), url: `/entreprise/applications/${c.id}/select` }))}
         ouvert={fenetre}
         onFermer={() => {
           apresEnvoi.current = false;
