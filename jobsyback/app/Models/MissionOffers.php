@@ -72,4 +72,16 @@ class MissionOffers extends Model
         return $this->accepted_at === null
             && !in_array($this->payment_status, ['locked', 'paid'], true);
     }
+
+    /** Étapes où la récompense peut être mise sous séquestre : offre acceptée par le candidat, mission pas encore terminée. */
+    public const ESCROW_STATUSES = ['accepted', 'service_started', 'in_progress', 'work_finished'];
+
+    /**
+     * Sans réponse, refusée ou terminée, une offre ne doit pas recevoir de fonds :
+     * aucune étape ne les rendrait ensuite à l'entreprise (seul le refus après la prise de service libère le séquestre).
+     */
+    public function canReceiveEscrow(): bool
+    {
+        return in_array($this->status, self::ESCROW_STATUSES, true);
+    }
 }
