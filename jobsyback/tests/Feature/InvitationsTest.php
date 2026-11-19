@@ -82,14 +82,24 @@ class InvitationsTest extends TestCase
         $this->assertStringNotContainsString('<script>alert(1)', $html);
     }
 
-    public function test_le_profil_complet_n_invente_pas_de_titre(): void
+    public function test_les_suggestions_et_le_profil_nomment_le_candidat_comme_ailleurs_sans_titre_invente(): void
     {
         $entreprise = Entreprise::factory()->create();
+        // Sans compétence exigée, le candidat est suggéré (score de 100)
+        $mission = Mission::factory()->create(['entreprise_id' => $entreprise->id, 'skills' => []]);
         $candidat = Candidat::factory()->create(['domaine_competence' => null]);
+        $candidat->user->update(['prenom' => 'Ayaba', 'nom' => 'Hounsou']);
+        $entete = $this->bearerFor($entreprise->user);
 
-        $this->withHeaders($this->bearerFor($entreprise->user))
+        $this->withHeaders($entete)
             ->getJson("/api/candidates/{$candidat->id}/full-profile")
             ->assertOk()
+            ->assertJsonPath('candidate.full_name', 'Ayaba Hounsou')
             ->assertJsonPath('candidate.title', null);
+
+        $suggestion = collect($this->withHeaders($entete)->getJson("/api/missions/{$mission->id}/suggested-candidates")->assertOk()->json('candidates'))
+            ->firstWhere('id', $candidat->id);
+        $this->assertSame('Ayaba Hounsou', $suggestion['full_name']);
+        $this->assertNull($suggestion['title']);
     }
 }
