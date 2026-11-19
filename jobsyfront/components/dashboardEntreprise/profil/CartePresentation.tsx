@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Editor } from "primereact/editor";
 import SafeHtml from "@/components/SafeHtml";
+import { nommerBarreEditeur } from "@/lib/editeur";
 import { CarteRealite } from "@/components/dashboardCandidat/qg/CarteRealite";
 import { messageGuilde } from "../guilde/regles";
 import { BOUTON_CONTOUR, BOUTON_PLEIN } from "./CarteChamps";
@@ -71,6 +72,7 @@ export function CartePresentation({ description, enregistrer }: Props) {
               zone?.setAttribute("aria-multiline", "true");
               zone?.setAttribute("aria-labelledby", "presentation-libelle");
               zone?.setAttribute("aria-describedby", "presentation-aide");
+              nommerBarreEditeur(quill);
               zone?.focus();
             }}
             style={{ height: "240px" }}

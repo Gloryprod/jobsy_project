@@ -30,12 +30,12 @@ function lienNotification(n: AppNotification): string | null {
     return `/dashboard/entreprises/missions/${n.data.mission_id}/${page}`;
 }
 
-function Cloche() {
+function Cloche({ conteneur }: { conteneur: HTMLElement | null }) {
     const { notifications, unreadCount, markAllAsRead } = useNotifications();
     const nom = unreadCount > 0 ? `Notifications : ${unreadCount} non lue${unreadCount > 1 ? "s" : ""}` : "Notifications";
 
     return (
-        <DropdownMenu>
+        <DropdownMenu modal={false}>
             <DropdownMenuTrigger aria-label={nom} className={BOUTON_ICONE}>
                 <Bell aria-hidden="true" className="w-5 h-5" />
                 {unreadCount > 0 && (
@@ -44,7 +44,7 @@ function Cloche() {
                     </span>
                 )}
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80 max-h-[70vh] overflow-y-auto font-lisible">
+            <DropdownMenuContent container={conteneur} align="end" className="w-80 max-h-[70vh] overflow-y-auto font-lisible">
                 <DropdownMenuLabel className="text-sm">Notifications</DropdownMenuLabel>
                 {unreadCount > 0 && (
                     <DropdownMenuItem
@@ -92,13 +92,15 @@ function Cloche() {
 /** En-tête de l'espace entreprise (lot 7a) : logo, notifications, compte, menu mobile. */
 export default function Header() {
     const [menuOuvert, setMenuOuvert] = useState(false);
+    // Les menus sont rendus dans l'en-tête, qui reste leur repère pour les lecteurs d'écran
+    const [entete, setEntete] = useState<HTMLElement | null>(null);
     const pathname = usePathname();
     const { user } = useUser();
     const { handleLogout } = useLogout();
     const nomEntreprise = user?.entreprise?.nom_entreprise || "Mon entreprise";
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-50 h-18 border-b border-white/10 bg-[#000080] font-lisible">
+        <header ref={setEntete} className="fixed top-0 left-0 right-0 z-50 h-18 border-b border-white/10 bg-[#000080] font-lisible">
             <div className="mx-auto flex h-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
                 <Link href="/dashboard/entreprises" className={`flex items-center gap-2.5 rounded-lg ${FOCUS}`}>
                     <span className="rounded-xl bg-white/10 p-2">
@@ -109,9 +111,10 @@ export default function Header() {
                 </Link>
 
                 <div className="flex items-center gap-2">
-                    <Cloche />
+                    <Cloche conteneur={entete} />
 
-                    <DropdownMenu>
+                    {/* Un menu n'est pas une fenêtre : non modal, il laisse la page lisible et se ferme avec Échap ou Tab */}
+                    <DropdownMenu modal={false}>
                         <DropdownMenuTrigger className={`hidden md:flex items-center gap-3 rounded-xl px-3 py-1.5 text-left hover:bg-white/10 cursor-pointer ${FOCUS}`}>
                             <span className="flex size-10 items-center justify-center rounded-full bg-white/15">
                                 <User aria-hidden="true" className="w-5 h-5 text-white" />
@@ -122,7 +125,7 @@ export default function Header() {
                             </span>
                             <ChevronDown aria-hidden="true" className="w-4 h-4 text-white/70" />
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-52 font-lisible">
+                        <DropdownMenuContent container={entete} align="end" className="w-52 font-lisible">
                             <DropdownMenuItem asChild className="min-h-11">
                                 <Link href="/dashboard/entreprises/profile">
                                     <User aria-hidden="true" className="w-4 h-4" />

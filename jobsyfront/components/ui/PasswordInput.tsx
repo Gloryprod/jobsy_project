@@ -38,7 +38,8 @@ export function PasswordInput({ icon, wrapperClassName, toggleClassName, classNa
         aria-pressed={visible}
         aria-controls={inputId}
         className={cn(
-          "absolute right-4 top-1/2 -translate-y-1/2 rounded cursor-pointer text-slate-500 hover:text-[#000080]",
+          // Cible de 32 px (24 px au minimum, WCAG 2.5.8)
+          "absolute right-2 top-1/2 -translate-y-1/2 inline-flex size-8 items-center justify-center rounded cursor-pointer text-slate-500 hover:text-[#000080]",
           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#000080]",
           toggleClassName
         )}
