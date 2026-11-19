@@ -897,6 +897,53 @@ L'espace entreprise compte environ 5 700 lignes. Il est découpé en cinq lots, 
 
 **Vérification** : tests de l'API ; API locale : création réelle (refus de chaque champ, puis réussite), modification, relance d'une mission terminée, désactivation et réactivation, clôture (candidatures rejetées, notification enregistrée), suppression simple et groupée, refus d'une suppression de mission engagée ; recherche et filtre ; clavier ; 375 px et animations réduites.
 
+### Lot 7c : les candidatures et le matching (plan détaillé du 18/11/2026)
+
+Environ 2 000 lignes, découpées en deux PR :
+- **7c-A** : la page des candidatures d'une mission (candidatures reçues, prise de service, candidats suggérés) et le dossier du candidat ;
+- **7c-B** : le profil ouvert depuis les suggestions, l'envoi d'une invitation et la page des invitations.
+
+#### 7c-A : les candidatures (plan détaillé)
+
+**Constats.**
+- **Page des candidatures.**
+  - 330 lignes de code mort commenté.
+  - La mission n'est pas nommée.
+  - Le statut de chaque candidature (en attente, retenue, refusée) n'est pas affiché, et un candidat déjà retenu peut être coché de nouveau.
+  - Les rangs E et D sont rebaptisés par des titres inventés (« Apprenti Junior », « Agent Certifié »).
+  - Une candidature sans évaluation affiche un score vide. Les points forts et faibles de l'épreuve ne sont jamais montrés.
+- **Prise de service.**
+  - Le formulaire n'a ni étiquettes liées ni vérification. La validité de l'offre peut dépasser la date de prise de service.
+  - Les invitations partent en boucle : si la deuxième échoue, la première est déjà envoyée, et la page ne dit pas laquelle a échoué. La liste n'est pas rechargée.
+- **Candidats suggérés.**
+  - L'API proposait des candidats d'un rang trop bas pour postuler, et des candidats qui avaient déjà postulé.
+  - Les compétences communes ne s'affichaient jamais : la page lisait un champ qui n'existe pas (`matching_skills` au lieu de `matched`).
+  - L'icône clignote sans fin.
+- **Dossier du candidat.**
+  - La page plante si le candidat n'a pas d'analyse de CV ou pas de rang.
+  - Elle masque les expériences et les diplômes des rangs E et D.
+  - Le bouton « Contacter » ne fait rien. Les coordonnées, visibles une fois que le candidat a postulé, ne sont jamais affichées.
+  - « Failed to load » en anglais.
+
+**API (`fix/api-matching-rang`, depuis `main`).** Les candidats suggérés sont limités à ceux qui peuvent postuler : la règle de rang est celle de la candidature, et ceux qui ont déjà postulé sont écartés. Chaque suggestion porte le rang. 1 test.
+
+**Front** (`components/dashboardEntreprise/candidatures`).
+- **L'en-tête** : la mission (titre, rang minimum, récompense, date limite) et un retour aux missions.
+- **Les candidatures.**
+  - Chaque carte affiche l'emblème du rang réel, le nom, la ville et le statut en toutes lettres.
+  - Elle montre aussi le score d'épreuve et son niveau, ou « Évaluation en attente ». Le résumé, les points forts et les points faibles sont dans un détail repliable.
+  - Le lien mène au dossier.
+  - Recherche et filtre par statut. Seules les candidatures en attente peuvent être retenues.
+- **La prise de service.**
+  - Une fenêtre accessible, avec les règles de l'API vérifiées avant l'envoi et une validité de l'offre au plus tard le jour de la prise de service.
+  - Le résultat est donné candidat par candidat, et la liste est rechargée.
+- **Les candidats suggérés** : le rang, le pourcentage de correspondance, les compétences communes et manquantes, et le profil complet (inchangé jusqu'au lot 7c-B).
+- **Le dossier du candidat.**
+  - Les sections s'affichent dès qu'elles ont un contenu, quel que soit le rang.
+  - Les coordonnées s'affichent quand l'API les rend visibles. Sinon, la page explique quand elles le deviennent.
+
+**Vérification** : tests de l'API ; API locale : candidatures en attente, retenue et refusée, avec et sans évaluation ; prise de service (refus de chaque champ, validité après la prise de service), envoi réel à deux candidats dont un refusé par l'API ; suggestions (rang trop bas absent, compétences communes) ; dossier avec et sans CV, coordonnées visibles ou non ; clavier ; 375 px et animations réduites.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -1043,6 +1090,8 @@ Repères à confirmer :
 | 7a | Prêt sur `design/lot-7a-guilde` (empilé sur le lot 6b) | — | Types, lint et build verts. API locale avec l'API 7a. 33 contrôles automatiques : compteurs conformes à la base ; candidatures envoyées seulement, avec le rang réel, sans adresse ni e-mail dans la réponse ; portefeuille et mouvements exacts (libellés, signes, statuts) ; vrai nombre de recrutés ; navigation (page en cours, menu réduit nommé) ; logo réparé ; cloche et menu du compte au clavier ; 8 liens vivants ; recharge (vide, moins de 100, décimal, plus de 10 000 000 refusés sans appel à l'API ; Échap ; refus de l'API ; montant envoyé ; annonce après l'ouverture du paiement) ; historique en erreur ; 375 px, menu mobile, animations réduites ; entreprise sans activité ; aucune erreur dans la console. Non vérifié : le paiement KkiaPay réel |
 | API 7b | Prêt sur `fix/api-notifications-immediates` (depuis `main`) | — | Cinq notifications : le canal « database » part tout de suite (`viaConnections`), l'e-mail reste en file. 1 test, qui échoue sans la correction. Suite : 147 tests |
 | 7b | Prêt sur `design/lot-7b-missions` (empilé sur le lot 7a) | — | Types, lint et build verts. API locale avec l'API 7b et une file en base, comme en production. 34 contrôles automatiques : cartes (candidatures sans brouillon, recrutés, statut), recherche et filtre ; désactivation (confirmation, message juste, focus rendu) et réactivation ; clôture (candidat refusé et prévenu dans l'application) ; suppression d'une mission engagée refusée dans la fenêtre ; suppression groupée avec la mission engagée signalée ; création réelle (refus de chaque champ, avertissement CDD dès le rang E, urgence et durée enregistrées), modification, relance avec une nouvelle date ; cache séparé des missions clôturées ; 375 px et animations réduites ; aucune erreur dans la console. Lot 7a toujours vert (33) |
+| API 7c | Prêt sur `fix/api-matching-rang` (depuis `main`) | — | Candidats suggérés : rang minimum de la candidature appliqué, candidats déjà là écartés, rang renvoyé. 1 test, qui échoue sans la correction. Suite : 147 tests |
+| 7c-A | Prêt sur `design/lot-7c-candidatures` (empilé sur le lot 7b) | — | Types, lint et build verts. API locale avec l'API 7c. 25 contrôles automatiques : en-tête de la mission ; rang réel, score et niveau, évaluation en attente, statuts écrits, plus de titres inventés ; évaluation (résumé, points forts et à surveiller) ; seules les candidatures en attente retenues ; filtre et recherche ; suggestions (rang suffisant, compétences communes, ni rang trop bas ni candidat déjà là) ; profil ouvert puis focus rendu ; prise de service (envoi vide, validité après la prise de service refusée, bilan avec un envoi réel et un refus, focus sur le bilan, offre en base, liste rechargée) ; dossier avec coordonnées, dossier sans lien (coordonnées masquées et expliquées, expériences et formation), dossier introuvable ; 375 px et animations réduites ; aucune erreur dans la console |
 
 Constat pour Gloria (lot 2b) : les questions de secours de l'API, servies quand l'IA est indisponible, vouvoient le candidat (« Qu'est-ce qui vous motive… »), alors que l'interface le tutoie. À harmoniser dans `ApplicationAIService` si elle le souhaite.
 
