@@ -1028,6 +1028,44 @@ Environ 2 000 lignes, découpées en deux PR :
 
 **Vérification** : tests de l'API ; API locale : recrutés dans chaque état ; garantie par le solde (solde et séquestre en base) ; prise de service confirmée (blocage puis démarrage, contrat généré et téléchargé) ; candidat non retenu (séquestre rendu) ; validation avec note et avis (candidat payé, commission, mission terminée) ; validation impossible sans garantie ; paiement KkiaPay ouvert quand le solde ne suffit pas (passerelle simulée), puis séquestre constaté après actualisation ; clavier ; 375 px et animations réduites.
 
+### Lot 7e : le profil de l'entreprise (plan détaillé du 19/11/2026)
+
+**Constats.**
+- **La présentation s'affiche avec ses balises.** L'éditeur l'enregistre en HTML, et la page la montre comme du texte (« <p>…</p> »).
+- **Les enregistrements trompent.**
+  - Chaque formulaire se ferme avant la réponse de l'API.
+  - En cas de refus, une bulle disparaît, et la page affiche les valeurs refusées comme si elles étaient enregistrées.
+  - En cas de réussite, la page réaffiche un instant les anciennes valeurs.
+- **L'API refuse sans explication.** Le site web doit être une adresse complète (https://…), et les réseaux sociaux aussi. Le front ne le dit pas, et le refus arrive en anglais.
+- Les icônes des réseaux sociaux mènent à « # » quand le lien est vide, et n'ont pas de nom accessible.
+- La fenêtre des réseaux sociaux n'est pas une vraie fenêtre de dialogue.
+- **Le logo.** N'importe quel fichier est envoyé (l'API n'accepte que JPG, PNG ou WebP de 2 Mo au plus), et l'image est cassée tant qu'il n'y a pas de logo.
+- Les champs n'ont pas d'étiquettes liées, et le téléphone non plus.
+- **Mot de passe.** Pas d'étiquettes, aucune règle affichée, des champs qui ne se vident pas après la réussite.
+  - Le travail en cours sur les mots de passe (règle commune, champ avec « afficher ») est repris ici, comme au lot 6a pour le candidat.
+- **API.** Le nom de l'entreprise peut être vidé, alors qu'il s'affiche sur les missions et dans les invitations. La présentation est enregistrée sans être nettoyée, contrairement à la description d'une mission.
+
+**API (`fix/api-profil-entreprise`, depuis `main`).**
+- Le nom de l'entreprise ne peut plus être vidé ; l'envoi du seul logo reste possible.
+- La présentation est nettoyée à l'enregistrement, comme la description d'une mission.
+- Tests pour chaque point.
+
+**Front** (`components/dashboardEntreprise/profil`).
+- **L'en-tête** : le logo (ou les initiales), le nom, le secteur et la ville.
+  - « Changer le logo » vérifie le type et la taille avant l'envoi.
+  - Le résultat s'affiche dans la page.
+- **Trois cartes à modifier** : les informations de l'entreprise, la présentation, et les coordonnées avec les réseaux sociaux.
+  - Chacune passe de la lecture à un formulaire avec étiquettes liées.
+  - Les règles de l'API sont vérifiées avant l'envoi, et le formulaire ne se ferme qu'après la réussite.
+  - Les refus s'affichent sous chaque champ, en français.
+- **La présentation** s'affiche mise en forme, et se modifie avec le même éditeur que les missions.
+- **Les réseaux sociaux** ne s'affichent que s'ils sont renseignés, sous forme de liens nommés.
+- **Le mot de passe** reprend la règle commune (`lib/password`) et le champ avec « afficher » (`PasswordInput`).
+  - Les erreurs s'affichent sous chaque champ, par exemple un mot de passe actuel incorrect.
+  - Les champs se vident après la réussite.
+
+**Vérification** : tests de l'API ; API locale : affichage d'un profil complet et d'un profil vide ; logo refusé (type, taille) puis envoyé ; informations (nom vide et site sans https refusés, enregistrement réel) ; présentation mise en forme et nettoyée ; coordonnées et réseaux (refus, enregistrement, liens) ; mot de passe (règle, confirmation, mot de passe actuel faux, réussite puis connexion avec le nouveau) ; clavier ; 375 px et animations réduites.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
