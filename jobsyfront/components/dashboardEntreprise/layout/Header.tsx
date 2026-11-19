@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Bell, Briefcase, ChevronDown, LogOut, Menu, User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -91,6 +92,7 @@ function Cloche() {
 /** En-tête de l'espace entreprise (lot 7a) : logo, notifications, compte, menu mobile. */
 export default function Header() {
     const [menuOuvert, setMenuOuvert] = useState(false);
+    const pathname = usePathname();
     const { user } = useUser();
     const { handleLogout } = useLogout();
     const nomEntreprise = user?.entreprise?.nom_entreprise || "Mon entreprise";
@@ -151,7 +153,11 @@ export default function Header() {
                                             {section.items.map((item) => (
                                                 <li key={item.id}>
                                                     <SheetClose asChild>
-                                                        <Link href={item.href} className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold hover:bg-white/10 ${FOCUS}`}>
+                                                        <Link
+                                                            href={item.href}
+                                                            aria-current={pathname === item.href ? "page" : undefined}
+                                                            className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold ${FOCUS} ${pathname === item.href ? "bg-[#F0E68C] text-black" : "hover:bg-white/10"}`}
+                                                        >
                                                             <item.icon aria-hidden="true" className="w-4 h-4 shrink-0" />
                                                             {item.name}
                                                         </Link>
