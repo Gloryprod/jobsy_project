@@ -27,7 +27,8 @@ class EntrepriseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nom_entreprise' => 'nullable|string|max:255',
+            // Présent, le nom ne peut pas être vidé (il s'affiche sur les missions et les invitations) ; l'envoi du seul logo reste possible
+            'nom_entreprise' => 'sometimes|filled|string|max:255',
             'secteur_activite' => 'nullable|string|max:255',
             'localisation' => 'nullable|string|max:255',
             'description' => 'nullable|string',
