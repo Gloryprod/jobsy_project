@@ -991,6 +991,43 @@ Environ 2 000 lignes, découpées en deux PR :
 
 **Vérification** : tests de l'API ; API locale : invitation réelle depuis une suggestion (refus d'un message trop court, invitation enregistrée, mention « Invité », second envoi signalé) ; refus sur une mission clôturée ; page des invitations avec une invitation en attente, une refusée et une acceptée (adresse e-mail visible pour celle-ci seulement) ; prise de service sur l'invitation acceptée (refus de chaque champ, offre en base), modification d'une offre sans réponse ; message à la ligne dans l'espace du candidat ; clavier ; 375 px et animations réduites.
 
+### Lot 7d : les recrutés (plan détaillé du 19/11/2026)
+
+**Constats.**
+- **Le paiement du candidat peut se perdre en route.**
+  - « Valider et démarrer » lance la mission, puis tente de bloquer la récompense.
+  - Si ce blocage échoue (solde disponible trop bas) ou si la fenêtre KkiaPay est fermée, la mission est en cours sans séquestre.
+  - La page ne propose ensuite plus jamais de garantir la récompense, et l'API refuse la validation sans séquestre : le candidat ne peut pas être payé.
+- Le front choisit entre portefeuille et KkiaPay d'après le solde total, alors que l'API compte le solde disponible (le solde moins les fonds déjà bloqués).
+- « Recaler » agit au premier clic, sans confirmation.
+- L'état du paiement (bloqué, payé, rendu) n'est jamais affiché, et les statuts s'affichent en anglais (« service_started », « in_progress »).
+- Les offres sans réponse ou refusées sont mêlées aux recrutés.
+- 295 lignes de code mort commenté ; fenêtres PrimeReact sans titre lié ; étoiles de notation peu accessibles ; messages en bulles qui disparaissent.
+- **API.** La récompense peut être bloquée sur une offre que le candidat n'a pas acceptée, ou déjà terminée : les fonds resteraient bloqués sans moyen de les rendre. Un second paiement KkiaPay peut être lancé pour une récompense déjà bloquée.
+
+**API (`fix/api-sequestre`, depuis `main`).**
+- La récompense ne peut être bloquée que sur une offre acceptée et en cours (acceptée, prise de service, mission en cours, travail terminé), depuis le portefeuille comme après un paiement KkiaPay.
+- Le paiement KkiaPay d'une mission est refusé si l'offre n'est pas en cours, ou si la récompense est déjà bloquée ou payée.
+- Tests pour chaque point.
+
+**Front** (`components/dashboardEntreprise/recrutes`).
+- **L'en-tête** : la mission, un retour aux candidatures et le solde disponible.
+- **Une carte par recruté** (offre acceptée) :
+  - le statut en toutes lettres et la prise de service (date, heure, lieu) ;
+  - la présence signalée, la ponctualité et la note ;
+  - le contrat à télécharger.
+- **Le paiement** est affiché sur chaque carte : non garanti, bloqué, payé (avec la commission) ou rendu. Tant qu'il n'est pas garanti, la carte propose de le garantir :
+  - par un blocage sur le solde disponible, s'il suffit ;
+  - sinon par un paiement KkiaPay, avec un bouton pour actualiser après la confirmation.
+- **Confirmer la prise de service** : une fenêtre demande la ponctualité.
+  - Quand le solde le permet, la récompense est bloquée d'abord. Si ce blocage échoue, rien n'est lancé.
+  - Sinon la mission démarre quand même (le candidat est sur place), et la carte rappelle de garantir la récompense.
+- **Ne pas retenir** : une confirmation qui dit que la récompense bloquée redevient disponible.
+- **Valider le travail** : une note de 1 à 5 (boutons radio) et un avis facultatif de 2 000 caractères au plus. Ce n'est proposé qu'une fois la récompense garantie ; sinon la carte explique pourquoi.
+- **Les offres sans réponse** sont comptées, avec un lien vers les candidatures.
+
+**Vérification** : tests de l'API ; API locale : recrutés dans chaque état ; garantie par le solde (solde et séquestre en base) ; prise de service confirmée (blocage puis démarrage, contrat généré et téléchargé) ; candidat non retenu (séquestre rendu) ; validation avec note et avis (candidat payé, commission, mission terminée) ; validation impossible sans garantie ; paiement KkiaPay ouvert quand le solde ne suffit pas (passerelle simulée), puis séquestre constaté après actualisation ; clavier ; 375 px et animations réduites.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -1141,6 +1178,8 @@ Repères à confirmer :
 | 7c-A | Prêt sur `design/lot-7c-candidatures` (empilé sur le lot 7b) | — | Types, lint et build verts. API locale avec l'API 7c. 25 contrôles automatiques : en-tête de la mission ; rang réel, score et niveau, évaluation en attente, statuts écrits, plus de titres inventés ; évaluation (résumé, points forts et à surveiller) ; seules les candidatures en attente retenues ; filtre et recherche ; suggestions (rang suffisant, compétences communes, ni rang trop bas ni candidat déjà là) ; profil ouvert puis focus rendu ; prise de service (envoi vide, validité après la prise de service refusée, bilan avec un envoi réel et un refus, focus sur le bilan, offre en base, liste rechargée) ; dossier avec coordonnées, dossier sans lien (coordonnées masquées et expliquées, expériences et formation), dossier introuvable ; 375 px et animations réduites ; aucune erreur dans la console |
 | API 7c-B | Prêt sur `fix/api-invitations` (empilé sur `fix/api-matching-rang`) | — | Invitation refusée sur une mission désactivée ou clôturée ; e-mail du candidat donné seulement après acceptation ; message de l'e-mail sans double échappement ; plus de titre inventé dans les suggestions et le profil, nom donné prénom d'abord comme ailleurs. 4 tests, qui échouent sans la correction. Suite : 151 tests |
 | 7c-B | Prêt sur `design/lot-7c-invitations` (empilé sur le lot 7c-A) | — | Types, lint et build verts. API locale avec l'API 7c-B. 35 contrôles automatiques : suggestions déjà invitées signalées ; profil (fenêtre nommée, rang, compétences, certifications, Échap et focus rendu) ; invitation (préremplie, message trop court refusé, envoi réel, focus sur la confirmation, retours à la ligne gardés en base, mention « Invité », pas de second envoi) ; refus en clair sur une mission clôturée ; page des invitations (mission nommée, e-mail seulement après acceptation, statuts écrits, filtres, recherche, message à la ligne) ; offre envoyée à un invité (refus de chaque champ, offre en base, liste rechargée) ; offre corrigée (préremplie, en base, fenêtre à jour) ; dossier d'un invité avec ses coordonnées ; message à la ligne côté candidat ; 375 px et animations réduites ; aucune erreur dans la console |
+| API 7d | Prêt sur `fix/api-sequestre` (depuis `main`) | — | Séquestre possible seulement sur une offre acceptée et en cours (portefeuille et webhook KkiaPay) ; paiement KkiaPay refusé pour une offre hors cours ou une récompense déjà garantie. 3 tests, qui échouent sans la correction. Suite : 149 tests |
+| 7d | Prêt sur `design/lot-7d-recrutes` (empilé sur le lot 7c-B) | — | Types, lint et build verts. API locale avec l'API 7d. 34 contrôles automatiques : lien depuis la mission ouverte, solde disponible, offres sans réponse écartées et comptées, aucun statut en anglais ; état de chaque recruté ; garantie par le solde (fenêtre, séquestre et solde en base, carte à jour) ; prise de service (ponctualité obligatoire, blocage annoncé, blocage refusé sans démarrage, démarrage réel, contrat généré et téléchargé) ; candidat non retenu (refus 403 expliqué, séquestre annulé et fonds rendus) ; validation (note obligatoire, paiement net, commission, +250 points, compte débité) ; solde insuffisant : validation impossible, paiement KkiaPay ouvert sans voler le focus, intention créée, séquestre constaté après actualisation (webhook simulé) ; 375 px et animations réduites ; aucune erreur dans la console. Lot 7b : 34 contrôles |
 
 Constat pour Gloria (lot 2b) : les questions de secours de l'API, servies quand l'IA est indisponible, vouvoient le candidat (« Qu'est-ce qui vous motive… »), alors que l'interface le tutoie. À harmoniser dans `ApplicationAIService` si elle le souhaite.
 

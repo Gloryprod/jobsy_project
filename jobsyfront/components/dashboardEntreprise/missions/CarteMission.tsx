@@ -98,6 +98,9 @@ export function CarteMission({ mission, selectionnee, onSelection, onAction, enC
             <LienDiscret href={`${MISSIONS}/${mission.id}/proposals`} className="px-2">
               Invitations<span className="sr-only"> : {mission.title}</span>
             </LienDiscret>
+            <LienDiscret href={`${MISSIONS}/${mission.id}/confirmedApplicants`} className="px-2">
+              Recrutés<span className="sr-only"> : {mission.title}</span>
+            </LienDiscret>
             <LienDiscret href={`${MISSIONS}/${mission.id}`} className="px-2">
               Modifier<span className="sr-only"> : {mission.title}</span>
             </LienDiscret>
