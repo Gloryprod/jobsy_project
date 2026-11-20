@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import useSWR from "swr";
 import api from "@/lib/api";
 import { formaterDateCourte } from "@/lib/formats";
@@ -49,6 +49,10 @@ export function FenetreProfil({ candidat, missionId, missionTitre, invitation, o
   const [envoi, setEnvoi] = useState(false);
   const [envoyee, setEnvoyee] = useState(false);
   const resultat = useRef<HTMLParagraphElement>(null);
+  // Le formulaire disparaît : le focus va au message qui confirme l'envoi, une fois affiché (après un await, React l'affiche plus tard que la prochaine image)
+  useEffect(() => {
+    if (envoyee) resultat.current?.focus();
+  }, [envoyee]);
 
   const p = profil.data;
   const rang = candidat.rank;
@@ -74,8 +78,6 @@ export function FenetreProfil({ candidat, missionId, missionTitre, invitation, o
       setEnvoyee(true);
       setRedaction(false);
       onInvite();
-      // Le formulaire disparaît : le focus va au message qui confirme l'envoi
-      requestAnimationFrame(() => resultat.current?.focus());
     } catch (err) {
       setErreurEnvoi(messageGuilde(err, "L'invitation n'a pas pu être envoyée. Réessayez dans quelques instants."));
     } finally {

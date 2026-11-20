@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import { useKKiaPay } from "kkiapay-react";
 import api from "@/lib/api";
@@ -29,7 +29,7 @@ import {
 } from "./regles";
 
 type Action = "bloquer" | "kkiapay" | "demarrer" | "ecarter" | "valider" | "contrat";
-type Annonce = { texte: string; erreur?: boolean; actualiser?: boolean };
+type Annonce = { texte: string; erreur?: boolean; actualiser?: boolean; focus?: boolean };
 
 const MISSIONS = "/dashboard/entreprises/missions";
 const BOUTON_PLEIN =
@@ -131,6 +131,10 @@ export function PageRecrutes({ missionId }: { missionId: string }) {
   const [annonce, setAnnonce] = useState<Annonce | null>(null);
   const declencheur = useRef<HTMLButtonElement | null>(null);
   const zoneAnnonce = useRef<HTMLDivElement>(null);
+  // Le focus suit l'affichage de l'annonce (après un await, React l'affiche plus tard que la prochaine image)
+  useEffect(() => {
+    if (annonce?.focus) zoneAnnonce.current?.focus();
+  }, [annonce]);
   // Après une action, le bouton d'origine a souvent disparu : le focus va à l'annonce
   const apresAction = useRef(false);
 
@@ -143,8 +147,7 @@ export function PageRecrutes({ missionId }: { missionId: string }) {
 
   const annoncer = (a: Annonce, deplacerFocus = true) => {
     apresAction.current = true;
-    setAnnonce(a);
-    if (deplacerFocus) requestAnimationFrame(() => zoneAnnonce.current?.focus());
+    setAnnonce({ ...a, focus: deplacerFocus });
   };
   const terminer = (texte: string) => {
     setDemande(null);

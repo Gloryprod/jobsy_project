@@ -1028,6 +1028,44 @@ Environ 2 000 lignes, découpées en deux PR :
 
 **Vérification** : tests de l'API ; API locale : recrutés dans chaque état ; garantie par le solde (solde et séquestre en base) ; prise de service confirmée (blocage puis démarrage, contrat généré et téléchargé) ; candidat non retenu (séquestre rendu) ; validation avec note et avis (candidat payé, commission, mission terminée) ; validation impossible sans garantie ; paiement KkiaPay ouvert quand le solde ne suffit pas (passerelle simulée), puis séquestre constaté après actualisation ; clavier ; 375 px et animations réduites.
 
+### Lot 7e : le profil de l'entreprise (plan détaillé du 19/11/2026)
+
+**Constats.**
+- **La présentation s'affiche avec ses balises.** L'éditeur l'enregistre en HTML, et la page la montre comme du texte (« <p>…</p> »).
+- **Les enregistrements trompent.**
+  - Chaque formulaire se ferme avant la réponse de l'API.
+  - En cas de refus, une bulle disparaît, et la page affiche les valeurs refusées comme si elles étaient enregistrées.
+  - En cas de réussite, la page réaffiche un instant les anciennes valeurs.
+- **L'API refuse sans explication.** Le site web doit être une adresse complète (https://…), et les réseaux sociaux aussi. Le front ne le dit pas, et le refus arrive en anglais.
+- Les icônes des réseaux sociaux mènent à « # » quand le lien est vide, et n'ont pas de nom accessible.
+- La fenêtre des réseaux sociaux n'est pas une vraie fenêtre de dialogue.
+- **Le logo.** N'importe quel fichier est envoyé (l'API n'accepte que JPG, PNG ou WebP de 2 Mo au plus), et l'image est cassée tant qu'il n'y a pas de logo.
+- Les champs n'ont pas d'étiquettes liées, et le téléphone non plus.
+- **Mot de passe.** Pas d'étiquettes, aucune règle affichée, des champs qui ne se vident pas après la réussite.
+  - Le travail en cours sur les mots de passe (règle commune, champ avec « afficher ») est repris ici, comme au lot 6a pour le candidat.
+- **API.** Le nom de l'entreprise peut être vidé, alors qu'il s'affiche sur les missions et dans les invitations. Les coordonnées n'ont pas de longueur maximale : au-delà de 255 caractères, la base refuse l'écriture et l'API répond par une erreur.
+
+**API (`fix/api-profil-entreprise`, depuis `main`).**
+- Le nom de l'entreprise ne peut plus être vidé ; l'envoi du seul logo reste possible.
+- Les coordonnées sont limitées à 255 caractères, la taille de leurs colonnes.
+- Tests pour chaque point.
+
+**Front** (`components/dashboardEntreprise/profil`).
+- **L'en-tête** : le logo (ou les initiales), le nom, le secteur et la ville.
+  - « Changer le logo » vérifie le type et la taille avant l'envoi.
+  - Le résultat s'affiche dans la page.
+- **Trois cartes à modifier** : les informations de l'entreprise, la présentation, et les coordonnées avec les réseaux sociaux.
+  - Chacune passe de la lecture à un formulaire avec étiquettes liées.
+  - Les règles de l'API sont vérifiées avant l'envoi, et le formulaire ne se ferme qu'après la réussite.
+  - Les refus s'affichent sous chaque champ, en français.
+- **La présentation** s'affiche mise en forme, et se modifie avec le même éditeur que les missions.
+- **Les réseaux sociaux** ne s'affichent que s'ils sont renseignés, sous forme de liens nommés.
+- **Le mot de passe** reprend la règle commune (`lib/password`) et le champ avec « afficher » (`PasswordInput`).
+  - Les erreurs s'affichent sous chaque champ, par exemple un mot de passe actuel incorrect.
+  - Les champs se vident après la réussite.
+
+**Vérification** : tests de l'API ; API locale : affichage d'un profil complet et d'un profil vide ; logo refusé (type, taille) puis envoyé ; informations (nom vide et site sans https refusés, enregistrement réel) ; présentation mise en forme ; coordonnées et réseaux (refus, enregistrement, liens) ; mot de passe (règle, confirmation, mot de passe actuel faux, réussite puis connexion avec le nouveau) ; clavier ; 375 px et animations réduites.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -1180,6 +1218,8 @@ Repères à confirmer :
 | 7c-B | Prêt sur `design/lot-7c-invitations` (empilé sur le lot 7c-A) | — | Types, lint et build verts. API locale avec l'API 7c-B. 35 contrôles automatiques : suggestions déjà invitées signalées ; profil (fenêtre nommée, rang, compétences, certifications, Échap et focus rendu) ; invitation (préremplie, message trop court refusé, envoi réel, focus sur la confirmation, retours à la ligne gardés en base, mention « Invité », pas de second envoi) ; refus en clair sur une mission clôturée ; page des invitations (mission nommée, e-mail seulement après acceptation, statuts écrits, filtres, recherche, message à la ligne) ; offre envoyée à un invité (refus de chaque champ, offre en base, liste rechargée) ; offre corrigée (préremplie, en base, fenêtre à jour) ; dossier d'un invité avec ses coordonnées ; message à la ligne côté candidat ; 375 px et animations réduites ; aucune erreur dans la console |
 | API 7d | Prêt sur `fix/api-sequestre` (depuis `main`) | — | Séquestre possible seulement sur une offre acceptée et en cours (portefeuille et webhook KkiaPay) ; paiement KkiaPay refusé pour une offre hors cours ou une récompense déjà garantie. 3 tests, qui échouent sans la correction. Suite : 149 tests |
 | 7d | Prêt sur `design/lot-7d-recrutes` (empilé sur le lot 7c-B) | — | Types, lint et build verts. API locale avec l'API 7d. 34 contrôles automatiques : lien depuis la mission ouverte, solde disponible, offres sans réponse écartées et comptées, aucun statut en anglais ; état de chaque recruté ; garantie par le solde (fenêtre, séquestre et solde en base, carte à jour) ; prise de service (ponctualité obligatoire, blocage annoncé, blocage refusé sans démarrage, démarrage réel, contrat généré et téléchargé) ; candidat non retenu (refus 403 expliqué, séquestre annulé et fonds rendus) ; validation (note obligatoire, paiement net, commission, +250 points, compte débité) ; solde insuffisant : validation impossible, paiement KkiaPay ouvert sans voler le focus, intention créée, séquestre constaté après actualisation (webhook simulé) ; 375 px et animations réduites ; aucune erreur dans la console. Lot 7b : 34 contrôles |
+| API 7e | Prêt sur `fix/api-profil-entreprise` (depuis `main`) | — | Nom de l'entreprise obligatoire quand il est envoyé (le logo seul reste possible) ; coordonnées limitées à 255 caractères. 3 tests, dont 2 qui échouent sans la correction (le troisième garde l'envoi du logo seul). Suite : 149 tests |
+| 7e | Prêt sur `design/lot-7e-profil` (empilé sur le lot 7d) | — | Types, lint et build verts. API locale avec l'API 7e. 30 contrôles automatiques : en-tête (nom, secteur, réseaux renseignés seulement, initiales sans logo) ; présentation mise en forme ; liens du site, de l'e-mail et du téléphone ; informations (étiquettes, nom vide et site invalide refusés, refus de l'API en français avec saisie gardée, enregistrement réel, https:// ajouté, lecture à jour, focus) ; présentation (éditeur nommé, enregistrement réel, paragraphes) ; coordonnées (e-mail et ancien numéro à 8 chiffres refusés, enregistrement réel, lien ajouté à l'en-tête) ; logo (type et taille refusés, faux fichier refusé par l'API, envoi réel) ; profil vide ; mot de passe (champs obligatoires, règle, confirmation, mot de passe actuel faux, « Afficher », réussite puis connexion avec le nouveau) ; 375 px et animations réduites ; aucune erreur dans la console. Correction du focus après un envoi (7c-B, 7d) : lots 7c-B 35 et 7d 34 contrôles |
 
 Constat pour Gloria (lot 2b) : les questions de secours de l'API, servies quand l'IA est indisponible, vouvoient le candidat (« Qu'est-ce qui vous motive… »), alors que l'interface le tutoie. À harmoniser dans `ApplicationAIService` si elle le souhaite.
 
