@@ -1066,6 +1066,49 @@ Environ 2 000 lignes, découpées en deux PR :
 
 **Vérification** : tests de l'API ; API locale : affichage d'un profil complet et d'un profil vide ; logo refusé (type, taille) puis envoyé ; informations (nom vide et site sans https refusés, enregistrement réel) ; présentation mise en forme ; coordonnées et réseaux (refus, enregistrement, liens) ; mot de passe (règle, confirmation, mot de passe actuel faux, réussite puis connexion avec le nouveau) ; clavier ; 375 px et animations réduites.
 
+### Lot 8 : les finitions (plan du 19/11/2026)
+
+Le lot 8 regroupe quatre chantiers de nature différente. Il est découpé comme le lot 7, une PR par chantier (D40) :
+
+| Sous-lot | Contenu |
+|---|---|
+| 8a | Navigation : en-tête et navigation du candidat (barre du bas de 5 entrées sur téléphone), page en cours annoncée dans les deux espaces |
+| 8b | Accessibilité : passe axe sur chaque écran refait, corrections, lien d'évitement vers le contenu |
+| 8c | Performance : mesure Lighthouse mobile des écrans principaux, corrections (critère : tableau de bord utilisable en moins de 3 secondes en 4G) |
+| 8d | Administration aux couleurs du thème, sans gamification (décision 2) |
+
+#### 8a : la navigation (plan détaillé)
+
+**Constats.** L'en-tête et la navigation du candidat datent d'avant la refonte (D7).
+- **Sur téléphone, deux menus** se superposent : le menu de l'en-tête et la barre du bas.
+  - La barre du bas coupe ses intitulés (texte de 10 px, « Offres confirmées » tronqué).
+  - Elle n'atteint que 5 des 6 pages.
+- **Des pages manquent** : les invitations (D18) et les messages du Système n'y figurent pas. Le Trésor s'appelle encore « Mes Gains ».
+- **La page en cours** n'est pas annoncée. Elle n'est reconnue que sur l'adresse exacte : dans une formation ou une candidature, aucune entrée n'est active.
+- **Clavier et lecteurs d'écran.**
+  - Le bouton qui réduit le menu n'a pas de nom accessible.
+  - La cloche est un lien placé dans un bouton : deux arrêts au clavier pour une seule action.
+  - Le menu du compte ne se ferme pas avec Échap et ne se parcourt pas au clavier.
+- Le solde affiché n'est pas formaté (« 12500 FCFA ») et ne mène pas au Trésor.
+- 245 lignes de code commenté.
+- **Espace entreprise** : le menu mobile n'annonce pas la page en cours.
+
+**Front** (`components/dashboardCandidat/layout`).
+- **Une seule liste des pages** du candidat, partagée par la barre latérale, la barre du bas et le panneau « Plus ». Les intitulés restent ceux de la couche réalité (D9).
+- **Sur ordinateur**, une barre latérale groupée :
+  - Missions : missions, missions confirmées, invitations ;
+  - Progression : formations, inventaire ;
+  - Compte : Trésor, profil, messages.
+  - Elle se réduit avec un bouton nommé. Le solde formaté mène au Trésor, et la déconnexion est en bas.
+- **Sur téléphone**, une barre du bas de 5 entrées aux intitulés entiers : tableau de bord, missions, formations, Trésor, et « Plus » (D41).
+  - « Plus » ouvre un panneau avec toutes les pages, le profil et la déconnexion.
+  - Le menu de l'en-tête disparaît.
+- **L'en-tête** : le logo, la cloche (un seul lien, nommé avec le nombre de messages non lus) et le menu du compte accessible au clavier, comme dans l'espace entreprise.
+- **La page en cours** est annoncée (`aria-current`) et reconnue sur ses sous-pages : une formation active « Formations », une offre de mission active « Missions confirmées ».
+- **Espace entreprise** : la page en cours est annoncée dans le menu mobile.
+
+**Vérification** : à 1 280 px et à 375 px, chaque entrée mène à sa page ; entrée active sur les sous-pages ; barre du bas de 5 entrées sans texte coupé ; panneau « Plus » et menu du compte au clavier (Échap, focus rendu) ; menu réduit nommé ; cloche avec un seul arrêt ; menu mobile de l'entreprise ; aucun débordement, animations réduites, aucune erreur dans la console.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -1178,6 +1221,8 @@ Repères à confirmer :
 - D37 (lot 6a) : le lot 6a passe avant les jetons (J1 à J4), dont le barème et les prix attendent Gloria. La « révélation du rang » de l'Éveil reste la quête du CV et la réévaluation (lot 4c). Une notification de rang après l'analyse du CV et la validation viendra plus tard.
 - D38 (lot 6b) : l'accueil ne montre ni chiffre, ni témoignage, ni logo d'entreprise tant qu'ils ne viennent pas de la base ou d'un accord écrit. Les coordonnées de contact du pied de page sont retirées en attendant les vraies, que Gloria doit fournir.
 - D39 (lot 7) : l'espace entreprise est découpé en cinq lots (7a à 7e), un par écran ou groupe d'écrans, chacun avec sa PR, comme les lots 2 et 3.
+- D40 (lot 8) : le lot 8 est découpé en quatre sous-lots (8a à 8d), un par chantier, chacun avec sa PR.
+- D41 (lot 8a) : la barre du bas du candidat garde les entrées de la boucle principale (tableau de bord, missions, formations, Trésor) et un « Plus » pour le reste. Les missions confirmées et les invitations restent à un geste, depuis « Plus » et depuis les quêtes du jour du tableau de bord. Facile à revoir après le test avec les jeunes (critère 1).
 
 ## Avancement
 
@@ -1220,6 +1265,7 @@ Repères à confirmer :
 | 7d | Prêt sur `design/lot-7d-recrutes` (empilé sur le lot 7c-B) | — | Types, lint et build verts. API locale avec l'API 7d. 34 contrôles automatiques : lien depuis la mission ouverte, solde disponible, offres sans réponse écartées et comptées, aucun statut en anglais ; état de chaque recruté ; garantie par le solde (fenêtre, séquestre et solde en base, carte à jour) ; prise de service (ponctualité obligatoire, blocage annoncé, blocage refusé sans démarrage, démarrage réel, contrat généré et téléchargé) ; candidat non retenu (refus 403 expliqué, séquestre annulé et fonds rendus) ; validation (note obligatoire, paiement net, commission, +250 points, compte débité) ; solde insuffisant : validation impossible, paiement KkiaPay ouvert sans voler le focus, intention créée, séquestre constaté après actualisation (webhook simulé) ; 375 px et animations réduites ; aucune erreur dans la console. Lot 7b : 34 contrôles |
 | API 7e | Prêt sur `fix/api-profil-entreprise` (depuis `main`) | — | Nom de l'entreprise obligatoire quand il est envoyé (le logo seul reste possible) ; coordonnées limitées à 255 caractères. 3 tests, dont 2 qui échouent sans la correction (le troisième garde l'envoi du logo seul). Suite : 149 tests |
 | 7e | Prêt sur `design/lot-7e-profil` (empilé sur le lot 7d) | — | Types, lint et build verts. API locale avec l'API 7e. 30 contrôles automatiques : en-tête (nom, secteur, réseaux renseignés seulement, initiales sans logo) ; présentation mise en forme ; liens du site, de l'e-mail et du téléphone ; informations (étiquettes, nom vide et site invalide refusés, refus de l'API en français avec saisie gardée, enregistrement réel, https:// ajouté, lecture à jour, focus) ; présentation (éditeur nommé, enregistrement réel, paragraphes) ; coordonnées (e-mail et ancien numéro à 8 chiffres refusés, enregistrement réel, lien ajouté à l'en-tête) ; logo (type et taille refusés, faux fichier refusé par l'API, envoi réel) ; profil vide ; mot de passe (champs obligatoires, règle, confirmation, mot de passe actuel faux, « Afficher », réussite puis connexion avec le nouveau) ; 375 px et animations réduites ; aucune erreur dans la console. Correction du focus après un envoi (7c-B, 7d) : lots 7c-B 35 et 7d 34 contrôles |
+| 8a | Prêt sur `design/lot-8a-navigation` (empilé sur le lot 7e) | — | Pas de changement d'API. Types, lint et build verts. 23 contrôles automatiques : barre latérale (9 pages groupées, solde formaté vers le Trésor, tableau de bord annoncé) ; cloche en un seul lien ; chaque entrée mène à sa page et y est annoncée ; sous-pages (candidature, offre) ; menu réduit nommé ; menu du compte au clavier (Échap, focus rendu) ; à 375 px, barre du bas de 5 entrées aux intitulés entiers, plus de second menu, « Plus » (toutes les pages, Échap et focus rendu, page en cours annoncée, mise en valeur), déconnexion ; menu mobile de l'entreprise ; aucun débordement ni animation en boucle ; aucune erreur dans la console. Lots 7a (33) et 5 (29) relancés |
 
 Constat pour Gloria (lot 2b) : les questions de secours de l'API, servies quand l'IA est indisponible, vouvoient le candidat (« Qu'est-ce qui vous motive… »), alors que l'interface le tutoie. À harmoniser dans `ApplicationAIService` si elle le souhaite.
 
