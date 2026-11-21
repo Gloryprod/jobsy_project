@@ -23,7 +23,8 @@ const ETAPES = [
   },
 ];
 
-const ENTREPRISES = [
+// Partagé avec la page publique des entreprises (lot 8e)
+export const ETAPES_ENTREPRISE = [
   "Publiez une mission : récompense, durée et rang minimum.",
   "Recevez des candidats classés par rang et par score à l'épreuve d'entrée.",
   "Invitez directement les profils qui vous intéressent.",
@@ -36,7 +37,7 @@ const TITRE_SECTION = "font-systeme text-2xl font-bold text-balance sm:text-3xl"
 /** L'accueil public (lot 6b) : « Le Système recrute », le jeu en quatre étapes, les rangs, les missions ouvertes et l'entrée entreprise. */
 export function Accueil() {
   return (
-    <main className="bg-systeme-nuit bg-[radial-gradient(ellipse_at_top,rgba(86,216,255,0.12),transparent_55%)] pt-20 font-lisible text-systeme-texte">
+    <main id="contenu" tabIndex={-1} className="focus:outline-none bg-systeme-nuit bg-[radial-gradient(ellipse_at_top,rgba(86,216,255,0.12),transparent_55%)] pt-20 font-lisible text-systeme-texte">
       <section aria-labelledby="accueil-titre" className="mx-auto grid max-w-3xl px-4 py-12 sm:px-6 sm:py-20">
         <FenetreSysteme etiquette="Système" className="gap-5 p-6 sm:p-8">
           <h1 id="accueil-titre" className="font-systeme text-4xl font-black text-balance sm:text-5xl">
@@ -109,7 +110,7 @@ export function Accueil() {
       <section className={`${SECTION} pb-20`}>
         <FenetreSysteme etiquette="Guilde" titre="Vous recrutez ?" niveauTitre={2} balayage={false} className="gap-4 p-6 sm:p-8">
           <ul className="grid gap-2 text-systeme-texte">
-            {ENTREPRISES.map((point) => (
+            {ETAPES_ENTREPRISE.map((point) => (
               <li key={point} className="flex gap-2">
                 <span aria-hidden="true" className="text-systeme-lueur">
                   ▸
