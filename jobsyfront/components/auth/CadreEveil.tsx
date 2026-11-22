@@ -26,7 +26,7 @@ export function CadreEveil({ etiquette, titre, retour, ton, children }: Props) {
           <ArrowLeft aria-hidden="true" className="size-4" />
           {retour.libelle}
         </Link>
-        <FenetreSysteme etiquette={etiquette} titre={titre} niveauTitre={2} ton={ton} className="gap-4">
+        <FenetreSysteme etiquette={etiquette} titre={titre} niveauTitre={1} ton={ton} className="gap-4">
           {children}
         </FenetreSysteme>
       </div>

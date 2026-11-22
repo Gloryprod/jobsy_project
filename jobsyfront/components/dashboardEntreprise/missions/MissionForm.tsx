@@ -7,6 +7,7 @@ import { Editor } from "primereact/editor";
 import { toast } from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
+import { nommerBarreEditeur } from "@/lib/editeur";
 import { champsRefuses, statutErreur } from "@/lib/erreurs";
 import { RANGS_PAR_DEFAUT } from "@/lib/progression";
 import { useUser } from "@/context/UserProvider";
@@ -302,6 +303,7 @@ export default function MissionForm({ initialData, reopen = false }: Props) {
             zone?.setAttribute("aria-multiline", "true");
             zone?.setAttribute("aria-labelledby", "description-libelle");
             zone?.setAttribute("aria-describedby", "description-aide description-erreur");
+            nommerBarreEditeur(quill);
           }}
           style={{ height: "260px" }}
         />
