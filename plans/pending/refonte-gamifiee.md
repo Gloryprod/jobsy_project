@@ -1221,6 +1221,35 @@ Le lot 8 regroupe quatre chantiers de nature différente. Il est découpé comme
 
 **Vérification** : la même mesure avant et après ; le nombre de requêtes de vérification et de lectures de `/user` dans Chrome ; déconnexion puis connexion d'un autre compte dans le même onglet ; les vérifications des lots touchés (4a, 4b, 4c, 5, 6a, 6b, 7a, 7e, 8a, 8b).
 
+#### 8d : l'administration (plan détaillé du 22/11/2026)
+
+**Règle** (décision 2) : l'administration garde ses écrans et ses fonctions. Elle prend seulement les couleurs et les polices du thème, sans gamification, comme la version sobre de l'espace entreprise.
+
+**Constats** (20 écrans, à 1 280 et à 375 px).
+- **En-tête et navigation** : des copies de ceux de l'espace entreprise d'avant le lot 7a, avec 300 lignes de code commenté.
+  - La cloche est factice : point rouge permanent, faux message « Nouveau message de Yin » avec une photo chargée depuis un site externe. L'API n'envoie aucune notification aux admins.
+  - Le lien « Profil » mène à une page qui n'existe pas. Next.js le précharge sur chaque écran : une erreur 404 par page, et une requête qui ne se termine jamais.
+  - Boutons sans nom (cloche, compte, menu réduit), deux bandeaux d'en-tête imbriqués, page en cours non annoncée, aucun lien d'évitement.
+  - Intitulés de la navigation trop pâles (blanc à 40 %, contraste de 3,2:1).
+- **Polices** : Geist partout, au lieu des polices du thème.
+- **Pages** : la passe axe trouve des violations sur les 20 écrans.
+  - 243 textes sans contraste suffisant, dont 120 dans la navigation ; le reste surtout en gris clair (`slate-400`, `gray-500`) sur fond clair.
+  - 67 boutons et 19 liens réduits à une icône, sans nom.
+  - Formulaires des formations, modules, examens et projets : champs sans étiquette liée, barre d'outils de l'éditeur sans noms, titre de niveau 2 au lieu de 1.
+  - Fenêtres de confirmation (SweetAlert2) aux couleurs par défaut, sans contraste suffisant, et bibliothèque chargée sur chaque écran.
+- À 375 px, aucun débordement.
+
+**Front.**
+- **En-tête et navigation partagés avec l'espace entreprise** : les composants du lot 7a prennent la liste des pages et le nom de l'espace en paramètre. L'administration les utilise, sans cloche ni lien « Profil ». Sa navigation reconnaît les sous-pages (une formation active « Formations »). Les anciens composants sont supprimés.
+- **Mise en page** comme l'espace entreprise : lien « Aller au contenu », zone principale, police lisible du thème, titres de page dans la police du Système en bleu marine.
+- **Contrastes** : les gris clairs passent au gris du thème (`slate-600`), les pastilles colorées à des teintes plus foncées.
+- **Noms** : boutons et liens réduits à une icône, champs et listes des formulaires, barre d'outils de l'éditeur (fonction commune du lot 8b).
+- **Titres** : un titre de niveau 1 par écran, sans niveau sauté.
+- **Confirmations** : SweetAlert2 aux couleurs du thème (bleu marine, rouge foncé), chargée au clic.
+- Pas de changement d'API.
+
+**Vérification** : la même passe axe, qui doit tomber à zéro violation sur les 20 écrans ; plus aucune erreur dans la console ; navigation (page en cours, sous-pages, menu réduit nommé, menu mobile, lien d'évitement) ; une action réelle par formulaire touché (créer une formation, un module, une question d'examen, un projet) et une confirmation SweetAlert2 ; 375 px sans débordement ; les vérifications des lots qui partagent l'en-tête (7a, 8a, 8b).
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
