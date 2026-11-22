@@ -1,13 +1,15 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import Swal from 'sweetalert2';
+import { mutate } from 'swr';
 import api from '@/lib/api';
 
 export function useLogout() {
   const router = useRouter();
 
     const handleLogout = async () => {
+        // Chargée au clic : la bibliothèque (21 Ko) ne pèse plus sur chaque page des espaces connectés
+        const { default: Swal } = await import('sweetalert2');
         const result = await Swal.fire({
         title: "Voulez-vous vraiment vous déconnecter ?",
         icon: "warning",
@@ -24,6 +26,8 @@ export function useLogout() {
             try {
                 // L'API révoque les tokens et efface les cookies httpOnly (poste partagé, cybercafé...)
                 await api.post("/logout");
+                // Le cache des données (utilisateur, profil, missions) est vidé : la personne suivante ne les voit pas, même un instant
+                await mutate(() => true, undefined, { revalidate: false });
 
                 Swal.fire({
                     icon: 'success',
