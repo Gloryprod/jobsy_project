@@ -28,8 +28,9 @@ export function QGCandidat() {
 
   const profil = useSWR<ProfilCandidat>("/candidat/profile-elements", lireDonnees);
   const candidatures = useSWR<Candidature[]>(candidatId ? `/missions/${candidatId}/myapplications` : null, lireDonnees);
-  const inscriptions = useSWR<Inscription[]>(candidatId ? "/courses/my-learnings" : null, lireDonnees);
-  const propositions = useSWR<Proposition[]>(candidatId ? "/candidat/proposals" : null, lireDonnees);
+  // Ces deux routes n'ont pas besoin de l'identifiant : elles partent tout de suite, sans attendre /user
+  const inscriptions = useSWR<Inscription[]>("/courses/my-learnings", lireDonnees);
+  const propositions = useSWR<Proposition[]>("/candidat/proposals", lireDonnees);
 
   if (chargementUtilisateur || profil.isLoading) return <SqueletteQG />;
 

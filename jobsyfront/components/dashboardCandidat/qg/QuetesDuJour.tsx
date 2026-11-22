@@ -6,9 +6,15 @@ export function QuetesDuJour({ quetes }: { quetes: Quete[] | null }) {
   return (
     <FenetreSysteme etiquette="Système" titre="Quêtes du jour" niveauTitre={2}>
       {quetes === null ? (
-        <p className="text-systeme-attenue" aria-live="polite">
-          Le Système prépare tes quêtes…
-        </p>
+        <div className="grid gap-3">
+          <p className="text-systeme-attenue" aria-live="polite">
+            Le Système prépare tes quêtes…
+          </p>
+          {/* Places réservées : la fenêtre garde à peu près sa hauteur à l'arrivée des quêtes, le bas de la page ne saute pas */}
+          {[0, 1].map((i) => (
+            <div key={i} aria-hidden="true" className="h-40 animate-pulse rounded-[3px] border border-systeme-lueur/15 bg-systeme-nuit/60 motion-reduce:animate-none" />
+          ))}
+        </div>
       ) : (
         <ol className="grid gap-3">
           {quetes.map((quete) => (
