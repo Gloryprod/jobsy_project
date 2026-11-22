@@ -5,14 +5,17 @@ import 'flowbite';
 import { PrimeReactProvider } from "primereact/api";
 import { Toaster } from "react-hot-toast";
 
+// Geist et Geist Mono ne servent plus qu'aux anciens écrans : sans préchargement, elles ne se téléchargent que là où une page les utilise
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  preload: false,
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  preload: false,
 });
 
 // Polices du Système (refonte gamifiée) : titres et chiffres de rang, puis texte courant très lisible

@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import api from "@/lib/api";
 import { champsRefuses, statutErreur } from "@/lib/erreurs";
 import { BoutonDossier, CarteDossier, Champ, MessageErreurDossier, MessageReussite } from "./ElementsDossier";
-import { PASSWORD_HINT, passwordSchema } from "@/lib/password";
+import { PASSWORD_HINT, erreurMotDePasse } from "@/lib/password";
 import { messageEnvoi } from "./regles";
 
 const VIDE = { currentPassword: "", newPassword: "", newPassword_confirmation: "" };
@@ -31,8 +31,8 @@ export function SectionMotDePasse() {
     const trouvees: Partial<Record<Nom, string>> = {};
     if (!valeurs.currentPassword) trouvees.currentPassword = "Indique ton mot de passe actuel.";
     // Même règle que l'inscription et l'API (PasswordPolicy)
-    const verification = passwordSchema.safeParse(valeurs.newPassword);
-    if (!verification.success) trouvees.newPassword = verification.error.issues[0].message;
+    const erreur = erreurMotDePasse(valeurs.newPassword);
+    if (erreur) trouvees.newPassword = erreur;
     if (valeurs.newPassword !== valeurs.newPassword_confirmation) trouvees.newPassword_confirmation = "Les deux mots de passe ne sont pas identiques.";
     if (Object.keys(trouvees).length > 0) {
       signaler(trouvees);

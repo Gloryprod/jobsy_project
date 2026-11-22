@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import api from "@/lib/api";
 import { champsRefuses, statutErreur } from "@/lib/erreurs";
-import { passwordSchema } from "@/lib/password";
+import { erreurMotDePasse } from "@/lib/password";
 import { BoutonSysteme } from "@/components/systeme";
 import { Alerte } from "@/components/dashboardCandidat/epreuve/Alerte";
 import { CadreEveil } from "./CadreEveil";
@@ -30,8 +30,8 @@ export function Reinitialisation() {
     e.preventDefault();
     setErreurEnvoi(null);
     const trouvees: Record<string, string> = {};
-    const verification = passwordSchema.safeParse(motDePasse);
-    if (!verification.success) trouvees.password = verification.error.issues[0].message;
+    const erreur = erreurMotDePasse(motDePasse);
+    if (erreur) trouvees.password = erreur;
     if (motDePasse !== confirmation) trouvees.password_confirmation = "Les deux mots de passe ne sont pas identiques.";
     setErreurs(trouvees);
     if (trouvees.password || trouvees.password_confirmation) {
