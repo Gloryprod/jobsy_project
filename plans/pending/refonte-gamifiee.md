@@ -1174,6 +1174,53 @@ Le lot 8 regroupe quatre chantiers de nature différente. Il est découpé comme
 
 **Vérification** : tests de l'API ; axe sans violation sur les quatre pages, à 1 280 px et à 375 px ; aucun chiffre, témoignage ou numéro inventé ; vraies missions et vraies formations affichées ; recherche et filtre au clavier ; aucun lien mort ; aucune erreur dans la console.
 
+#### 8c : la performance (plan détaillé du 22/11/2026)
+
+**Mesure.** Lighthouse 13.6, profil mobile par défaut (4G lente simulée, processeur ralenti 4 fois), médiane de 3 passages. Huit écrans : l'accueil, les missions publiques, la connexion, puis, avec un compte, le tableau de bord, les missions et les formations du candidat, le tableau de bord et les missions de l'entreprise. Front construit (`next build`), API de test locale.
+
+**Constats.**
+- **Pages publiques et connexion** : rapides. Contenu affiché en 1,2 s, score de 98 à 100.
+- **Tableaux de bord** : contenu principal affiché en 5,8 à 6,7 s, score de 56 à 69. Les causes :
+  - Tout le contenu se construit dans le navigateur : après le chargement du code, puis après les réponses de l'API.
+  - L'API exige l'en-tête `X-Requested-With` (protection CSRF). Chaque appel est donc précédé d'une requête de vérification CORS, et `max_age` à 0 la faisait redemander à chaque fois : 7 par chargement du tableau de bord du candidat.
+  - `GET /user` partait deux fois sur chaque page connectée : une fois pour le contexte, une fois pour la garde.
+  - Le tableau de bord du candidat attendait `/user` avant de demander les formations et les invitations, qui n'en ont pas besoin.
+  - À l'arrivée des quêtes du jour, le bas de la page sautait (décalage de 0,21 ; la limite recommandée est 0,1).
+- **Poids.**
+  - zod (64 Ko) était chargé sur les pages d'entrée pour une seule règle de mot de passe.
+  - SweetAlert2 (21 Ko) était chargé sur chaque page connectée pour la seule confirmation de déconnexion.
+  - Les polices Geist, qui ne servent plus qu'aux anciens écrans, étaient préchargées partout : 98 Ko de polices par page.
+
+**API (`fix/api-cors-preflight`, depuis `main`).** `max_age` passe à 7200 secondes, le plafond de Chrome : le navigateur garde la réponse de vérification 2 heures. Test.
+
+**Front.**
+- `/user` est lu une seule fois par page : le contexte et la garde partagent la même requête (SWR). Le cache est vidé à la déconnexion, pour la personne suivante sur le même poste.
+- Le tableau de bord du candidat demande ses listes en même temps, sans attendre `/user` quand elles n'en ont pas besoin.
+- Les quêtes du jour réservent leur place pendant le calcul.
+- La règle du mot de passe est écrite sans zod : même règle, mêmes messages.
+- SweetAlert2 se charge au clic sur « Se déconnecter ».
+- Geist n'est plus préchargée.
+
+**Résultats** (médianes, avant → après) :
+
+| Écran | Score | Premier affichage | Contenu principal | Décalage | Poids |
+|---|---|---|---|---|---|
+| Accueil | 100 → 100 | 1,2 → 1,2 s | 1,2 → 1,2 s | 0 → 0 | 499 → 383 Ko |
+| Missions publiques | 98 → 99 | 1,2 → 1,2 s | 1,2 → 1,2 s | 0 → 0 | 499 → 383 Ko |
+| Connexion | 98 → 100 | 1,2 → 1,2 s | 1,2 → 1,2 s | 0 → 0 | 484 → 368 Ko |
+| Tableau de bord du candidat | 56 → 70 | 2,3 → 1,2 s | 6,7 → 6,7 s | 0,21 → 0,02 | 601 → 452 Ko |
+| Missions du candidat | 68 → 73 | 1,6 → 1,2 s | 6,0 → 5,2 s | 0,05 → 0,05 | 532 → 460 Ko |
+| Formations du candidat | 69 → 73 | 2,3 → 1,2 s | 5,8 → 5,2 s | 0 → 0 | 514 → 442 Ko |
+| Tableau de bord de l'entreprise | 65 → 73 | 2,4 → 1,2 s | 6,1 → 5,5 s | 0,02 → 0,02 | 521 → 448 Ko |
+| Missions de l'entreprise | 90 → 97 | 2,5 → 1,2 s | 2,5 → 1,2 s | 0 → 0 | 515 → 442 Ko |
+
+- **Requêtes de vérification**, mesurées dans Chrome : avec l'ancienne valeur, 6 à chaque chargement du tableau de bord du candidat ; avec la nouvelle, aucune après la première visite. Lighthouse ne le voit pas, car il repart d'un navigateur vide à chaque passage. Le gain porte sur chaque page visitée après la première, et sur l'interrogation des notifications toutes les minutes.
+- **Tableau de bord du candidat** : la dernière réponse de l'API arrive à 3,2 s au lieu de 4,3 s. Le contenu principal ne bouge pas : il attend cette dernière réponse.
+- **Le critère des 3 secondes n'est pas atteint** sur les tableaux de bord (D43).
+- **Limites de la mesure.** Le serveur de test (`php artisan serve`) traite une requête à la fois : les appels à l'API passent l'un après l'autre, ce qui alourdit les chiffres ci-dessus. En production, s'ajoutent la distance jusqu'à Render et le réveil de l'API, mise en veille par le plan gratuit après un moment sans visite. Non mesuré ici.
+
+**Vérification** : la même mesure avant et après ; le nombre de requêtes de vérification et de lectures de `/user` dans Chrome ; déconnexion puis connexion d'un autre compte dans le même onglet ; les vérifications des lots touchés (4a, 4b, 4c, 5, 6a, 6b, 7a, 7e, 8a, 8b).
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -1289,6 +1336,10 @@ Repères à confirmer :
 - D40 (lot 8) : le lot 8 est découpé en quatre sous-lots (8a à 8d), un par chantier, chacun avec sa PR.
 - D41 (lot 8a) : la barre du bas du candidat garde les entrées de la boucle principale (tableau de bord, missions, formations, Trésor) et un « Plus » pour le reste. Les missions confirmées et les invitations restent à un geste, depuis « Plus » et depuis les quêtes du jour du tableau de bord. Facile à revoir après le test avec les jeunes (critère 1).
 - D42 (lot 8) : les pages publiques Missions, Formations, Entreprises et Contact n'ont jamais été refaites (le lot 6b n'a repris que l'accueil, l'en-tête et le pied de page). La page Entreprises affiche des chiffres inventés, de faux témoignages attribués à de vraies marques, de faux numéros et un bouton sans effet. Elles forment le sous-lot 8e, traité juste après le 8b, avec la règle de D38.
+- D43 (lot 8c, à valider par Gloria) : le critère de 3 secondes sur les tableaux de bord ne s'atteint pas par le front seul. Le reste dépend de l'hébergement, donc de Gloria. Recommandation, dans l'ordre :
+  1. Corriger le déploiement Vercel (Root Directory sur `jobsyfront`) : sans cela, le front n'est pas construit. C'est un préalable.
+  2. Servir l'API sous le domaine du front (réécritures de Next.js ou de Vercel vers Render). Plus aucune requête de vérification, cookies du même site, et un rendu des tableaux de bord côté serveur devient possible ensuite. Demande de revoir la configuration des cookies et de Sanctum.
+  3. Sortir l'API du plan gratuit de Render, qui la met en veille : la première visite attend son réveil.
 
 ## Avancement
 
