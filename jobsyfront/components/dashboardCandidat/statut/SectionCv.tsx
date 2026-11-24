@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import api, { STORAGE_URL } from "@/lib/api";
+import api from "@/lib/api";
 import { champsRefuses, statutErreur } from "@/lib/erreurs";
 import { ConfirmationRefus } from "../commun/ConfirmationRefus";
 import { BoutonDossier, BoutonFichier, CarteDossier, MessageErreurDossier, MessageReussite } from "./ElementsDossier";
@@ -61,7 +61,7 @@ export function SectionCv({ cv, onChange }: Props) {
     <CarteDossier id="cv" titre="Mon CV" titreRef={titreRef}>
       <p className="text-slate-700">Le Système lit ton CV pour fixer ton rang de départ et repérer tes compétences.</p>
       {cv ? (
-        <a href={`${STORAGE_URL}/${cv.fichier}`} target="_blank" rel="noreferrer" className="justify-self-start font-bold text-[#000080] underline underline-offset-2">
+        <a href={cv.fichier_url ?? undefined} target="_blank" rel="noreferrer" className="justify-self-start font-bold text-[#000080] underline underline-offset-2">
           Voir mon CV
         </a>
       ) : (
