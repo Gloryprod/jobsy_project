@@ -39,7 +39,7 @@ export const columns: ColumnDef<Entreprise>[] = [
         cell: ({ row }) => {
             // row.index commence à 0, donc on ajoute 1
             return (
-                <div className="text-center font-medium text-slate-400">
+                <div className="text-center font-medium text-slate-600">
                     {row.index + 1}
                 </div>  
             );
@@ -70,6 +70,7 @@ export const columns: ColumnDef<Entreprise>[] = [
     
     {
         id: "actions",
+        header: () => <span className="sr-only">Actions</span>,
         cell: ({ row }) => <ActionCell entreprise={row.original} />,
     },
 

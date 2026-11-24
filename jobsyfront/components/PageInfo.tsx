@@ -5,18 +5,20 @@ interface PageInfoProps {
     pageName: string;
     pageLink: string;
 }
+
+/** Fil d'Ariane de l'administration : le tableau de bord, puis la rubrique. */
 export default function PageInfo({ pageName, pageLink }: PageInfoProps) {
     return (
-        <div className="border-b flex items-center justify-between border-gray-400 shadow-sm  p-4 h-12">
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-                <Link href="/dashboard/entreprises" className="hover:text-[#000080] transition-colors">
-                    <Home size={16} />
+        <nav aria-label="Fil d'Ariane" className="border-b flex items-center justify-between border-gray-400 shadow-sm  p-4 h-12">
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+                <Link href="/dashboard/admin" aria-label="Tableau de bord" className="hover:text-[#000080] transition-colors">
+                    <Home aria-hidden="true" size={16} />
                 </Link>
-                <span>/</span>
+                <span aria-hidden="true">/</span>
                 <Link href={pageLink} className="hover:text-[#000080] font-medium transition-colors">
                     {pageName}
                 </Link>
             </div>
-        </div>
+        </nav>
     );
 }

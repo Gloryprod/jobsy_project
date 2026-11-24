@@ -19,7 +19,6 @@ import {
 import { useRouter } from "next/navigation"
 import { toast } from 'react-hot-toast';
 import api from '@/lib/api';
-import Swal from 'sweetalert2';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 
 
@@ -32,8 +31,8 @@ export const ActionCell = ({ entreprise }: { entreprise: Entreprise }) => {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0 cursor-pointer">
-            <MoreHorizontal className="h-4 w-4" />
+          <Button aria-label={`Actions : ${entreprise.nom_entreprise}`} variant="ghost" className="h-8 w-8 p-0 cursor-pointer">
+            <MoreHorizontal aria-hidden="true" className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">

@@ -207,7 +207,7 @@ export default function AdminLogisticsValidation() {
 
     const logistic_type = "kit"
 
-    const pageLink = "/dashboard/admin/logisticsRequests";
+    const pageLink = "/dashboard/admin/logistics_approval";
 
     // États pour la recherche et la pagination
     const [searchTerm, setSearchTerm] = useState('');
@@ -259,12 +259,12 @@ export default function AdminLogisticsValidation() {
 
                 <div className="mb-8">
                     <h1 className="text-2xl font-black text-slate-800 flex items-center justify-center">Suivi Formation Logistique Terrain</h1>
-                    <p className="text-slate-500 flex items-center justify-center"><i>Validez les kits et les sessions pour débloquer les accès théoriques aux étudiants.</i></p>
+                    <p className="text-slate-600 flex items-center justify-center"><i>Validez les kits et les sessions pour débloquer les accès théoriques aux étudiants.</i></p>
                 </div>
 
                 {/* Barre de Recherche */}
                 <div className="mb-6 relative w-full max-w-sm flex items-end justify-end">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
                     <input
                         type="text"
                         placeholder="Rechercher un candidat ou une formation..."
@@ -278,13 +278,13 @@ export default function AdminLogisticsValidation() {
                     <table className="w-full text-left border-collapse">
                         <thead className="bg-slate-50 border-b border-slate-100">
                             <tr>
-                                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest">#</th>
-                                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest">Candidat</th>
-                                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest">Formation / Type</th>
-                                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest">Mode Validation</th>
-                                {/* <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest">Statut</th> */}
-                                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest">Date Inscription</th>
-                                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">Actions</th>
+                                <th className="p-6 text-[10px] font-black uppercase text-slate-600 tracking-widest">#</th>
+                                <th className="p-6 text-[10px] font-black uppercase text-slate-600 tracking-widest">Candidat</th>
+                                <th className="p-6 text-[10px] font-black uppercase text-slate-600 tracking-widest">Formation / Type</th>
+                                <th className="p-6 text-[10px] font-black uppercase text-slate-600 tracking-widest">Mode Validation</th>
+                                {/* <th className="p-6 text-[10px] font-black uppercase text-slate-600 tracking-widest">Statut</th> */}
+                                <th className="p-6 text-[10px] font-black uppercase text-slate-600 tracking-widest">Date Inscription</th>
+                                <th className="p-6 text-[10px] font-black uppercase text-slate-600 tracking-widest text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
@@ -294,7 +294,7 @@ export default function AdminLogisticsValidation() {
                                     <td className="p-4">
                                         <div className="flex flex-col">
                                             <span className="font-bold text-slate-800">{item.candidat.user.nom} {item.candidat.user.prenom}</span>
-                                            <span className="text-xs text-slate-400 font-mono">{item.candidat.contact ? item.candidat.contact.telephone : "+229 01 97 25 48 12"}</span>
+                                            <span className="text-xs text-slate-600 font-mono">{item.candidat.contact ? item.candidat.contact.telephone : "+229 01 97 25 48 12"}</span>
                                         </div>
                                     </td>
                                     <td className="p-4">
@@ -311,16 +311,16 @@ export default function AdminLogisticsValidation() {
                                         </div>
                                     </td>
                                     <td className="p-4">
-                                        <span className="text-xs font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-2 py-1 rounded-lg border border-amber-100">
+                                        <span className="text-xs font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2 py-1 rounded-lg border border-amber-100">
                                             {item.course.validation_mode == "A" ? "Standard" : item.course.validation_mode == "B" ? "Logistique" : "Expert"}
                                         </span>
                                     </td>
                                     {/* <td className="p-4">
-                                        <span className="text-xs font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-2 py-1 rounded-lg border border-amber-100">
+                                        <span className="text-xs font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2 py-1 rounded-lg border border-amber-100">
                                             {item.delivery_status == "pending" ? "Non validé" : "Validé"}
                                         </span>
                                     </td> */}
-                                    <td className="p-4 text-slate-500">
+                                    <td className="p-4 text-slate-600">
                                         {new Date(item.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                                     </td>
                                     <td className="p-4">
@@ -329,19 +329,19 @@ export default function AdminLogisticsValidation() {
                                                 <button 
                                                     onClick={() => handleAction(item.id, 'reject')} 
                                                     title="Rejeter / Annuler" 
-                                                    className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all cursor-pointer shadow-sm"
+                                                    className="p-3 bg-red-50 text-red-700 rounded-xl hover:bg-red-500 hover:text-white transition-all cursor-pointer shadow-sm"
                                                 >
-                                                    <X size={20} />
+                                                    <X aria-hidden="true" size={20} />
                                                 </button>
                                                 <button 
                                                     onClick={() => handleAction(item.id, 'approve')} 
                                                     title="Valider l'étape terrain" 
-                                                    className="p-3 bg-emerald-50 text-emerald-500 rounded-xl hover:bg-emerald-500 hover:text-white transition-all cursor-pointer flex items-center gap-2 font-black px-6 shadow-sm"
+                                                    className="p-3 bg-emerald-50 text-emerald-700 rounded-xl hover:bg-emerald-500 hover:text-white transition-all cursor-pointer flex items-center gap-2 font-black px-6 shadow-sm"
                                                 >
                                                     <Check size={20} />
                                                 </button>
                                             </div> : 
-                                            <span className="text-xs font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-2 py-1 rounded-lg border border-amber-100">Validé</span>
+                                            <span className="text-xs font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2 py-1 rounded-lg border border-amber-100">Validé</span>
                                         }
                                     </td>
                                 </tr>
@@ -354,30 +354,30 @@ export default function AdminLogisticsValidation() {
                             <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <Search size={24} className="text-slate-300" />
                             </div>
-                            <p className="text-slate-400 font-medium italic">Aucun dossier logistique en attente pour cette recherche.</p>
+                            <p className="text-slate-600 font-medium italic">Aucun dossier logistique en attente pour cette recherche.</p>
                         </div>
                     )}
 
                     {/* Pagination UI */}
                     {totalPages > 1 && (
                         <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-                            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                            <p className="text-xs font-black text-slate-600 uppercase tracking-widest">
                                 Page {currentPage} sur {totalPages}
                             </p>
                             <div className="flex gap-2">
-                                <button
+                                <button aria-label="Page précédente"
                                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                     disabled={currentPage === 1}
                                     className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-[#000080] hover:text-white transition-all cursor-pointer"
                                 >
-                                    <ChevronLeft size={20} />
+                                    <ChevronLeft aria-hidden="true" size={20} />
                                 </button>
-                                <button
+                                <button aria-label="Page suivante"
                                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                     disabled={currentPage === totalPages}
                                     className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-[#000080] hover:text-white transition-all cursor-pointer"
                                 >
-                                    <ChevronRight size={20} />
+                                    <ChevronRight aria-hidden="true" size={20} />
                                 </button>
                             </div>
                         </div>

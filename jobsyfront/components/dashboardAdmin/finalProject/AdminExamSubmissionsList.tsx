@@ -95,7 +95,7 @@ export default function AdminExamSubmissionsList({
           <h1 className="text-xl font-black text-slate-900 flex items-center gap-2">
             <FileCheck2 className="w-6 h-6 text-slate-700" /> Soumissions Projet Final
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-600 mt-1">
             Gérez et corrigez les projets soumis par les candidats.
           </p>
         </div>
@@ -103,7 +103,7 @@ export default function AdminExamSubmissionsList({
 
       {/* Barre de recherche */}
     <div className="relative w-full sm:w-72 md:w-50">
-        <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <Search className="w-4 h-4 text-slate-600 absolute left-3 top-1/2 -translate-y-1/2" />
         <input
         type="text"
         placeholder="Rechercher candidat, projet..."
@@ -165,7 +165,7 @@ export default function AdminExamSubmissionsList({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-black uppercase text-slate-500 tracking-wider">
+              <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-black uppercase text-slate-600 tracking-wider">
                 <th className="py-3.5 px-4">Candidat</th>
                 <th className="py-3.5 px-4">Projet / Épreuve</th>
                 <th className="py-3.5 px-4">Date de soumission</th>
@@ -177,7 +177,7 @@ export default function AdminExamSubmissionsList({
             <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
               {filteredSubmissions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400 italic">
+                  <td colSpan={6} className="py-12 text-center text-slate-600 italic">
                     Aucune soumission trouvée.
                   </td>
                 </tr>
@@ -192,7 +192,7 @@ export default function AdminExamSubmissionsList({
                         </div>
                         <div>
                           <p className="font-bold text-slate-900">{item.candidat.user.nom} {item.candidat.user.prenom}</p>
-                          <p className="text-[11px] text-slate-400">{item.candidat.user.email}</p>
+                          <p className="text-[11px] text-slate-600">{item.candidat.user.email}</p>
                         </div>
                       </div>
                     </td>
@@ -203,9 +203,9 @@ export default function AdminExamSubmissionsList({
                     </td>
 
                     {/* Date */}
-                    <td className="py-3.5 px-4 text-slate-500">
+                    <td className="py-3.5 px-4 text-slate-600">
                       <div className="flex items-center gap-1.5 text-[11px]">
-                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                        <Calendar className="w-3.5 h-3.5 text-slate-600" />
                         {new Date(item.submitted_at).toLocaleDateString("fr-FR", {
                           day: "numeric",
                           month: "short",
@@ -227,8 +227,8 @@ export default function AdminExamSubmissionsList({
                         <span
                           className={
                             item.final_score >= item.exam_project.passing_score
-                              ? "text-emerald-600"
-                              : "text-rose-600"
+                              ? "text-emerald-700"
+                              : "text-rose-700"
                           }
                         >
                           {item.final_score} / 20

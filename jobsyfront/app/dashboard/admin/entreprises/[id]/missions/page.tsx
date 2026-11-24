@@ -122,12 +122,12 @@ export default function MissionsPage({ params }: { params: Promise<{ id: string 
 
             <div className="mb-8 ">
                 <h1 className="text-2xl font-black text-slate-800 flex items-center justify-center">Gestion des Missions</h1>
-                <p className="text-slate-500 flex items-center justify-center"><i>Vue d&apos;ensemble des missions publiées par entreprise</i></p>
+                <p className="text-slate-600 flex items-center justify-center"><i>Vue d&apos;ensemble des missions publiées par entreprise</i></p>
             </div>
 
             {/* Barre de Recherche */}
             <div className="mb-6 mt-2 relative w-full max-w-sm flex items-end justify-end">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 " size={16} />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 " size={16} />
                 <input
                     type="text"
                     placeholder="Rechercher une mission..."
@@ -145,7 +145,7 @@ export default function MissionsPage({ params }: { params: Promise<{ id: string 
                     <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Search size={24} className="text-slate-300" />
                     </div>
-                    <p className="text-slate-400 font-medium italic">Aucune mission disponible.</p>
+                    <p className="text-slate-600 font-medium italic">Aucune mission disponible.</p>
                 </div>
             )}
 
@@ -154,30 +154,30 @@ export default function MissionsPage({ params }: { params: Promise<{ id: string 
                 <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Search size={24} className="text-slate-300" />
                 </div>
-                <p className="text-slate-400 font-medium italic">Aucun résultat pour cette recherche.</p>
+                <p className="text-slate-600 font-medium italic">Aucun résultat pour cette recherche.</p>
                 </div>
             )}
 
             {/* Pagination UI */}
             {totalPages >= 1 && (
                 <div className="p-6 border-t border-slate-100 flex items-center justify-between">
-                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                <p className="text-xs font-black text-slate-600 uppercase tracking-widest">
                     Page {currentPage} sur {totalPages}
                 </p>
                 <div className="flex gap-2">
-                    <button 
+                    <button aria-label="Page précédente" 
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
                     className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-[#000080] hover:text-white transition-all cursor-pointer"
                     >
-                    <ChevronLeft size={20} />
+                    <ChevronLeft aria-hidden="true" size={20} />
                     </button>
-                    <button 
+                    <button aria-label="Page suivante" 
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
                     className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-[#000080] hover:text-white transition-all cursor-pointer"
                     >
-                    <ChevronRight size={20} />
+                    <ChevronRight aria-hidden="true" size={20} />
                     </button>
                 </div>
                 </div>

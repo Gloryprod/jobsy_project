@@ -4,6 +4,7 @@ import { useForm, Controller } from "react-hook-form"
 import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import { Editor, EditorTextChangeEvent } from 'primereact/editor';
+import { nommerBarreEditeur } from "@/lib/editeur";
 import { useRouter } from "next/navigation"
 
 interface Course {
@@ -80,13 +81,13 @@ export default function CourseForm({ initialData }: CourseFormProps) {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className={labelClass}>Titre de la formation</label>
-                        <input {...register("title")} type="text" name="title" className={inputClass} />
+                        <label htmlFor="champ-title" className={labelClass}>Titre de la formation</label>
+                        <input id="champ-title" {...register("title")} type="text" name="title" className={inputClass} />
                     </div>
 
                     <div>
-                        <label className={labelClass}>Mode de validation</label>
-                        <select {...register("validation_mode")} name="validation_mode" className={inputClass}>
+                        <label htmlFor="champ-validation_mode" className={labelClass}>Mode de validation</label>
+                        <select id="champ-validation_mode" {...register("validation_mode")} name="validation_mode" className={inputClass}>
                             <option defaultValue="">Sélectionner le mode de validation</option>
                             <option value="A">Mode Standard</option>
                             <option value="B">Mode Logistique</option>
@@ -97,8 +98,8 @@ export default function CourseForm({ initialData }: CourseFormProps) {
 
                 {validationMode === "C" && (
                     <div>
-                        <label className={labelClass}>Type de contenu</label>
-                        <select {...register("type_contenu")} name="type_contenu" className={inputClass}>
+                        <label htmlFor="champ-type_contenu" className={labelClass}>Type de contenu</label>
+                        <select id="champ-type_contenu" {...register("type_contenu")} name="type_contenu" className={inputClass}>
                             <option defaultValue="">Sélectionner le type de contenu pour le mode expert</option>
                             <option value="Kit">Kit (Logistique)</option>
                             <option value="Digital">Digital</option>
@@ -107,19 +108,19 @@ export default function CourseForm({ initialData }: CourseFormProps) {
                 )}
 
                 <div>
-                    <label className={labelClass}>Compétences à acquérir</label>
-                    <input {...register("delivered_skills")} type="text" name="delivered_skills" className={inputClass}   />
+                    <label htmlFor="champ-delivered_skills" className={labelClass}>Compétences à acquérir</label>
+                    <input id="champ-delivered_skills" {...register("delivered_skills")} type="text" name="delivered_skills" className={inputClass}   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                     <div>
-                        <label className={labelClass}>Points</label>
-                        <input {...register("reward_xp")} type="number" name="reward_xp" className={inputClass} />
+                        <label htmlFor="champ-reward_xp" className={labelClass}>Points</label>
+                        <input id="champ-reward_xp" {...register("reward_xp")} type="number" name="reward_xp" className={inputClass} />
                     </div>
                 </div>
 
                 <div>     
-                    <label className={labelClass}>Description</label>
+                    <label id="description-libelle" className={labelClass}>Description</label>
                     <Controller
                         name="description"
                         control={control}
@@ -127,6 +128,14 @@ export default function CourseForm({ initialData }: CourseFormProps) {
                             <Editor 
                                 value={field.value} 
                                 onTextChange={(e) => field.onChange(e.htmlValue)} 
+                                onLoad={(quill) => {
+                                    // La zone de saisie prend le nom de l'étiquette, la barre d'outils des noms en français (lot 8b)
+                                    const zone = quill?.root as HTMLElement | undefined;
+                                    zone?.setAttribute("role", "textbox");
+                                    zone?.setAttribute("aria-multiline", "true");
+                                    zone?.setAttribute("aria-labelledby", "description-libelle");
+                                    nommerBarreEditeur(quill);
+                                }}
                                 style={{ height: '320px' }} 
                             />
                         )}
