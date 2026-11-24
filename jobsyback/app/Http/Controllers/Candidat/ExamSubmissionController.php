@@ -7,6 +7,7 @@ use App\Models\ExamProjects;
 use App\Models\UserExamSession;
 use App\Models\FinalExamResults;
 use App\Models\Enrollment;
+use App\Support\FichiersPrives;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -460,11 +461,9 @@ class ExamSubmissionController extends Controller
         }
 
         if ($request->hasFile('file') && $request->file('file')->isValid()) {
-            // Stockage dans storage/app/public/exam_deliverables
-            $path = $request->file('file')->store('exam_deliverables', 'public');
-
-            // Génération de l'URL publique accessible depuis React
-            $url = asset('storage/' . $path);
+            // Disque privé : le lien rendu est signé ; les réponses l'enregistrent sans signature (cast ReponsesExamen)
+            $path = $request->file('file')->store('exam_deliverables', FichiersPrives::DISQUE);
+            $url = FichiersPrives::lien($path);
 
             return response()->json([
                 'status' => 'success',

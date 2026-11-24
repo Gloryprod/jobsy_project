@@ -85,8 +85,8 @@ class MatchingController extends Controller
 
         // Scans de diplômes et certificats (pièces personnelles) : seulement après candidature ou proposition acceptée
         if (!($request->user()->entreprise?->hasRelationshipWith($candidate) ?? false)) {
-            $candidate->diplomes->each->makeHidden(['fichier']);
-            $candidate->formations->each->makeHidden(['certificat']);
+            $candidate->diplomes->each->makeHidden(['fichier', 'fichier_url']);
+            $candidate->formations->each->makeHidden(['certificat', 'certificat_url']);
         }
 
         // Cumul propre des compétences

@@ -50,7 +50,8 @@ class CandidatePrivacyTest extends TestCase
 
         $full = $this->withHeaders($headers)->getJson("/api/candidates/{$this->candidat->id}/full-profile")->assertOk();
         $full->assertJsonPath('candidate.diplomes.0.intitule', 'Licence')
-            ->assertJsonMissingPath('candidate.diplomes.0.fichier');
+            ->assertJsonMissingPath('candidate.diplomes.0.fichier')
+            ->assertJsonMissingPath('candidate.diplomes.0.fichier_url');
     }
 
     public function test_apres_candidature_l_entreprise_voit_les_coordonnees(): void
@@ -66,9 +67,13 @@ class CandidatePrivacyTest extends TestCase
             ->assertJsonPath('data.user.telephone', '2290197000000')
             ->assertJsonMissingPath('data.cv_datas.raw_ai_data');
 
-        $this->withHeaders($headers)->getJson("/api/candidates/{$this->candidat->id}/full-profile")
+        $lien = $this->withHeaders($headers)->getJson("/api/candidates/{$this->candidat->id}/full-profile")
             ->assertOk()
-            ->assertJsonPath('candidate.diplomes.0.fichier', 'diplomes/scan.pdf');
+            ->assertJsonPath('candidate.diplomes.0.fichier', 'diplomes/scan.pdf')
+            ->json('candidate.diplomes.0.fichier_url');
+        // Le scan se consulte par un lien signé qui expire (disque privé)
+        $this->assertStringContainsString('/storage/diplomes/scan.pdf?expires=', $lien);
+        $this->assertStringContainsString('signature=', $lien);
     }
 
     public function test_une_candidature_en_brouillon_ne_suffit_pas(): void

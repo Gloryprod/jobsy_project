@@ -20,6 +20,7 @@ class UploadAndContentSecurityTest extends TestCase
         parent::setUp();
 
         Storage::fake('public');
+        Storage::fake('local');
     }
 
     public function test_un_certificat_de_formation_doit_etre_un_pdf_ou_une_image(): void

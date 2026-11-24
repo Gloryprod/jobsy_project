@@ -165,7 +165,8 @@ class ThirdPassSecurityTest extends TestCase
 
     public function test_un_nouveau_cv_remplace_l_ancien(): void
     {
-        Storage::fake('public');
+        // Les CV sont sur le disque privé
+        Storage::fake('local');
         $candidat = Candidat::factory()->create();
         $headers = $this->bearerFor($candidat->user);
 
@@ -175,8 +176,8 @@ class ThirdPassSecurityTest extends TestCase
         $this->withHeaders($headers)->post('/api/candidat/cv', ['fichier' => UploadedFile::fake()->create('cv2.pdf', 10, 'application/pdf')], ['Accept' => 'application/json'])->assertCreated();
 
         $this->assertSame(1, Cv::count());
-        Storage::disk('public')->assertMissing($first);
-        Storage::disk('public')->assertExists(Cv::firstOrFail()->fichier);
+        Storage::disk('local')->assertMissing($first);
+        Storage::disk('local')->assertExists(Cv::firstOrFail()->fichier);
     }
 
     public function test_l_historique_d_une_entreprise_sans_wallet_est_vide(): void

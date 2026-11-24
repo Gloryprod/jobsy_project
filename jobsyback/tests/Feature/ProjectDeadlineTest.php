@@ -174,6 +174,7 @@ class ProjectDeadlineTest extends TestCase
     public function test_un_refus_de_validation_donne_un_message_lisible(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
         $this->enroll();
         $this->start();
 

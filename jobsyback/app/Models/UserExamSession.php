@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\ReponsesExamen;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -30,7 +31,8 @@ class UserExamSession extends Model
     ];
 
     protected $casts = [
-        'submitted_data' => 'array',
+        // Livrables sur le disque privé : enregistrés sans signature, relus avec un lien signé neuf
+        'submitted_data' => ReponsesExamen::class,
         'detailed_marks' => 'array',
         'started_at' => 'datetime',
         'submitted_at' => 'datetime',

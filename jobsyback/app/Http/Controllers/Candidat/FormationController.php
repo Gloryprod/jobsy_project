@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Candidat;
 
 use App\Http\Controllers\Controller;
+use App\Support\FichiersPrives;
 use Illuminate\Http\Request;
 
 class FormationController extends Controller
@@ -35,9 +36,10 @@ class FormationController extends Controller
             ->formations()
             ->findOrFail($id);
 
-        // Gestion du fichier certificat (si présent)
+        // Gestion du fichier certificat (si présent) : l'ancien fichier, personnel, ne reste pas sur le disque
         if ($request->hasFile('certificat')) {
-            $path = $request->file('certificat')->store('certificats', 'public');
+            deleteFile($formation->certificat);
+            $path = $request->file('certificat')->store('certificats', FichiersPrives::DISQUE);
             $formation->certificat = $path;
         }
 

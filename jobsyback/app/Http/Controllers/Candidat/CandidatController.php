@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Jobs\AnalyzeCVJob;
 use App\Models\Candidat;
+use App\Support\FichiersPrives;
 use Illuminate\Support\Facades\Hash;
 
 
@@ -95,7 +96,7 @@ class CandidatController extends Controller
 
         // Fichier optionnel, déjà validé par DiplomeRequest (pdf, jpg, png, 2 Mo)
         if ($request->hasFile('fichier')) {
-            $data['fichier'] = $request->file('fichier')->store('diplomes', 'public');
+            $data['fichier'] = $request->file('fichier')->store('diplomes', FichiersPrives::DISQUE);
         }
 
         $candidat->diplomes()->create($data);
@@ -114,7 +115,7 @@ class CandidatController extends Controller
 
         // Fichier optionnel, déjà validé par FormationRequest (pdf, jpg, png, 2 Mo)
         if ($request->hasFile('certificat')) {
-            $data['certificat'] = $request->file('certificat')->store('certificats', 'public');
+            $data['certificat'] = $request->file('certificat')->store('certificats', FichiersPrives::DISQUE);
         }
 
         $data['en_cours'] = false;
@@ -130,13 +131,13 @@ class CandidatController extends Controller
         $candidat = $request->user()->candidat;
 
         // Un seul CV par candidat : l'ancien est remplacé. Sinon la relation hasOne renvoyait un CV arbitraire
-        // (souvent l'ancien) et les fichiers personnels s'accumulaient sur le disque public.
+        // (souvent l'ancien) et les fichiers personnels s'accumulaient sur le disque.
         foreach (\App\Models\Cv::where('candidat_id', $candidat->id)->get() as $oldCv) {
             deleteFile($oldCv->fichier);
             $oldCv->delete();
         }
 
-        $path = $request->file('fichier')->store('cvs', 'public');
+        $path = $request->file('fichier')->store('cvs', FichiersPrives::DISQUE);
 
         $candidat->cv()->create([
             'fichier' => $path,

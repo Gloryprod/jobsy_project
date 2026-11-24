@@ -57,10 +57,12 @@ function frontendUrl(string $path = ''): string
     return rtrim((string) config('services.frontend_url'), '/') . '/' . ltrim($path, '/');
 }
 
+/** Supprime un fichier personnel (CV, diplôme, certificat) du disque privé. */
 function deleteFile(?string $path)
 {
-    if ($path && Storage::disk('public')->exists($path)) {
-        Storage::disk('public')->delete($path);
+    $disque = Storage::disk(\App\Support\FichiersPrives::DISQUE);
+    if ($path && $disque->exists($path)) {
+        $disque->delete($path);
     }
 }
 

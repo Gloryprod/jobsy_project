@@ -3,7 +3,9 @@
 namespace App\Jobs;
 
 use App\Models\Candidat;
+use App\Support\FichiersPrives;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Services\Cv\CVParserService;
 use Illuminate\Support\Facades\Log;
@@ -24,7 +26,7 @@ class AnalyzeCVJob implements ShouldQueue
 
     public function handle(CVParserService $nlpService): void
     {
-        $fullPath = storage_path("app/public/$this->filePath");
+        $fullPath = Storage::disk(FichiersPrives::DISQUE)->path($this->filePath);
         $text = "";
 
         // --- ÉTAPE 1 : Tentative rapide avec Smalot ---
