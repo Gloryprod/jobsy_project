@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ContactEntrepriseRequest;
 use App\Http\Requests\EntrepriseRequest;
 use App\Models\Entreprise;
+use App\Support\PasswordPolicy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -90,10 +91,11 @@ class EntrepriseController extends Controller
     }
 
     public function updatePassword(Request $request) {
+        // Même règle qu'à l'inscription : sinon le profil permettait de repasser à un mot de passe faible
         $request->validate([
             'currentPassword' => 'required',
-            'newPassword' => 'required|min:8|confirmed',
-        ]);
+            'newPassword' => ['required', 'confirmed', ...PasswordPolicy::rules()],
+        ], PasswordPolicy::messages('newPassword'));
 
         $entreprise = $request->user()->entreprise;
 
