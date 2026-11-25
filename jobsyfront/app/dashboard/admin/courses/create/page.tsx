@@ -15,7 +15,7 @@ export default function CreateFormation(){
             </div>
 
             <div className="w-full mx-auto my-10 p-4 bg-white shadow-xl rounded-2xl border border-gray-100">
-                <h2 className="text-2xl font-bold text-gray-800 ml-4 mb-4">Ajouter une formation</h2>
+                <h1 className="text-2xl font-bold text-gray-800 ml-4 mb-4">Ajouter une formation</h1>
                 <DropdownMenuSeparator className="ml-4 mr-4 flex items-center justify-end" />
                 <CourseForm />                
             </div>

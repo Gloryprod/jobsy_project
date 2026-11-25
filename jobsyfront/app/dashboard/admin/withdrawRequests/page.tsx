@@ -83,12 +83,12 @@ export default function AdminWithdrawals() {
 
         <div className="mb-8">
             <h1 className="text-2xl font-black text-slate-800 flex items-center justify-center">Gestion des Retraits</h1>
-            <p className="text-slate-500 flex items-center justify-center"><i>Validez les requêtes de retrait.</i></p>
+            <p className="text-slate-600 flex items-center justify-center"><i>Validez les requêtes de retrait.</i></p>
         </div>
 
         {/* Barre de Recherche */}
         <div className="mb-6 relative w-full max-w-sm flex items-end justify-end">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 " size={16} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 " size={16} />
           <input
             type="text"
             placeholder="Rechercher un candidat ou un numéro..."
@@ -102,12 +102,12 @@ export default function AdminWithdrawals() {
           <table className="w-full text-left border-collapse">
             <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
-                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest">#</th>
-                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest">Candidat</th>
-                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest">Montant</th>
-                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest">Méthode & Numéro</th>
-                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest">Date de la demande</th>
-                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">Actions</th>
+                <th className="p-6 text-[10px] font-black uppercase text-slate-600 tracking-widest">#</th>
+                <th className="p-6 text-[10px] font-black uppercase text-slate-600 tracking-widest">Candidat</th>
+                <th className="p-6 text-[10px] font-black uppercase text-slate-600 tracking-widest">Montant</th>
+                <th className="p-6 text-[10px] font-black uppercase text-slate-600 tracking-widest">Méthode & Numéro</th>
+                <th className="p-6 text-[10px] font-black uppercase text-slate-600 tracking-widest">Date de la demande</th>
+                <th className="p-6 text-[10px] font-black uppercase text-slate-600 tracking-widest text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -125,17 +125,17 @@ export default function AdminWithdrawals() {
                         {wd.metadata.method}
                       </span>
                       <span className="flex items-center gap-2 font-mono font-bold text-slate-600">
-                        <Phone size={14} className="text-slate-400" /> {wd.metadata.phone}
+                        <Phone size={14} className="text-slate-600" /> {wd.metadata.phone}
                       </span>
                     </div>
                   </td>
-                  <td className="p-4 text-slate-500">{new Date(wd.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</td>
+                  <td className="p-4 text-slate-600">{new Date(wd.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</td>
                   <td className="p-4">
                     <div className="flex justify-center gap-3">
-                      <button onClick={() => handleAction(wd.id, 'reject')} title="Refuser" className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all cursor-pointer shadow-sm">
-                        <X size={20} />
+                      <button onClick={() => handleAction(wd.id, 'reject')} title="Refuser" className="p-3 bg-red-50 text-red-700 rounded-xl hover:bg-red-500 hover:text-white transition-all cursor-pointer shadow-sm">
+                        <X aria-hidden="true" size={20} />
                       </button>
-                      <button onClick={() => handleAction(wd.id, 'approve')} title="Valider le paiement" className="p-3 bg-emerald-50 text-emerald-500 rounded-xl hover:bg-emerald-500 hover:text-white transition-all cursor-pointer flex items-center gap-2 font-black px-6 shadow-sm">
+                      <button onClick={() => handleAction(wd.id, 'approve')} title="Valider le paiement" className="p-3 bg-emerald-50 text-emerald-700 rounded-xl hover:bg-emerald-500 hover:text-white transition-all cursor-pointer flex items-center gap-2 font-black px-6 shadow-sm">
                         <Check size={20} /> 
                       </button>
                     </div>
@@ -150,30 +150,30 @@ export default function AdminWithdrawals() {
                <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Search size={24} className="text-slate-300" />
                </div>
-               <p className="text-slate-400 font-medium italic">Aucun résultat pour cette recherche.</p>
+               <p className="text-slate-600 font-medium italic">Aucun résultat pour cette recherche.</p>
             </div>
           )}
 
           {/* Pagination UI */}
           {totalPages >= 1 && (
             <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-              <p className="text-xs font-black text-slate-400 uppercase tracking-widest">
+              <p className="text-xs font-black text-slate-600 uppercase tracking-widest">
                 Page {currentPage} sur {totalPages}
               </p>
               <div className="flex gap-2">
-                <button 
+                <button aria-label="Page précédente" 
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
                   className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-[#000080] hover:text-white transition-all cursor-pointer"
                 >
-                  <ChevronLeft size={20} />
+                  <ChevronLeft aria-hidden="true" size={20} />
                 </button>
-                <button 
+                <button aria-label="Page suivante" 
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
                   className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-[#000080] hover:text-white transition-all cursor-pointer"
                 >
-                  <ChevronRight size={20} />
+                  <ChevronRight aria-hidden="true" size={20} />
                 </button>
               </div>
             </div>

@@ -1221,6 +1221,44 @@ Le lot 8 regroupe quatre chantiers de nature différente. Il est découpé comme
 
 **Vérification** : la même mesure avant et après ; le nombre de requêtes de vérification et de lectures de `/user` dans Chrome ; déconnexion puis connexion d'un autre compte dans le même onglet ; les vérifications des lots touchés (4a, 4b, 4c, 5, 6a, 6b, 7a, 7e, 8a, 8b).
 
+#### 8d : l'administration (plan détaillé du 22/11/2026)
+
+**Règle** (décision 2) : l'administration garde ses écrans et ses fonctions. Elle prend seulement les couleurs et les polices du thème, sans gamification, comme la version sobre de l'espace entreprise.
+
+**Constats** (20 écrans, à 1 280 et à 375 px).
+- **En-tête et navigation** : des copies de ceux de l'espace entreprise d'avant le lot 7a, avec 300 lignes de code commenté.
+  - La cloche est factice : point rouge permanent, faux message « Nouveau message de Yin » avec une photo chargée depuis un site externe. L'API n'envoie aucune notification aux admins.
+  - Le lien « Profil » mène à une page qui n'existe pas. Next.js le précharge sur chaque écran : une erreur 404 par page, et une requête qui ne se termine jamais.
+  - Boutons sans nom (cloche, compte, menu réduit), deux bandeaux d'en-tête imbriqués, page en cours non annoncée, aucun lien d'évitement.
+  - Intitulés de la navigation trop pâles (blanc à 40 %, contraste de 3,2:1).
+- **Polices** : Geist partout, au lieu des polices du thème.
+- **Pages** : la passe axe trouve des violations sur les 20 écrans.
+  - 243 textes sans contraste suffisant, dont 120 dans la navigation ; le reste surtout en gris clair (`slate-400`, `gray-500`) sur fond clair.
+  - 67 boutons et 19 liens réduits à une icône, sans nom.
+  - Formulaires des formations, modules, examens et projets : champs sans étiquette liée, barre d'outils de l'éditeur sans noms, titre de niveau 2 au lieu de 1.
+  - Fenêtres de confirmation (SweetAlert2) aux couleurs par défaut, sans contraste suffisant, et bibliothèque chargée sur chaque écran.
+- À 375 px, aucun débordement.
+- **Trouvés pendant la correction.**
+  - Le fil d'Ariane renvoyait l'admin vers le tableau de bord de l'entreprise, et quatre de ses liens menaient à des pages inexistantes (questions et projets d'examen, logistique, candidats) : une erreur 404 sur ces écrans.
+  - La page de modification d'un projet final s'ouvrait vide : elle lisait mal la réponse de l'API (`{ project }`). Aucun lien n'y mène ; la modification se fait depuis la liste.
+  - Avatars des candidats en blanc sur une couleur tirée du nom (jusqu'à 1,4:1) ; badges de rang et de catégorie écrits dans la couleur de l'API, souvent trop claire.
+  - Avertissements et badges qui clignotaient sans fin.
+  - `ModuleForm` (577 lignes), une ancienne copie de `ModuleForms`, n'est plus utilisé.
+
+**Front.**
+- **En-tête et navigation partagés avec l'espace entreprise** : les composants du lot 7a prennent la liste des pages et le nom de l'espace en paramètre. L'administration les utilise, sans cloche ni lien « Profil ». Sa navigation reconnaît les sous-pages (une formation active « Formations »). Les anciens composants sont supprimés.
+- **Mise en page** comme l'espace entreprise : lien « Aller au contenu », zone principale, police lisible du thème, titres de page dans la police du Système en bleu marine.
+- **Contrastes** : les gris clairs passent au gris du thème (`slate-600`), les pastilles colorées à des teintes plus foncées.
+- **Noms** : boutons et liens réduits à une icône, champs et listes des formulaires, barre d'outils de l'éditeur (fonction commune du lot 8b).
+- **Titres** : un titre de niveau 1 par écran, sans niveau sauté.
+- **Confirmations** : SweetAlert2 aux couleurs du thème (bleu marine, rouge foncé), chargée au clic.
+- **Liens** : fil d'Ariane vers le tableau de bord de l'administration, liens morts corrigés, page de modification d'un projet préremplie.
+- **Couleurs calculées** : avatars sur fond bleu marine ; badges de rang et de catégorie en texte foncé, la couleur de l'API gardée en fond et en bordure ; plus de clignotement permanent.
+- `ModuleForm` est supprimé.
+- Pas de changement d'API.
+
+**Vérification** : la même passe axe, qui doit tomber à zéro violation sur les 20 écrans ; plus aucune erreur dans la console ; navigation (page en cours, sous-pages, menu réduit nommé, menu mobile, lien d'évitement) ; une action réelle par formulaire touché (créer une formation, un module, une question d'examen, un projet) et une confirmation SweetAlert2 ; 375 px sans débordement ; les vérifications des lots qui partagent l'en-tête (7a, 8a, 8b).
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -1388,6 +1426,11 @@ Repères à confirmer :
 | 8e | Prêt sur `design/lot-8e-pages-publiques` (empilé sur le lot 8b) | — | Types, lint et build verts. API locale avec l'API 8e. 35 contrôles automatiques : sur l'accueil et les quatre pages, un titre de niveau 1 et une zone principale, aucun chiffre, témoignage, numéro ni bouton inventé, axe sans violation à 1 280 et 375 px, page en cours annoncée ; aucun lien mort (l'ancien `/register/entreprise`) ; missions et formations conformes à l'API ; recherche, filtre au clavier, foire aux questions au clavier ; lien d'évitement ; aucune erreur dans la console. Passe axe complète : 46 écrans sur 46 sans violation. Lot 6b relancé (36) |
 | API 8c | Prêt sur `fix/api-cors-preflight` (depuis `main`) | — | Réponse de vérification CORS gardée 2 heures par le navigateur (`max_age` à 7200 secondes au lieu de 0). 1 test, qui échoue sans la correction. Suite : 161 tests |
 | 8c | Prêt sur `design/lot-8c-performance` (empilé sur le lot 8e) | — | Types, lint et build verts. API locale avec l'API 8c. Lighthouse mobile, médiane de 3 passages, 8 écrans : 72 à 149 Ko de moins par page (polices de 98 à 46 Ko) ; premier affichage des tableaux de bord de 1,6–2,5 s à 1,2 s ; décalage du tableau de bord du candidat de 0,21 à 0,02 ; contenu principal des tableaux de bord de 5,8–6,7 s à 5,2–6,7 s, **critère des 3 secondes non atteint** (D43). Dans Chrome : `/user` lu une fois par page, requêtes de vérification de 6 par chargement à aucune après la première visite, dernière réponse du tableau de bord du candidat à 3,2 s au lieu de 4,3 s ; déconnexion du candidat puis connexion d'une entreprise dans le même onglet sans renvoi. Lots relancés : 4a (64), 4b (36), 4c (13), 5 (29), 6a (31), 6b (36), 7a (33), 7e (30), 8a (23), 8b (axe : 46 écrans sans violation, 4) |
+| 8d | Prêt sur `design/lot-8d-administration` (empilé sur le lot 8c) | — | Pas de changement d'API. Types et build verts ; ESLint : aucun fichier moins bon qu'avant (les `any` déjà présents dans l'administration restent). axe-core 4.11 sur les 20 écrans de l'administration : de 20 écrans en défaut (243 contrastes, 67 boutons et 19 liens sans nom, champs sans étiquette, titres) à **zéro violation** ; aucune erreur dans la console (avant : un 404 par écran) ; aucun débordement à 375 px. 47 contrôles automatiques, deux passages complets : plus de cloche factice ni de lien « Profil », un seul en-tête, 6 pages et leurs sous-pages annoncées, menu réduit nommé, menu du compte au clavier, lien d'évitement, fil d'Ariane vivant ; formation créée en base, puis supprimée après une confirmation aux couleurs du thème (« Annuler » ne supprime rien) ; module et projet final modifiés en base, puis rétablis ; question d'examen créée avec la bonne réponse annoncée, puis retirée ; menu mobile (6 pages, page en cours, Échap et focus rendu) ; 10 pages chargées à 375 px sans débordement ; aucune erreur dans la console. Lots relancés : 7a (33), 8a (23), 8b (4 ; passe axe : 42 écrans sans violation) |
+
+Constats pour Gloria (lot 8d) :
+- Dans le suivi des offres d'une mission (administration, Entreprises, puis les missions d'une entreprise), les boutons « Voir » et « Relancer manuellement » n'ont aucune action. Ils sont gardés et nommés, en attendant de savoir ce qu'ils doivent faire.
+- La page de modification d'un projet final (`/dashboard/admin/courses/{id}/final_project/{id}`) n'est atteinte par aucun lien : la modification se fait depuis la liste des projets. Elle est corrigée, mais elle pourrait être supprimée.
 
 Constat pour Gloria (lot 2b) : les questions de secours de l'API, servies quand l'IA est indisponible, vouvoient le candidat (« Qu'est-ce qui vous motive… »), alors que l'interface le tutoie. À harmoniser dans `ApplicationAIService` si elle le souhaite.
 

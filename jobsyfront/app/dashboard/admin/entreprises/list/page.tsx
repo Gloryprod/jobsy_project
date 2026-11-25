@@ -36,7 +36,7 @@ export default function ListEntreprise(){
     );
     if (error) return (
         <div className="min-h-screen flex items-center justify-center">
-            <p className="text-red-400">Erreur de chargement des entreprises.</p>
+            <p className="text-red-700">Erreur de chargement des entreprises.</p>
         </div>
     );
 
@@ -48,7 +48,7 @@ export default function ListEntreprise(){
 
             <div className="mb-6">
                 <h1 className="text-2xl font-black text-slate-800 flex items-center justify-center">Gestion des Entreprises</h1>
-                <p className="text-slate-500 flex items-center justify-center"><i>Vue d&apos;ensemble des entreprises inscrites</i></p>
+                <p className="text-slate-600 flex items-center justify-center"><i>Vue d&apos;ensemble des entreprises inscrites</i></p>
             </div>
 
             {/* <div className="flex justify-end items-end mb-4">

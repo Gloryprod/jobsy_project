@@ -9,7 +9,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Edit, Delete, BookOpen, HelpCircle, ChevronLeft, ChevronRight, Search} from "lucide-react";
 import toast from 'react-hot-toast';
-import Swal from 'sweetalert2';
 import { useRouter } from "next/navigation"
 import React, { useState } from 'react';
  
@@ -84,20 +83,22 @@ export default function ModulesPage({ params }: { params: Promise<{ id: string }
 
     if (error) return (
         <div className="min-h-screen flex items-center justify-center">
-            <p className="text-red-400">Erreur de chargement des informations de la formation.</p>
+            <p className="text-red-700">Erreur de chargement des informations de la formation.</p>
         </div>
     );
 
     const handleDelete = async (module_id:number) =>{
 
+        // Chargée au clic : la bibliothèque ne pèse pas sur l'écran
+        const { default: Swal } = await import("sweetalert2");
         const result = await Swal.fire({
             title: `Voulez-vous supprimer ce module ?`,
             icon: "warning",
             showCancelButton: true,
             confirmButtonText: "Oui, supprimer",
             cancelButtonText: "Annuler",
-            confirmButtonColor: "#d33",
-            cancelButtonColor: "#3085d6",
+            confirmButtonColor: "#b91c1c",
+            cancelButtonColor: "#000080",
         });
         
         if (result.isConfirmed) {
@@ -121,7 +122,7 @@ export default function ModulesPage({ params }: { params: Promise<{ id: string }
 
                 <div className="mb-8">
                     <h1 className="text-2xl font-black text-slate-800 flex items-center justify-center">Gestion des Modules</h1>
-                    <p className="text-slate-500 flex items-center justify-center"><i>Consultez les modules et lecons associées</i></p>
+                    <p className="text-slate-600 flex items-center justify-center"><i>Consultez les modules et lecons associées</i></p>
                 </div>
 
                 <div className='pt-12'>
@@ -133,7 +134,7 @@ export default function ModulesPage({ params }: { params: Promise<{ id: string }
                     </div>
 
                     <div className="mb-6 relative w-full max-w-sm flex items-end justify-end">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 " size={16} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 " size={16} />
                         <input
                             type="text"
                             placeholder="Rechercher un module..."
@@ -179,13 +180,11 @@ export default function ModulesPage({ params }: { params: Promise<{ id: string }
 
                                         {/* Actions Admin : shrink-0 empêche les boutons de rétrécir ou de se décaler */}
                                         <div className="flex items-center shrink-0 gap-1">
-                                            <Link href={`/dashboard/admin/courses/${id}/modules/${module.id}/edit`}>
-                                                <button className="cursor-pointer p-2 hover:bg-blue-50 text-[#000080] rounded-lg transition-colors">
-                                                    <Edit className="w-4 h-4" />
-                                                </button>
+                                            <Link href={`/dashboard/admin/courses/${id}/modules/${module.id}/edit`} aria-label={`Modifier le module ${module.title}`} className="cursor-pointer p-2 hover:bg-blue-50 text-[#000080] rounded-lg transition-colors">
+                                                <Edit aria-hidden="true" className="w-4 h-4" />
                                             </Link>
-                                            <button onClick={()=> handleDelete(module.id)} className="cursor-pointer p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors">
-                                                <Delete className="w-4 h-4" />
+                                            <button aria-label={`Supprimer le module ${module.title}`} onClick={()=> handleDelete(module.id)} className="cursor-pointer p-2 hover:bg-red-50 text-red-700 rounded-lg transition-colors">
+                                                <Delete aria-hidden="true" className="w-4 h-4" />
                                             </button>
                                         </div>
                                     </div>
@@ -200,12 +199,12 @@ export default function ModulesPage({ params }: { params: Promise<{ id: string }
                                 {/* Pied de carte : Toujours fixé en bas grâce au justify-between du parent */}
                                 <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
                                     <div className="flex gap-4">
-                                        <div className="flex items-center gap-1.5 text-xs font-medium text-gray-400">
+                                        <div className="flex items-center gap-1.5 text-xs font-medium text-gray-600">
                                             <BookOpen className="w-4 h-4 text-[#000080]" />
                                             <span>{module.lessons?.length || 0} leçons</span>
                                         </div>
-                                        <div className="flex items-center gap-1.5 text-xs font-medium text-gray-400">
-                                            <HelpCircle className="w-4 h-4 text-orange-500" />
+                                        <div className="flex items-center gap-1.5 text-xs font-medium text-gray-600">
+                                            <HelpCircle className="w-4 h-4 text-orange-700" />
                                             <span>{module.quiz_questions?.length || 0} Quiz</span>
                                         </div>
                                     </div>
@@ -226,30 +225,30 @@ export default function ModulesPage({ params }: { params: Promise<{ id: string }
                         <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                             <Search size={24} className="text-slate-300" />
                         </div>
-                        <p className="text-slate-400 font-medium italic">Aucun résultat pour cette recherche.</p>
+                        <p className="text-slate-600 font-medium italic">Aucun résultat pour cette recherche.</p>
                         </div>
                     )}
 
                     {/* Pagination UI */}
                     {totalPages > 1 && (
                         <div className="p-6 border-t border-slate-100 flex items-center justify-between">
-                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                        <p className="text-xs font-black text-slate-600 uppercase tracking-widest">
                             Page {currentPage} sur {totalPages}
                         </p>
                         <div className="flex gap-2">
-                            <button 
+                            <button aria-label="Page précédente" 
                             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                             disabled={currentPage === 1}
                             className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-[#000080] hover:text-white transition-all cursor-pointer"
                             >
-                            <ChevronLeft size={20} />
+                            <ChevronLeft aria-hidden="true" size={20} />
                             </button>
-                            <button 
+                            <button aria-label="Page suivante" 
                             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                             disabled={currentPage === totalPages}
                             className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-[#000080] hover:text-white transition-all cursor-pointer"
                             >
-                            <ChevronRight size={20} />
+                            <ChevronRight aria-hidden="true" size={20} />
                             </button>
                         </div>
                         </div>

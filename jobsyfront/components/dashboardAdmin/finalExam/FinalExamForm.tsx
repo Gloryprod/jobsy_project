@@ -116,7 +116,7 @@
 
 //   // Classes de styles réutilisables (Esprit Jobsy)
 //   const inputClass = "w-full mt-1 p-3 bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-[#000080]/20 focus:border-[#000080] outline-none transition-all font-medium";
-//   const labelClass = "block text-xs font-black text-slate-500 uppercase tracking-wider";
+//   const labelClass = "block text-xs font-black text-slate-600 uppercase tracking-wider";
 
 //   return (
 //     <div className=" p-6 md:p-8 w-full mx-auto animate-fadeIn">
@@ -127,10 +127,10 @@
 //           <h2 className="text-base font-black text-slate-900">
 //             {isEditing ? "Modifier la question" : "Ajouter une question"}
 //           </h2>
-//           <p className="text-[11px] text-slate-400 font-medium">Examen final de la certification</p>
+//           <p className="text-[11px] text-slate-600 font-medium">Examen final de la certification</p>
 //         </div>
 //         {onCancel && (
-//           <button onClick={onCancel} className="cursor-pointer text-xs font-bold text-slate-400 hover:text-slate-900 flex items-center gap-1 transition-all">
+//           <button onClick={onCancel} className="cursor-pointer text-xs font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1 transition-all">
 //             <ArrowLeft className="w-3.5 h-3.5" /> Annuler
 //           </button>
 //         )}
@@ -204,7 +204,7 @@
 //           <button
 //             type="button"
 //             onClick={() => append("")}
-//             className="cursor-pointer flex items-center justify-center gap-2 w-full p-3 border-2 border-dashed border-slate-100 rounded-xl text-slate-400 hover:border-slate-200 hover:text-slate-600 transition-all text-[10px] font-black uppercase tracking-wider bg-white"
+//             className="cursor-pointer flex items-center justify-center gap-2 w-full p-3 border-2 border-dashed border-slate-100 rounded-xl text-slate-600 hover:border-slate-200 hover:text-slate-600 transition-all text-[10px] font-black uppercase tracking-wider bg-white"
 //           >
 //             <Plus className="w-3.5 h-3.5" /> Ajouter une option de réponse
 //           </button>
@@ -223,7 +223,7 @@
 //           </div>
 
 //           {watchedCorrectAnswers.length === 0 && (
-//             <div className="flex items-center gap-1.5 text-red-500 sm:justify-end animate-pulse">
+//             <div className="flex items-center gap-1.5 text-red-700 sm:justify-end">
 //               <AlertCircle className="w-4 h-4 shrink-0" />
 //               <span className="text-[10px] font-black uppercase tracking-wider">Aucune bonne réponse cochée</span>
 //             </div>
@@ -383,7 +383,7 @@ export default function FinalExamQuestionForm({ courseId, initialData, onSuccess
 
   // Classes de styles réutilisables
   const inputClass = "w-full mt-1 p-3 bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-[#000080]/20 focus:border-[#000080] outline-none transition-all font-medium";
-  const labelClass = "block text-xs font-black text-slate-500 uppercase tracking-wider";
+  const labelClass = "block text-xs font-black text-slate-600 uppercase tracking-wider";
 
   return (
     <div className="p-6 md:p-8 w-full mx-auto animate-fadeIn">
@@ -394,13 +394,13 @@ export default function FinalExamQuestionForm({ courseId, initialData, onSuccess
           <h2 className="text-base font-black text-slate-900">
             {isEditing ? "Modifier la question" : "Ajouter une question"}
           </h2>
-          <p className="text-[11px] text-slate-400 font-medium">Examen final de la certification</p>
+          <p className="text-[11px] text-slate-600 font-medium">Examen final de la certification</p>
         </div>
         {onCancel && (
           <button 
             type="button"
             onClick={onCancel} 
-            className="cursor-pointer text-xs font-bold text-slate-400 hover:text-slate-900 flex items-center gap-1 transition-all"
+            className="cursor-pointer text-xs font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1 transition-all"
           >
             <ArrowLeft className="w-3.5 h-3.5" /> Annuler
           </button>
@@ -411,8 +411,8 @@ export default function FinalExamQuestionForm({ courseId, initialData, onSuccess
         
         {/* Énoncé de la question */}
         <div>
-          <label className={labelClass}>Énoncé de la question</label>
-          <textarea
+          <label htmlFor="champ-question_text" className={labelClass}>Énoncé de la question</label>
+          <textarea id="champ-question_text"
             {...register("question_text")}
             rows={3}
             className={inputClass}
@@ -439,12 +439,14 @@ export default function FinalExamQuestionForm({ courseId, initialData, onSuccess
                   {/* Case à cocher personnalisée pour marquer la réponse correcte */}
                   <button
                     type="button"
+                    aria-pressed={isCorrect}
+                    aria-label={`Option ${index + 1} : bonne réponse`}
                     onClick={() => handleToggleCorrectAnswer(currentOptionValue)}
                     className={`cursor-pointer w-6 h-6 rounded-lg flex items-center justify-center transition-all shrink-0 ${
                       isCorrect ? "bg-green-500 text-white shadow-sm" : "bg-white border border-slate-200 text-transparent"
                     }`}
                   >
-                    <Check className="w-4 h-4 stroke-3" />
+                    <Check aria-hidden="true" className="w-4 h-4 stroke-3" />
                   </button>
 
                   {/* Champ texte de l'option (lié avec .value) */}
@@ -457,12 +459,12 @@ export default function FinalExamQuestionForm({ courseId, initialData, onSuccess
 
                   {/* Bouton pour supprimer une option */}
                   {fields.length > 2 && (
-                    <button
+                    <button aria-label={`Supprimer l'option ${index + 1}`}
                       type="button"
                       onClick={() => remove(index)}
                       className="p-1.5 text-slate-300 hover:text-red-500 rounded-lg hover:bg-red-50 transition-all shrink-0"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 aria-hidden="true" className="w-4 h-4" />
                     </button>
                   )}
                 </div>
@@ -474,7 +476,7 @@ export default function FinalExamQuestionForm({ courseId, initialData, onSuccess
           <button
             type="button"
             onClick={() => append({ value: "" })}
-            className="cursor-pointer flex items-center justify-center gap-2 w-full p-3 border-2 border-dashed border-slate-100 rounded-xl text-slate-400 hover:border-slate-200 hover:text-slate-600 transition-all text-[10px] font-black uppercase tracking-wider bg-white"
+            className="cursor-pointer flex items-center justify-center gap-2 w-full p-3 border-2 border-dashed border-slate-100 rounded-xl text-slate-600 hover:border-slate-200 hover:text-slate-600 transition-all text-[10px] font-black uppercase tracking-wider bg-white"
           >
             <Plus className="w-3.5 h-3.5" /> Ajouter une option de réponse
           </button>
@@ -483,8 +485,8 @@ export default function FinalExamQuestionForm({ courseId, initialData, onSuccess
         {/* Pied du formulaire : Barème & Messages d'alerte */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center pt-4 border-t border-slate-50">
           <div>
-            <label className={labelClass}>Barème de points</label>
-            <input
+            <label htmlFor="champ-points" className={labelClass}>Barème de points</label>
+            <input id="champ-points"
               {...register("points", { valueAsNumber: true })}
               type="number"
               min="1"
@@ -493,7 +495,7 @@ export default function FinalExamQuestionForm({ courseId, initialData, onSuccess
           </div>
 
           {watchedCorrectAnswers.length === 0 && (
-            <div className="flex items-center gap-1.5 text-red-500 sm:justify-end animate-pulse">
+            <div className="flex items-center gap-1.5 text-red-700 sm:justify-end">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span className="text-[10px] font-black uppercase tracking-wider">Aucune bonne réponse cochée</span>
             </div>

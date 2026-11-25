@@ -74,10 +74,10 @@ export default function AdminExamReview({ project, session, onSuccess }: AdminEx
       <div className="flex items-center justify-between border-b border-slate-100 pb-4">
         <div>
           <h2 className="text-base font-black text-slate-900">{session.candidat.user.nom} {session.candidat.user.prenom}</h2>
-          <p className="text-xs text-slate-500">{session.candidat.user.email}</p>
+          <p className="text-xs text-slate-600">{session.candidat.user.email}</p>
         </div>
         <div className="text-right">
-          <span className="text-[10px] font-bold text-slate-400 block">Soumis le</span>
+          <span className="text-[10px] font-bold text-slate-600 block">Soumis le</span>
           <span className="text-xs font-semibold text-slate-700">
             {new Date(session.submitted_at).toLocaleDateString("fr-FR", {
               day: "numeric",
@@ -102,15 +102,15 @@ export default function AdminExamReview({ project, session, onSuccess }: AdminEx
 
             return (
               <div key={field.key} className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
                   {field.label}
                 </span>
 
                 {!value ? (
-                  <p className="text-xs text-slate-400 italic">Aucune réponse fournie</p>
+                  <p className="text-xs text-slate-600 italic">Aucune réponse fournie</p>
                 ) : (field.type === "url" || field.type === "file") && !safeHttpUrl(value) ? (
                   // Lien non http(s) (ex. javascript:) : affiché comme texte, jamais cliquable
-                  <p className="text-xs text-red-600 break-all">Lien refusé (format non autorisé) : {String(value)}</p>
+                  <p className="text-xs text-red-700 break-all">Lien refusé (format non autorisé) : {String(value)}</p>
                 ) : field.type === "url" || field.type === "file" ? (
                   <a
                     href={safeHttpUrl(value) ?? undefined}
@@ -138,7 +138,7 @@ export default function AdminExamReview({ project, session, onSuccess }: AdminEx
           {/* Note sur 100 */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
-              <Award className="w-4 h-4 text-amber-500" /> Note attribuable / 20
+              <Award className="w-4 h-4 text-amber-700" /> Note attribuable / 20
             </label>
             <input
               type="number"
@@ -176,7 +176,7 @@ export default function AdminExamReview({ project, session, onSuccess }: AdminEx
         {/* Feedback / Remarques */}
         <div className="space-y-1.5">
           <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
-            <MessageSquare className="w-4 h-4 text-slate-500" /> Remarques / Feedback pour l&apos;étudiant
+            <MessageSquare className="w-4 h-4 text-slate-600" /> Remarques / Feedback pour l&apos;étudiant
           </label>
           <textarea
             rows={4}
