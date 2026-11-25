@@ -25,7 +25,9 @@ return [
 
     'exposed_headers' => [],
 
-    'max_age' => 0,
+    // L'en-tête X-Requested-With (protection CSRF) déclenche une requête de vérification avant chaque appel :
+    // le navigateur garde sa réponse 2 heures (plafond de Chrome) au lieu de la redemander à chaque fois
+    'max_age' => 7200,
 
     'supports_credentials' => true,
 
