@@ -2,6 +2,8 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 // Racine du back Laravel (.env.local : NEXT_PUBLIC_API_URL=https://api.jobsy.bj), sans /api :
 // c'est la convention du reste du front (`${NEXT_PUBLIC_API_URL}/storage/...`). Un /api final est toléré.
+// Avec l'API servie sous le domaine du front (D43, API_ORIGIN dans next.config.ts), NEXT_PUBLIC_API_URL=/ :
+// la racine devient vide et les appels partent vers /api et /storage sur le même domaine.
 export const API_ROOT = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/+$/, "").replace(/\/api$/, "");
 export const API_URL = `${API_ROOT}/api`;
 // Fichiers publics (logos, CV, diplômes, leçons) servis par Laravel sous /storage.
