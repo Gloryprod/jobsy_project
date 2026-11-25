@@ -50,7 +50,16 @@ export const columns: ColumnDef<Entreprise>[] = [
         accessorKey: "logo",
         header: () => <div className="text-left">Logo</div>,
         cell: ({ row }) => {
-            return <Image src={`${STORAGE_URL}/${row.getValue("logo")}`} alt="Logo de l'entreprise" width={40} height={40} className="w-12 h-12 object-cover rounded-full" unoptimized />;
+            const logo = row.original.logo;
+            // Sans logo, l'initiale de l'entreprise (le nom est dans la colonne suivante) plutôt qu'une image cassée (/storage/null)
+            if (!logo) {
+                return (
+                    <span aria-hidden="true" className="flex w-12 h-12 items-center justify-center rounded-full bg-slate-100 font-bold text-[#000080]">
+                        {(row.original.nom_entreprise || "?").charAt(0).toUpperCase()}
+                    </span>
+                );
+            }
+            return <Image src={`${STORAGE_URL}/${logo}`} alt={`Logo de ${row.original.nom_entreprise}`} width={40} height={40} className="w-12 h-12 object-cover rounded-full" unoptimized />;
         }
     },
 
