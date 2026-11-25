@@ -2,9 +2,9 @@
 
 import useSWR from "swr";
 import api from "@/lib/api";
-import { EmblemeRang, LienSysteme } from "@/components/systeme";
-import { formaterFcfa } from "@/lib/formats";
+import { LienSysteme } from "@/components/systeme";
 import type { MissionPortail } from "@/components/dashboardCandidat/portails/types";
+import { CarteMissionPublique } from "@/components/public/CarteMissionPublique";
 
 const MAX_MISSIONS = 3;
 
@@ -29,24 +29,11 @@ export function DernieresMissions() {
   } else {
     contenu = (
       <ul className="grid gap-4 md:grid-cols-3">
-        {missions.map((mission) => {
-          const rang = (mission.min_rank_required || "E").trim().toUpperCase().slice(0, 1);
-          const entreprise = mission.entreprise?.nom_entreprise || mission.company;
-          return (
-            <li key={mission.id} className="grid content-start overflow-hidden rounded-2xl border border-systeme-lueur/30 bg-white text-slate-900">
-              <p className="flex items-center gap-3 bg-systeme-panneau px-4 py-2.5 font-systeme text-sm font-bold text-systeme-texte">
-                <EmblemeRang rang={rang} taille="sm" />
-                {rang === "E" ? "Ouverte à tous les rangs" : `Rang ${rang} requis`}
-              </p>
-              <div className="grid gap-2 p-5">
-                <h3 className="text-lg leading-snug font-bold break-words">{mission.title}</h3>
-                <p className="text-sm text-slate-600">{[entreprise, mission.location].filter(Boolean).join(", ")}</p>
-                <p className="text-xl font-bold text-[#000080] tabular-nums">{formaterFcfa(mission.reward) ?? "Montant non précisé"}</p>
-                <p className="text-xs font-semibold text-[#6B5F00]">+250 XP à la validation</p>
-              </div>
-            </li>
-          );
-        })}
+        {missions.map((mission) => (
+          <li key={mission.id} className="grid">
+            <CarteMissionPublique mission={mission} />
+          </li>
+        ))}
       </ul>
     );
   }

@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import api from "@/lib/api";
-import { passwordSchema } from "@/lib/password";
+import { erreurMotDePasse } from "@/lib/password";
 import { BoutonSysteme } from "@/components/systeme";
 import { Alerte } from "@/components/dashboardCandidat/epreuve/Alerte";
 import { RenvoiConfirmation } from "@/components/forms/RenvoiConfirmation";
@@ -52,8 +52,8 @@ export function Inscription({ role }: { role: keyof typeof PROFILS }) {
     const trouvees: Record<string, string> = {};
     for (const champ of profil.champs as Champ[]) if (champ.obligatoire && !v(champ.nom).trim()) trouvees[champ.nom] = "Ce champ est obligatoire.";
     if (!emailValide(v("email"))) trouvees.email = "Indiquez une adresse e-mail valide.";
-    const mdp = passwordSchema.safeParse(v("password"));
-    if (!mdp.success) trouvees.password = mdp.error.issues[0].message;
+    const mdp = erreurMotDePasse(v("password"));
+    if (mdp) trouvees.password = mdp;
     if (v("password") !== v("password_confirmation")) trouvees.password_confirmation = "Les deux mots de passe ne sont pas identiques.";
     setErreurs(trouvees);
     const ordre = [...profil.champs.map((c) => c.nom), "email", "password", "password_confirmation"];
