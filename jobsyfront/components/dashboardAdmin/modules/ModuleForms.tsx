@@ -4,6 +4,7 @@ import { useForm, Controller, useFieldArray } from "react-hook-form"
 import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import { Editor } from 'primereact/editor';
+import { nommerBarreEditeur } from "@/lib/editeur";
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
@@ -359,18 +360,18 @@ export default function ModuleForm({ courseId, initialData }: ModuleFormProps) {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className={labelClass}>Titre du module</label>
-                        <input {...register("title")} type="text" name="title" className={inputClass} />
+                        <label htmlFor="champ-title" className={labelClass}>Titre du module</label>
+                        <input id="champ-title" {...register("title")} type="text" name="title" className={inputClass} />
                     </div>
 
                     <div>
-                        <label className={labelClass}>Ordre</label>
-                        <input {...register("order")} type="number" name="order" className={inputClass} />
+                        <label htmlFor="champ-order" className={labelClass}>Ordre</label>
+                        <input id="champ-order" {...register("order")} type="number" name="order" className={inputClass} />
                     </div>
                 </div>
 
                 <div>     
-                    <label className={labelClass}>Description</label>
+                    <label id="description-libelle" className={labelClass}>Description</label>
                     <Controller
                         name="description"
                         control={control}
@@ -378,6 +379,14 @@ export default function ModuleForm({ courseId, initialData }: ModuleFormProps) {
                             <Editor 
                                 value={field.value} 
                                 onTextChange={(e) => field.onChange(e.htmlValue)} 
+                                onLoad={(quill) => {
+                                    // La zone de saisie prend le nom de l'étiquette, la barre d'outils des noms en français (lot 8b)
+                                    const zone = quill?.root as HTMLElement | undefined;
+                                    zone?.setAttribute("role", "textbox");
+                                    zone?.setAttribute("aria-multiline", "true");
+                                    zone?.setAttribute("aria-labelledby", "description-libelle");
+                                    nommerBarreEditeur(quill);
+                                }}
                                 style={{ height: '320px' }} 
                             />
                         )}
@@ -390,22 +399,22 @@ export default function ModuleForm({ courseId, initialData }: ModuleFormProps) {
                         <DropdownMenuSeparator className="my-4" />
 
                         <div className='flex items-center justify-between'>
-                            <h3 className="text-xl font-semibold text-gray-800 mb-4">Ajouter une leçon</h3>
-                            <Button variant="ghost" className='cursor-pointer text-red-500 hover:text-red-700' onClick={() => setOpenLessonForm(false)}>
-                                <X className="h-4 w-4" />
+                            <h2 className="text-xl font-semibold text-gray-800 mb-4">Ajouter une leçon</h2>
+                            <Button aria-label="Fermer" variant="ghost" className='cursor-pointer text-red-700 hover:text-red-700' onClick={() => setOpenLessonForm(false)}>
+                                <X aria-hidden="true" className="h-4 w-4" />
                             </Button> 
                         </div>
 
                         {/* Formulaire d'ajout de leçon */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border p-4 rounded-lg bg-gray-50">
                             <div>
-                                <label className={labelClass}>Titre de la leçon</label>
-                                <input type="text" name="title" className={inputClass} />
+                                <label htmlFor="champ-lecon-title" className={labelClass}>Titre de la leçon</label>
+                                <input id="champ-lecon-title" type="text" name="title" className={inputClass} />
                             </div>
 
                             <div>
-                                <label className={labelClass}>Type de contenu</label>
-                                <select name="type" className={inputClass} value={contentType} onChange={(e) => setContentType(e.target.value)}>
+                                <label htmlFor="champ-type" className={labelClass}>Type de contenu</label>
+                                <select id="champ-type" name="type" className={inputClass} value={contentType} onChange={(e) => setContentType(e.target.value)}>
                                     <option value="video">Vidéo</option>
                                     <option value="text">Texte</option>
                                     <option value="pdf">Document</option>
@@ -429,7 +438,7 @@ export default function ModuleForm({ courseId, initialData }: ModuleFormProps) {
                                     // Si type === vidéo ou pdf, on affiche le champ d'upload
                                     <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg bg-white">
                                         <div className="space-y-1 text-center">
-                                            <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                            <svg className="mx-auto h-12 w-12 text-gray-600" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                                                 <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                             </svg>
                                             <div className="flex text-sm text-gray-600">
@@ -443,7 +452,7 @@ export default function ModuleForm({ courseId, initialData }: ModuleFormProps) {
                                                     />
                                                 </label>
                                             </div>
-                                            <p className="text-xs text-gray-500">
+                                            <p className="text-xs text-gray-600">
                                                 {contentType === 'video' ? 'MP4, WebM jusqu\'à 50MB' : 'PDF jusqu\'à 10MB'}
                                             </p>
                                         </div>
@@ -452,18 +461,18 @@ export default function ModuleForm({ courseId, initialData }: ModuleFormProps) {
                             </div>
 
                             {/* <div className="md:col-span-2">
-                                <label className={labelClass}>Contenu de la leçon</label>
-                                <textarea name="lesson_content" className={`${inputClass} h-32`}></textarea>
+                                <label htmlFor="champ-lesson_content" className={labelClass}>Contenu de la leçon</label>
+                                <textarea id="champ-lesson_content" name="lesson_content" className={`${inputClass} h-32`}></textarea>
                             </div> */}
 
                             <div>
-                                <label className={labelClass}>Durée (minutes)</label>
-                                <input type="number" name="lesson_duration" className={inputClass} />
+                                <label htmlFor="champ-lesson_duration" className={labelClass}>Durée (minutes)</label>
+                                <input id="champ-lesson_duration" type="number" name="lesson_duration" className={inputClass} />
                             </div>
 
                             <div>
-                                <label className={labelClass}>Ordre</label>
-                                <input type="number" name="lesson_order" className={inputClass} />
+                                <label htmlFor="champ-lesson_order" className={labelClass}>Ordre</label>
+                                <input id="champ-lesson_order" type="number" name="lesson_order" className={inputClass} />
                             </div>
 
                             <div className='flex justify-end md:col-span-2'>
@@ -488,19 +497,19 @@ export default function ModuleForm({ courseId, initialData }: ModuleFormProps) {
 
                 <div className="space-y-2 mt-4">
                     {lessonContent.length > 0 && (
-                        <h3 className="text-xl font-semibold text-gray-800 mb-4">Leçons ajoutées</h3>
+                        <h2 className="text-xl font-semibold text-gray-800 mb-4">Leçons ajoutées</h2>
                     )}
                     {lessonContent.map((lesson, index) => (
                         <div key={index} className="flex items-center justify-between p-3 bg-blue-50 border border-blue-100 rounded-lg">
                             <span className="text-sm font-medium">{lesson.order}. {lesson.title}</span>
                             <div className="flex items-center gap-2">
                                 <span className="text-xs bg-blue-200 text-[#000080] px-2 py-1 rounded capitalize">{lesson.type}</span>
-                                <button 
-                                    type="button" 
+                                <button aria-label={`Retirer la leçon ${lesson.title}`}
+                                    type="button"
                                     onClick={() => handleDeleteLesson(index)}
-                                    className="text-red-500 hover:text-red-700 cursor-pointer"
+                                    className="text-red-700 hover:text-red-700 cursor-pointer"
                                 >
-                                    <X className="h-4 w-4" />
+                                    <X aria-hidden="true" className="h-4 w-4" />
                                 </button>
                             </div>                                   
                         </div>
@@ -512,9 +521,9 @@ export default function ModuleForm({ courseId, initialData }: ModuleFormProps) {
                         <DropdownMenuSeparator className="my-4" />
 
                         <div className='flex items-center justify-between'>
-                            <h3 className="text-xl font-semibold text-gray-800 mb-4">Ajouter une question de quiz</h3>
-                            <Button variant="ghost" className='cursor-pointer text-red-500 hover:text-red-700' onClick={() => setOpenQuizForm(false)}>
-                                <X className="h-4 w-4" />
+                            <h2 className="text-xl font-semibold text-gray-800 mb-4">Ajouter une question de quiz</h2>
+                            <Button aria-label="Fermer" variant="ghost" className='cursor-pointer text-red-700 hover:text-red-700' onClick={() => setOpenQuizForm(false)}>
+                                <X aria-hidden="true" className="h-4 w-4" />
                             </Button> 
                         </div>
 
@@ -525,8 +534,8 @@ export default function ModuleForm({ courseId, initialData }: ModuleFormProps) {
                                     <h3 className="text-black font-bold mb-2">Question n°{index + 1}</h3>
 
                                     <div>
-                                        <label className={labelClass}>Énoncé de la question</label>
-                                        <textarea
+                                        <label htmlFor={`champ-quiz_questions-${index}-question_text`} className={labelClass}>Énoncé de la question</label>
+                                        <textarea id={`champ-quiz_questions-${index}-question_text`}
                                             {...register(`quiz_questions.${index}.question_text`)}
                                             rows={3}
                                             className={inputClass}
@@ -544,8 +553,8 @@ export default function ModuleForm({ courseId, initialData }: ModuleFormProps) {
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center pt-4 border-t border-slate-50">
                                         <div>
-                                            <label className={labelClass}>Barème de points</label>
-                                            <input
+                                            <label htmlFor={`champ-quiz_questions-${index}-points`} className={labelClass}>Barème de points</label>
+                                            <input id={`champ-quiz_questions-${index}-points`}
                                             {...register(`quiz_questions.${index}.points`, { valueAsNumber: true })}
                                             type="number"
                                             min="1"
@@ -557,7 +566,7 @@ export default function ModuleForm({ courseId, initialData }: ModuleFormProps) {
                                     <button 
                                         type="button" 
                                         onClick={() => removeQuestion(index)}
-                                        className="mt-4 text-red-400 text-xs hover:underline cursor-pointer"
+                                        className="mt-4 text-red-700 text-xs hover:underline cursor-pointer"
                                     >
                                         Supprimer la question
                                     </button>
@@ -587,7 +596,7 @@ export default function ModuleForm({ courseId, initialData }: ModuleFormProps) {
 
                 <div className="space-y-4 mt-6">
                     {quizContent.length > 0 && (
-                        <h3 className="text-xl font-semibold text-gray-800 mb-4">Questions ajoutées</h3>
+                        <h2 className="text-xl font-semibold text-gray-800 mb-4">Questions ajoutées</h2>
                     )}
                     {quizContent.map((question, index) => (
                         <div 
@@ -600,7 +609,7 @@ export default function ModuleForm({ courseId, initialData }: ModuleFormProps) {
                                 <div className="flex-1 p-4 bg-green-50/50">
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="space-y-1">
-                                            <span className="text-[10px] font-bold uppercase tracking-wider text-green-600">Question {index + 1}</span>
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-green-700">Question {index + 1}</span>
                                             <p className="text-sm md:text-base font-semibold text-gray-800 leading-tight">
                                                 {question.question_text}
                                             </p>
@@ -613,7 +622,7 @@ export default function ModuleForm({ courseId, initialData }: ModuleFormProps) {
 
                                 {/* Colonne Droite : Les Options */}
                                 <div className="flex-2 p-4 border-t md:border-t-0 md:border-l border-green-100 bg-white">
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Options de réponse</p>
+                                    <p className="text-[10px] font-bold text-gray-600 uppercase mb-2">Options de réponse</p>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         {question.options.map((opt, i) => (
                                             <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-md border border-gray-100">
@@ -626,7 +635,7 @@ export default function ModuleForm({ courseId, initialData }: ModuleFormProps) {
 
                                 {question.correct_answers && (
                                     <div className="flex-1 p-4 border-t md:border-t-0 md:border-l border-green-100 bg-white">
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Réponses correctes</p>
+                                        <p className="text-[10px] font-bold text-gray-600 uppercase mb-2">Réponses correctes</p>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                             {question.correct_answers.map((ans, i) => (
                                                 <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-md border border-gray-100">
@@ -642,10 +651,10 @@ export default function ModuleForm({ courseId, initialData }: ModuleFormProps) {
                                     <button 
                                         type="button" 
                                         onClick={() => handleDeleteQuiz(index)} // Attention : vérifie si c'est handleDeleteQuestion ?
-                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                        className="p-2 text-gray-600 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                                         title="Supprimer la question"
                                     >
-                                        <X className="h-5 w-5" />
+                                        <X aria-hidden="true" className="h-5 w-5" />
                                     </button>
                                 </div>
 
@@ -759,12 +768,14 @@ function OptionsFieldsList({ questionIndex, control, register, setValue }: { que
             {/* Case à cocher */}
             <button
               type="button"
+              aria-pressed={isCorrect}
+              aria-label={`Option ${optionIndex + 1} : bonne réponse`}
               onClick={() => handleToggleCorrectAnswer(currentOptionValue)}
               className={`cursor-pointer w-6 h-6 rounded-lg flex items-center justify-center transition-all shrink-0 ${
                 isCorrect ? "bg-green-500 text-white shadow-sm" : "bg-slate-50 border border-slate-200 text-transparent"
               }`}
             >
-              <Check className="w-4 h-4 stroke-3" />
+              <Check aria-hidden="true" className="w-4 h-4 stroke-3" />
             </button>
 
             {/* Champ texte de l'option */}
@@ -777,12 +788,12 @@ function OptionsFieldsList({ questionIndex, control, register, setValue }: { que
 
             {/* Bouton pour supprimer une option */}
             {fields.length > 2 && (
-              <button
+              <button aria-label={`Supprimer l'option ${optionIndex + 1}`}
                 type="button"
                 onClick={() => remove(optionIndex)}
                 className="p-1.5 text-slate-300 hover:text-red-500 rounded-lg transition-all shrink-0"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 aria-hidden="true" className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -790,7 +801,7 @@ function OptionsFieldsList({ questionIndex, control, register, setValue }: { que
       })}
 
       {watchedCorrectAnswers.length === 0 && (
-        <div className="flex items-center gap-1.5 text-red-500 sm:justify-end animate-pulse">
+        <div className="flex items-center gap-1.5 text-red-700 sm:justify-end">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span className="text-[10px] font-black uppercase tracking-wider">Aucune bonne réponse cochée</span>
         </div>
@@ -799,7 +810,7 @@ function OptionsFieldsList({ questionIndex, control, register, setValue }: { que
       <button
         type="button"
         onClick={() => append("")}
-        className="cursor-pointer flex items-center justify-center gap-2 w-full p-3 border-2 border-dashed border-slate-100 rounded-xl text-slate-400 hover:border-slate-200 hover:text-slate-600 transition-all text-[10px] font-black uppercase tracking-wider bg-white"
+        className="cursor-pointer flex items-center justify-center gap-2 w-full p-3 border-2 border-dashed border-slate-100 rounded-xl text-slate-600 hover:border-slate-200 hover:text-slate-600 transition-all text-[10px] font-black uppercase tracking-wider bg-white"
       >
         <Plus className="w-3.5 h-3.5" /> Ajouter une option de réponse
       </button>

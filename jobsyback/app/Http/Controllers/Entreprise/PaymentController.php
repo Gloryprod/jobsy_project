@@ -25,6 +25,14 @@ class PaymentController extends Controller
         $entreprise = $request->user()->entreprise;
         $offer = $this->ownedOffer($request, (int) $request->offer_id);
 
+        // Pas de paiement pour une offre qui ne peut pas recevoir le séquestre, ni pour une récompense déjà garantie
+        if (!$offer->canReceiveEscrow()) {
+            return apiResponse(null, "Cette offre n'est pas en cours : la récompense ne peut pas être payée.", 'error', 422);
+        }
+        if (in_array($offer->payment_status, ['locked', 'paid'], true)) {
+            return apiResponse(null, 'La récompense de cette mission est déjà garantie.', 'error', 409);
+        }
+
         $this->walletFor($entreprise->id);
         Wallet::firstOrCreate(
             ['candidat_id' => $offer->application->candidat_id],

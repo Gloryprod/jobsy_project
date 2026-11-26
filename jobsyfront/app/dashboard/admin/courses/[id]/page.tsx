@@ -31,7 +31,7 @@ export default function EditCourse({ params }: { params: Promise<{ id: string }>
     );
     if (!course) return (
         <div className="min-h-screen flex items-center justify-center">
-            <p className="text-red-400">Erreur de chargement des informations de la formation.</p>
+            <p className="text-red-700">Erreur de chargement des informations de la formation.</p>
         </div>
     );
 
@@ -42,7 +42,7 @@ export default function EditCourse({ params }: { params: Promise<{ id: string }>
             </div>
 
             <div className="w-full mx-auto my-10 p-4 bg-white shadow-xl rounded-2xl border border-gray-100">
-                <h2 className="text-2xl font-bold text-gray-800 ml-4 mb-4">Modifier une formation</h2>
+                <h1 className="text-2xl font-bold text-gray-800 ml-4 mb-4">Modifier une formation</h1>
                 <DropdownMenuSeparator className="ml-4 mr-4 flex items-center justify-end" />
                 <CourseForm initialData={course} />            
             </div>

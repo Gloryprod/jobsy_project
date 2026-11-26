@@ -66,6 +66,16 @@ class MissionProposalController extends Controller
         $candidat = Candidat::with('user')->findOrFail($validated['candidat_id']);
         $mission = Mission::findOrFail($validated['mission_id']);
 
+        // Le candidat ne pourrait pas accepter (ProposalResponseService) : on refuse dès l'envoi
+        if (!$mission->active || $mission->closed_at) {
+            return response()->json([
+                'success' => false,
+                'message' => $mission->closed_at
+                    ? 'Cette mission est clôturée : elle ne peut plus recevoir d\'invitation.'
+                    : 'Cette mission est désactivée : réactivez-la pour inviter un candidat.'
+            ], 422);
+        }
+
         // Vérifier que l'adresse email du candidat existe
         $candidatEmail = $candidat->user->email;
 
@@ -148,7 +158,8 @@ class MissionProposalController extends Controller
                 'candidat' => [
                     'id' => $proposal->candidat->id ?? null,
                     'nom_complet' => trim(($proposal->candidat->user->prenom ?? '') . ' ' . ($proposal->candidat->user->nom ?? '')),
-                    'email' => $proposal->candidat->user->email ?? null,
+                    // Inviter ne doit pas suffire à obtenir l'adresse : elle n'est donnée qu'une fois l'invitation acceptée
+                    'email' => $proposal->status === 'accepted' ? ($proposal->candidat->user->email ?? null) : null,
                     // 'avatar' => $proposal->candidat->photo_profil ?? null,
                     'titre' => $proposal->candidat->domaine_competence ?? null,
                     // 'telephone' => $proposal->candidat->telephone ?? null,

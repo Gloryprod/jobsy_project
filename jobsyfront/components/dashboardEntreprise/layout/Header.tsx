@@ -1,265 +1,225 @@
 'use client';
 
-import { useState, useRef } from "react";
-import { 
-    Archive, ClipboardCheck, LayoutDashboard, Briefcase, User, 
-    ChevronDown, Bell, X, Menu, LogOut, UsersRound 
-} from "lucide-react";
-import { useUser } from "@/context/UserProvider";
-import { useLogout } from "@/lib/logout";
-import useOnClickOutside from "@/hooks/useOnClickOutside";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
-import Drawer from '@mui/material/Drawer';
+import { usePathname } from "next/navigation";
+import { Bell, Briefcase, ChevronDown, LogOut, Menu, User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useUser } from "@/context/UserProvider";
+import { useLogout } from "@/lib/logout";
 import { useNotifications, type AppNotification } from "@/hooks/useNotifications";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { SECTIONS_ENTREPRISE, estActive, type SectionEspace } from "./Navigation";
 
-// Liste des dernières notifications (relances d'offres, propositions acceptées...)
-function NotificationItems({ notifications }: { notifications: AppNotification[] }) {
-    if (notifications.length === 0) {
-        return <p className="px-4 py-6 text-center text-xs text-slate-400">Aucune notification pour le moment.</p>;
-    }
+const FOCUS = "focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#F0E68C]";
+const BOUTON_ICONE = `relative inline-flex size-11 items-center justify-center rounded-xl text-white hover:bg-white/10 cursor-pointer ${FOCUS}`;
+
+/** Lien d'une notification : l'offre acceptée mène aux propositions, le reste au suivi des recrutés. */
+function lienNotification(n: AppNotification): string | null {
+    if (!n.data.mission_id) return null;
+    const page = n.data.type === "proposal_accepted" ? "proposals" : "confirmedApplicants";
+    return `/dashboard/entreprises/missions/${n.data.mission_id}/${page}`;
+}
+
+function Cloche({ conteneur }: { conteneur: HTMLElement | null }) {
+    const { notifications, unreadCount, markAllAsRead } = useNotifications();
+    const nom = unreadCount > 0 ? `Notifications : ${unreadCount} non lue${unreadCount > 1 ? "s" : ""}` : "Notifications";
 
     return (
-        <ul className="divide-y divide-gray-100">
-            {notifications.slice(0, 10).map((n) => {
-                const content = (
-                    <div className="ml-1">
-                        <h3 className={`text-xs text-slate-900 ${n.read_at ? 'font-medium' : 'font-bold'}`}>
-                            {n.data.mission_title || "Nouvelle notification"}
-                        </h3>
-                        <p className="text-xs text-slate-500 leading-relaxed mt-1 line-clamp-2">{n.data.message}</p>
-                        <p className="text-[10px] text-[#000080]/60 font-medium mt-1">
-                            {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: fr })}
-                        </p>
-                    </div>
-                );
-
-                return (
-                    <li key={n.id} className="p-4 flex items-start hover:bg-gray-50 transition">
-                        {n.data.mission_id ? (
-                            <Link href={`/dashboard/entreprises/missions/${n.data.mission_id}/${n.data.type === 'proposal_accepted' ? 'proposals' : 'confirmedApplicants'}`}>
-                                {content}
-                            </Link>
-                        ) : content}
-                    </li>
-                );
-            })}
-        </ul>
+        <DropdownMenu modal={false}>
+            <DropdownMenuTrigger aria-label={nom} className={BOUTON_ICONE}>
+                <Bell aria-hidden="true" className="w-5 h-5" />
+                {unreadCount > 0 && (
+                    <span aria-hidden="true" className="absolute top-1 right-1 min-w-5 rounded-full bg-red-600 px-1 text-[11px] font-bold leading-5 text-white">
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                )}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent container={conteneur} align="end" className="w-80 max-h-[70vh] overflow-y-auto font-lisible">
+                <DropdownMenuLabel className="text-sm">Notifications</DropdownMenuLabel>
+                {unreadCount > 0 && (
+                    <DropdownMenuItem
+                        onSelect={(e) => {
+                            e.preventDefault();
+                            markAllAsRead();
+                        }}
+                        className="min-h-11 font-semibold text-[#000080]"
+                    >
+                        Tout marquer comme lu
+                    </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                {notifications.length === 0 ? (
+                    <p className="px-2 py-4 text-sm text-slate-600">Aucune notification pour le moment.</p>
+                ) : (
+                    notifications.slice(0, 10).map((n) => {
+                        const lien = lienNotification(n);
+                        const contenu = (
+                            <span className="grid gap-0.5">
+                                <span className={`text-sm text-slate-900 ${n.read_at ? "font-medium" : "font-bold"}`}>
+                                    {!n.read_at && <span className="sr-only">Non lue : </span>}
+                                    {n.data.mission_title || "Notification"}
+                                </span>
+                                {n.data.message && <span className="text-sm text-slate-600">{n.data.message}</span>}
+                                <span className="text-xs text-slate-500">{formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: fr })}</span>
+                            </span>
+                        );
+                        return lien ? (
+                            <DropdownMenuItem key={n.id} asChild className="items-start">
+                                <Link href={lien}>{contenu}</Link>
+                            </DropdownMenuItem>
+                        ) : (
+                            <div key={n.id} className="px-2 py-1.5">
+                                {contenu}
+                            </div>
+                        );
+                    })
+                )}
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 }
 
-export default function Header() {
-    const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-    const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
-    const [mobileNotificationMenuOpen, setMobileNotificationMenuOpen] = useState(false);
-    const [openDrawer, setOpenDrawer] = useState(false);
-    
-    const notificationRef = useRef<HTMLDivElement>(null!);
-    const profileRef = useRef<HTMLUListElement>(null!);
-    const mobileNotificationRef = useRef<HTMLDivElement>(null!);
+interface EnteteEspaceProps {
+    sections: SectionEspace[];
+    /** Destination du logo */
+    accueil: string;
+    /** Nom affiché dans le menu du compte et en titre du menu mobile */
+    nom: string;
+    /** « Espace entreprise », « Administration » */
+    espace: string;
+    /** Page du profil, si l'espace en a une */
+    profil?: string;
+    /** Cloche des notifications, si l'espace en reçoit ; elle reçoit l'en-tête comme conteneur de son menu */
+    cloche?: (conteneur: HTMLElement | null) => ReactNode;
+}
 
-    const { user } = useUser();
+/** En-tête des espaces sobres (lot 7a, partagé avec l'administration au lot 8d) : logo, notifications, compte, menu mobile. */
+export function EnteteEspace({ sections, accueil, nom, espace, profil, cloche }: EnteteEspaceProps) {
+    const [menuOuvert, setMenuOuvert] = useState(false);
+    // Les menus sont rendus dans l'en-tête, qui reste leur repère pour les lecteurs d'écran
+    const [entete, setEntete] = useState<HTMLElement | null>(null);
+    const pathname = usePathname();
     const { handleLogout } = useLogout();
-    const { notifications, unreadCount, markAllAsRead } = useNotifications();
-
-    // Gestion des clics à l'extérieur pour fermer les menus déroulants
-    useOnClickOutside(profileRef, () => setProfileDropdownOpen(false));
-    useOnClickOutside(notificationRef, () => setNotificationDropdownOpen(false));
-    useOnClickOutside(mobileNotificationRef, () => setMobileNotificationMenuOpen(false));
-
-    const toggleDrawer = (state: boolean) => () => {
-        setOpenDrawer(state);
-    };
-
-    // Tableaux de données pour la navigation mobile (Drawer)
-    const sections = [
-        {
-            title: "Menu",
-            items: [{ id: "home", name: "Tableau de bord", icon: LayoutDashboard, href: "/dashboard/entreprises" }]
-        },
-        {
-            title: "Mes Missions",
-            items: [
-                { id: "openJobs", name: "Offres Ouvertes", icon: ClipboardCheck, href: "/dashboard/entreprises/missions/list" },
-                { id: "closeJobs", name: "Offres Clôturées", icon: Archive, href: "/dashboard/entreprises/missions/closed/list" },
-            ]
-        },
-        {
-            title: "Candidats",
-            items: [{ id: "profileJeune", name: "Profils Candidats", icon: UsersRound, href: "/dashboard/entreprises/listCandidateProfile" }]
-        },
-        {
-            title: "Général",
-            items: [{ id: "profile", name: "Profil", icon: User, href: "/dashboard/entreprises/profile" }]
-        }
-    ];
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-50 bg-[#000080]/90 backdrop-blur-xl border-b border-white/10 h-18">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center h-full justify-between">
-                
-                {/* Logo principal */}
-                <Link href="/dashboard/entreprise" className="flex items-center space-x-2.5 group">
-                    <div className="bg-white/10 p-2 rounded-xl group-hover:bg-white/20 transition-all">
-                        <Briefcase className="w-5 h-5 text-white animate-pulse" strokeWidth={2.5} />
-                    </div>
-                    <span className="text-white text-xl font-black tracking-tight">Jobsy</span>
+        <header ref={setEntete} className="fixed top-0 left-0 right-0 z-50 h-18 border-b border-white/10 bg-[#000080] font-lisible">
+            <div className="mx-auto flex h-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+                <Link href={accueil} className={`flex items-center gap-2.5 rounded-lg ${FOCUS}`}>
+                    <span className="rounded-xl bg-white/10 p-2">
+                        <Briefcase aria-hidden="true" className="w-5 h-5 text-white" strokeWidth={2.5} />
+                    </span>
+                    <span className="font-systeme text-xl font-black tracking-tight text-white">Jobsy</span>
+                    <span className="sr-only">, tableau de bord</span>
                 </Link>
 
+                <div className="flex items-center gap-2">
+                    {cloche?.(entete)}
 
-                {/* --- VERSION DESKTOP --- */}
-                <div className="hidden md:flex items-center space-x-4">                     
-                    {/* Cloche de Notifications */}
-                    <div className="relative" ref={notificationRef}>
-                        <button 
-                            onClick={() => setNotificationDropdownOpen(!notificationDropdownOpen)} 
-                            className="w-10 h-10 flex items-center justify-center rounded-xl text-white cursor-pointer hover:bg-white/10 transition"
-                        >
-                            <Bell className="w-5 h-5 text-white" />
-                            {unreadCount > 0 && (
-                                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" aria-label={`${unreadCount} notification(s) non lue(s)`}></span>
+                    {/* Un menu n'est pas une fenêtre : non modal, il laisse la page lisible et se ferme avec Échap ou Tab */}
+                    <DropdownMenu modal={false}>
+                        <DropdownMenuTrigger className={`hidden md:flex items-center gap-3 rounded-xl px-3 py-1.5 text-left hover:bg-white/10 cursor-pointer ${FOCUS}`}>
+                            <span className="flex size-10 items-center justify-center rounded-full bg-white/15">
+                                <User aria-hidden="true" className="w-5 h-5 text-white" />
+                            </span>
+                            <span className="grid">
+                                <span className="text-sm font-bold leading-tight text-white">{nom}</span>
+                                <span className="text-xs text-[#F0E68C]">{espace}</span>
+                            </span>
+                            <ChevronDown aria-hidden="true" className="w-4 h-4 text-white/70" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent container={entete} align="end" className="w-52 font-lisible">
+                            {profil && (
+                                <>
+                                    <DropdownMenuItem asChild className="min-h-11">
+                                        <Link href={profil}>
+                                            <User aria-hidden="true" className="w-4 h-4" />
+                                            Mon profil
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                </>
                             )}
-                        </button>
+                            <DropdownMenuItem onSelect={handleLogout} className="min-h-11 text-red-700 focus:text-red-700">
+                                <LogOut aria-hidden="true" className="w-4 h-4 text-red-700" />
+                                Se déconnecter
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
 
-                        {notificationDropdownOpen && (
-                            <div className="absolute right-0 shadow-2xl bg-white py-4 z-50 rounded-xl w-95 max-h-112.5 overflow-auto mt-2 border border-gray-100">
-                                <div className="flex items-center justify-end px-4 mb-3">
-                                    {unreadCount > 0 && (
-                                        <button onClick={markAllAsRead} className="text-xs text-[#000080] font-semibold cursor-pointer hover:underline">Marquer comme lu</button>
-                                    )}
-                                </div>
-                                <NotificationItems notifications={notifications} />
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Bloc Profil Administrateur Entreprise */}
-                    <div className="relative">
-                        <button
-                            onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                            className="flex cursor-pointer items-center space-x-3 rounded-xl hover:bg-white/10 px-3 py-1.5 transition"
-                        >
-                            <div className="relative">
-                                <div className="w-10 h-10 rounded-full bg-linear-to-br from-[#F0E68C] to-yellow-400 p-0.5">
-                                    <div className="w-full h-full rounded-full bg-[#000080] flex items-center justify-center">
-                                        <User className="w-5 h-5 text-white" />
+                    <Sheet open={menuOuvert} onOpenChange={setMenuOuvert}>
+                        <SheetTrigger asChild>
+                            <button type="button" aria-label="Ouvrir le menu" className={`${BOUTON_ICONE} md:hidden`}>
+                                <Menu aria-hidden="true" className="w-5 h-5" />
+                            </button>
+                        </SheetTrigger>
+                        <SheetContent side="right" className="w-72 border-white/10 bg-[#000080] font-lisible text-white">
+                            <SheetTitle className="px-5 pt-6 text-base font-bold text-[#F0E68C]">{nom}</SheetTitle>
+                            <nav aria-label={espace} className="grid gap-5 overflow-y-auto px-5 pb-6">
+                                {sections.map((section) => (
+                                    <div key={section.title} className="grid gap-1">
+                                        <p className="px-2 text-xs font-bold uppercase tracking-wider text-white/60">{section.title}</p>
+                                        <ul className="grid gap-1">
+                                            {section.items.map((item) => {
+                                                const active = estActive(pathname, item);
+                                                return (
+                                                    <li key={item.id}>
+                                                        <SheetClose asChild>
+                                                            <Link
+                                                                href={item.href}
+                                                                aria-current={active ? "page" : undefined}
+                                                                className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold ${FOCUS} ${active ? "bg-[#F0E68C] text-black" : "hover:bg-white/10"}`}
+                                                            >
+                                                                <item.icon aria-hidden="true" className="w-4 h-4 shrink-0" />
+                                                                {item.name}
+                                                            </Link>
+                                                        </SheetClose>
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
                                     </div>
-                                </div>
-                                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#000080]"></div>
-                            </div>
-                            <div className="text-left">
-                                <p className="text-white text-xs font-bold leading-tight">{user?.entreprise?.nom_entreprise || "Mon Entreprise"}</p>
-                                <p className="text-[#F0E68C] text-[10px]">Espace Entreprise</p>
-                            </div>
-                            <ChevronDown className={`w-4 h-4 text-white/70 transition-transform duration-200 ${profileDropdownOpen ? 'rotate-180' : ''}`} />
-                        </button>
-
-                        {profileDropdownOpen && ( 
-                            <ul ref={profileRef} className="absolute right-0 shadow-2xl bg-white py-1.5 z-50 w-48 rounded-xl mt-2 border border-gray-100 overflow-hidden">
-                                <Link href="/dashboard/entreprises/profile">
-                                    <li className="py-2 px-4 flex items-center hover:bg-slate-50 text-slate-700 font-medium text-xs cursor-pointer transition">
-                                        <User className="w-4 h-4 mr-2.5 text-slate-400" />
-                                        Mon Profil
-                                    </li>
-                                </Link>
-                                <li 
-                                    onClick={handleLogout}
-                                    className="py-2 px-4 flex items-center hover:bg-red-50 text-red-600 font-medium text-xs cursor-pointer transition border-t border-gray-100"
+                                ))}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setMenuOuvert(false);
+                                        handleLogout();
+                                    }}
+                                    className={`flex min-h-11 items-center gap-3 rounded-xl bg-red-500/15 px-3 text-sm font-semibold text-red-100 hover:bg-red-500/25 cursor-pointer ${FOCUS}`}
                                 >
-                                    <LogOut className="w-4 h-4 mr-2.5 text-red-400" />     
-                                    Déconnexion
-                                </li>
-                            </ul>
-                        )}   
-                    </div>
-                </div> 
-                
-                {/* --- VERSION MOBILE --- */}
-                <div className="md:hidden flex items-center space-x-2">
-                    {/* Cloche Notification Mobile */}
-                    <div className="relative" ref={mobileNotificationRef}>
-                        <button onClick={() => setMobileNotificationMenuOpen(!mobileNotificationMenuOpen)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 transition cursor-pointer">
-                            <Bell className="w-5 h-5 text-white" />
-                            {unreadCount > 0 && (
-                                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
-                            )}
-                        </button>
-
-                        {mobileNotificationMenuOpen && (
-                            <div className="absolute right-0 top-11 shadow-2xl bg-white py-4 z-50 rounded-xl w-72.5 border border-gray-100">
-                                <div className="flex items-center justify-end px-4 mb-2">
-                                    {unreadCount > 0 && (
-                                        <button onClick={markAllAsRead} className="text-[10px] text-[#000080] font-bold cursor-pointer">Marquer lu</button>
-                                    )}
-                                </div>
-                                <div className="max-h-60 overflow-y-auto">
-                                    <NotificationItems notifications={notifications} />
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Déclencheur du Menu Drawer Latéral Mobile */}
-                    <button 
-                        onClick={toggleDrawer(true)} 
-                        className="p-2 cursor-pointer rounded-xl bg-white/5 hover:bg-white/10 transition"
-                    > 
-                        <Menu className="w-5 h-5 text-white" />
-                    </button>
-
-                    {/* Le Drawer Mui Nav Mobile */}
-                    <Drawer open={openDrawer} onClose={toggleDrawer(false)} anchor="right">
-                        <div className="w-64 h-full bg-[#000080]/90 text-white p-5 flex flex-col justify-between">
-                            <div className="space-y-6">
-                                {/* Header interne au tiroir mobile */}
-                                <div className="flex items-center justify-between pb-4 border-b border-white/10">
-                                    <span className="text-base font-black uppercase tracking-wider text-[#F0E68C]">Navigation</span>
-                                    <button onClick={toggleDrawer(false)} className="p-1 rounded-lg bg-white/10 text-white">
-                                        <X className="w-4 h-4" />
-                                    </button>
-                                </div>
-
-                                {/* Parcours dynamique de toutes les sections de l'app */}
-                                <div className="space-y-5 overflow-y-auto no-scrollbar">
-                                    {sections.map((section, sIndex) => (
-                                        <div key={sIndex} className="space-y-2">
-                                            <span className="block px-2 text-[10px] font-black uppercase tracking-widest text-white/40">
-                                                {section.title}
-                                            </span>
-                                            <nav className="space-y-1">
-                                                {section.items.map((item) => (
-                                                    <Link
-                                                        href={item.href}
-                                                        key={item.id}
-                                                        onClick={toggleDrawer(false)}
-                                                        className="flex items-center px-3 py-2 text-xs font-bold text-white rounded-xl hover:bg-[#F0E68C] hover:text-black transition cursor-pointer"
-                                                    >
-                                                        <item.icon className="w-4 h-4 shrink-0 mr-3" />
-                                                        <span>{item.name}</span>
-                                                    </Link>
-                                                ))}
-                                            </nav>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Section Déconnexion basse */}
-                            <div className="pt-4 border-t border-white/10">
-                                <button 
-                                    onClick={() => { handleLogout(); setOpenDrawer(false); }}
-                                    className="flex items-center w-full px-3 py-2.5 text-xs font-bold text-red-300 bg-red-500/10 rounded-xl hover:bg-red-500/20 transition cursor-pointer"
-                                >
-                                    <LogOut className="w-4 h-4 shrink-0 mr-3" />
-                                    <span>Déconnexion</span>
+                                    <LogOut aria-hidden="true" className="w-4 h-4 shrink-0" />
+                                    Se déconnecter
                                 </button>
-                            </div>
-                        </div>
-                    </Drawer>
+                            </nav>
+                        </SheetContent>
+                    </Sheet>
                 </div>
-
             </div>
         </header>
+    );
+}
+
+/** En-tête de l'espace entreprise (lot 7a). */
+export default function Header() {
+    const { user } = useUser();
+    return (
+        <EnteteEspace
+            sections={SECTIONS_ENTREPRISE}
+            accueil="/dashboard/entreprises"
+            nom={user?.entreprise?.nom_entreprise || "Mon entreprise"}
+            espace="Espace entreprise"
+            profil="/dashboard/entreprises/profile"
+            cloche={(conteneur) => <Cloche conteneur={conteneur} />}
+        />
     );
 }

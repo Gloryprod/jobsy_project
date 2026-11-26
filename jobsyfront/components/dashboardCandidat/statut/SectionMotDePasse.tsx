@@ -4,12 +4,12 @@ import { useState, type FormEvent } from "react";
 import api from "@/lib/api";
 import { champsRefuses, statutErreur } from "@/lib/erreurs";
 import { BoutonDossier, CarteDossier, Champ, MessageErreurDossier, MessageReussite } from "./ElementsDossier";
-import { LONGUEUR_MIN_MOT_DE_PASSE, messageEnvoi } from "./regles";
+import { PASSWORD_HINT, erreurMotDePasse } from "@/lib/password";
+import { messageEnvoi } from "./regles";
 
 const VIDE = { currentPassword: "", newPassword: "", newPassword_confirmation: "" };
 type Nom = keyof typeof VIDE;
 
-const REGLE_LONGUEUR = `${LONGUEUR_MIN_MOT_DE_PASSE} caractères au moins.`;
 
 export function SectionMotDePasse() {
   const [valeurs, setValeurs] = useState(VIDE);
@@ -30,7 +30,9 @@ export function SectionMotDePasse() {
     setErreurEnvoi(null);
     const trouvees: Partial<Record<Nom, string>> = {};
     if (!valeurs.currentPassword) trouvees.currentPassword = "Indique ton mot de passe actuel.";
-    if (valeurs.newPassword.length < LONGUEUR_MIN_MOT_DE_PASSE) trouvees.newPassword = REGLE_LONGUEUR;
+    // Même règle que l'inscription et l'API (PasswordPolicy)
+    const erreur = erreurMotDePasse(valeurs.newPassword);
+    if (erreur) trouvees.newPassword = erreur;
     if (valeurs.newPassword !== valeurs.newPassword_confirmation) trouvees.newPassword_confirmation = "Les deux mots de passe ne sont pas identiques.";
     if (Object.keys(trouvees).length > 0) {
       signaler(trouvees);
@@ -75,7 +77,7 @@ export function SectionMotDePasse() {
     <CarteDossier id="mot-de-passe" titre="Mot de passe">
       <form noValidate onSubmit={changer} className="grid gap-4">
         {champ("currentPassword", "Mot de passe actuel", "current-password")}
-        {champ("newPassword", "Nouveau mot de passe", "new-password", REGLE_LONGUEUR)}
+        {champ("newPassword", "Nouveau mot de passe", "new-password", PASSWORD_HINT)}
         {champ("newPassword_confirmation", "Confirme le nouveau mot de passe", "new-password")}
         <MessageErreurDossier message={erreurEnvoi} />
         <BoutonDossier type="submit" chargement={envoi} className="justify-self-start">

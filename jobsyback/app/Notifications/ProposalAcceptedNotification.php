@@ -23,6 +23,17 @@ class ProposalAcceptedNotification extends Notification implements ShouldQueue
     }
 
     /**
+     * La notification dans l'application part tout de suite ; seul l'e-mail passe par la file d'attente.
+     * Sans traitement de file en production, tout restait sinon bloqué, et un e-mail en échec ne doit pas faire échouer la requête.
+     *
+     * @return array<string, string>
+     */
+    public function viaConnections(): array
+    {
+        return ['database' => 'sync'];
+    }
+
+    /**
      * Get the notification's delivery channels.
      *
      * @return array<int, string>

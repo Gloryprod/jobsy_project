@@ -81,7 +81,7 @@ export default function ListCandidateProfile() {
     const [ranks, setRanks ] = useState<Rank[] | []>([]);
     const [candidats, setCandidats] = useState<Candidat[] | []>([]);
     const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
-    const pageLink = "/dashboard/entreprises/listCandidateProfile";
+    const pageLink = "/dashboard/admin/listCandidateProfile";
     const [loading, setLoading] = useState(false);
 
     // États pour la recherche et la pagination
@@ -164,7 +164,7 @@ export default function ListCandidateProfile() {
 
             <div className="mb-8">
                 <h1 className="text-2xl font-black text-slate-800 flex items-center justify-center">Gestion des Candidats</h1>
-                <p className="text-slate-500 flex items-center justify-center"><i>Vue d&apos;ensemble des talents inscrits</i></p>
+                <p className="text-slate-600 flex items-center justify-center"><i>Vue d&apos;ensemble des talents inscrits</i></p>
             </div>
 
             <div className="max-w-7xl mx-auto">
@@ -190,7 +190,7 @@ export default function ListCandidateProfile() {
 
                         <button
                             onClick={() => resetFilters()}
-                            className="cursor-pointer shrink-0 flex items-center justify-center gap-2 bg-red-50 px-5 py-3.5 rounded-2xl font-bold text-red-600 hover:bg-red-100 active:scale-95 transition-all"
+                            className="cursor-pointer shrink-0 flex items-center justify-center gap-2 bg-red-50 px-5 py-3.5 rounded-2xl font-bold text-red-700 hover:bg-red-100 active:scale-95 transition-all"
                         >
                             <RotateCcw size={16} />
                             <span className="text-xs uppercase tracking-wide">Réinitialiser</span>
@@ -199,7 +199,7 @@ export default function ListCandidateProfile() {
 
                     {/* Barre de Recherche */}
                     <div className="relative flex-1 lg:max-w-sm lg:ml-auto">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
                         <input
                             type="text"
                             placeholder="Rechercher un nom ou prénom..."
@@ -228,8 +228,8 @@ export default function ListCandidateProfile() {
                     `}>
                         <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
                             <h2 className="font-black text-slate-800 text-lg">Domaines</h2>
-                            <button onClick={() => setIsMenuOpen(false)} className="p-2 text-slate-400 hover:bg-slate-50 rounded-xl transition-colors">
-                                <X size={22} />
+                            <button aria-label="Fermer" onClick={() => setIsMenuOpen(false)} className="p-2 text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">
+                                <X aria-hidden="true" size={22} />
                             </button>
                         </div>
 
@@ -271,8 +271,8 @@ export default function ListCandidateProfile() {
                     `}>
                         <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
                             <h2 className="font-black text-slate-800 text-lg">Diplômes</h2>
-                            <button onClick={() => setIsMenuRankOpen(false)} className="p-2 text-slate-400 hover:bg-slate-50 rounded-xl transition-colors">
-                                <X size={22} />
+                            <button aria-label="Fermer" onClick={() => setIsMenuRankOpen(false)} className="p-2 text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">
+                                <X aria-hidden="true" size={22} />
                             </button>
                         </div>
 
@@ -323,12 +323,12 @@ export default function ListCandidateProfile() {
                                                 </div>
                                                 <div className="min-w-0">
                                                     <h3 className="font-bold text-slate-900 text-sm truncate">{candidat.user?.nom} {candidat.user?.prenom}</h3>
-                                                    <p className="text-xs text-slate-500 truncate">{candidat.domaine_competence || "Apprenti Junior Jobsy"}</p>
+                                                    <p className="text-xs text-slate-600 truncate">{candidat.domaine_competence || "Apprenti Junior Jobsy"}</p>
                                                 </div>
                                             </div>
                                             <span
-                                                className="shrink-0 px-2.5 py-1 text-[10px] font-black uppercase rounded-lg"
-                                                style={{ backgroundColor: `${candidat.rank?.code_hexa}20`, color: candidat.rank?.code_hexa }}
+                                                className="shrink-0 px-2.5 py-1 text-[10px] font-black uppercase rounded-lg border text-slate-900"
+                                                style={{ backgroundColor: `${candidat.rank?.code_hexa}20`, borderColor: candidat.rank?.code_hexa }}
                                             >
                                                 Rang {candidat.rank.rank}
                                             </span>
@@ -339,17 +339,17 @@ export default function ListCandidateProfile() {
                                                 uniqueCategories.map((cat) => (
                                                     <span
                                                         key={cat.id}
-                                                        className="px-2.5 py-1 text-[11px] font-bold rounded-full"
+                                                        className="px-2.5 py-1 text-[11px] font-bold rounded-full border text-slate-900"
                                                         style={{
                                                             backgroundColor: `${cat.color || '#E1F5FE'}20`,
-                                                            color: `${cat.color}`
+                                                            borderColor: cat.color || '#E1F5FE'
                                                         }}
                                                     >
                                                         {cat.name}
                                                     </span>
                                                 ))
                                             ) : (
-                                                <span className="text-xs text-slate-400 italic">Aucun domaine renseigné</span>
+                                                <span className="text-xs text-slate-600 italic">Aucun domaine renseigné</span>
                                             )}
                                         </div>
 
@@ -369,30 +369,30 @@ export default function ListCandidateProfile() {
                         <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-slate-100">
                             <Search size={22} className="text-slate-300" />
                         </div>
-                        <p className="text-slate-400 font-medium italic text-sm">Aucun résultat pour cette recherche.</p>
+                        <p className="text-slate-600 font-medium italic text-sm">Aucun résultat pour cette recherche.</p>
                     </div>
                 )}
 
                 {/* Pagination */}
                 {totalPages >= 1 && currentItems.length > 0 && (
                     <div className="mt-6 pt-6 border-t border-slate-200/80 flex items-center justify-between">
-                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                        <p className="text-xs font-black text-slate-600 uppercase tracking-widest">
                             Page {currentPage} sur {totalPages}
                         </p>
                         <div className="flex gap-2">
-                            <button
+                            <button aria-label="Page précédente"
                                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                 disabled={currentPage === 1}
                                 className="p-2.5 bg-white border border-slate-200 rounded-xl disabled:opacity-30 hover:bg-[#000080] hover:text-white hover:border-[#000080] transition-all cursor-pointer"
                             >
-                                <ChevronLeft size={18} />
+                                <ChevronLeft aria-hidden="true" size={18} />
                             </button>
-                            <button
+                            <button aria-label="Page suivante"
                                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                 disabled={currentPage === totalPages}
                                 className="p-2.5 bg-white border border-slate-200 rounded-xl disabled:opacity-30 hover:bg-[#000080] hover:text-white hover:border-[#000080] transition-all cursor-pointer"
                             >
-                                <ChevronRight size={18} />
+                                <ChevronRight aria-hidden="true" size={18} />
                             </button>
                         </div>
                     </div>

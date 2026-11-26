@@ -77,9 +77,9 @@ export default function MissionOffersMonitoring({ applications }: MissionOffersM
     
     const isExpired = new Date(offer.expires_at) < new Date();
     if (isExpired) 
-      return <Badge className="bg-slate-100 text-slate-500 border-slate-200 italic">Expiré</Badge>;
+      return <Badge className="bg-slate-100 text-slate-600 border-slate-200 italic">Expiré</Badge>;
 
-    return <Badge className="bg-amber-100 text-amber-700 border-amber-200 animate-pulse">En attente</Badge>;
+    return <Badge className="bg-amber-100 text-amber-700 border-amber-200">En attente</Badge>;
   };
 
   return (
@@ -104,7 +104,7 @@ export default function MissionOffersMonitoring({ applications }: MissionOffersM
                 </div>
               </div>
               
-              <Badge className={isExpired ? "bg-red-600" : "bg-amber-600 animate-pulse"}>
+              <Badge className={isExpired ? "bg-red-600" : "bg-amber-700"}>
                 {isExpired ? "Délai dépassé" : "Réponses en cours"}
               </Badge>
             </div>
@@ -116,9 +116,9 @@ export default function MissionOffersMonitoring({ applications }: MissionOffersM
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/50 border-b border-slate-100">
-              <th className="p-4 text-[10px] font-black uppercase text-slate-400">Candidat</th>
-              <th className="p-4 text-[10px] font-black uppercase text-slate-400">Statut</th>
-              <th className="p-4 text-[10px] font-black uppercase text-slate-400">Actions</th>
+              <th className="p-4 text-[10px] font-black uppercase text-slate-600">Candidat</th>
+              <th className="p-4 text-[10px] font-black uppercase text-slate-600">Statut</th>
+              <th className="p-4 text-[10px] font-black uppercase text-slate-600">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
@@ -132,13 +132,13 @@ export default function MissionOffersMonitoring({ applications }: MissionOffersM
                 </td>
                 <td className="p-4">
                   <div className="flex gap-2">
-                    <button className="cursor-pointer p-2 hover:bg-white rounded-lg border border-transparent hover:border-slate-200 text-slate-400 hover:text-[#000080] transition-all">
-                      <Eye size={18} />
+                    <button aria-label="Voir" className="cursor-pointer p-2 hover:bg-white rounded-lg border border-transparent hover:border-slate-200 text-slate-600 hover:text-[#000080] transition-all">
+                      <Eye aria-hidden="true" size={18} />
                     </button>
                     {!application.mission_offers.accepted_at && !application.mission_offers.declined_at && !isExpired && (
                       <button 
                         title="Relancer manuellement"
-                        className="p-2 text-amber-500 hover:bg-amber-50 rounded-xl transition-all cursor-pointer"
+                        className="p-2 text-amber-700 hover:bg-amber-50 rounded-xl transition-all cursor-pointer"
                       >
                         <MailWarning size={18} />
                       </button>

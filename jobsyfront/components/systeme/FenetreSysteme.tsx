@@ -8,7 +8,7 @@ type Props = {
   etiquette: string;
   titre?: ReactNode;
   /** Niveau du titre dans la page, selon l'endroit où la fenêtre est posée. */
-  niveauTitre?: 2 | 3 | 4;
+  niveauTitre?: 1 | 2 | 3 | 4;
   ton?: TonSysteme;
   /** Balayage lumineux à l'apparition, coupé quand l'appareil demande moins d'animations. */
   balayage?: boolean;
@@ -29,7 +29,7 @@ export function FenetreSysteme({
   className,
   children,
 }: Props) {
-  const Titre = `h${niveauTitre}` as "h2" | "h3" | "h4";
+  const Titre = `h${niveauTitre}` as "h1" | "h2" | "h3" | "h4";
 
   return (
     <div data-ton={ton} className={cn("systeme-fenetre grid content-start gap-3.5 p-5 font-lisible", className)}>

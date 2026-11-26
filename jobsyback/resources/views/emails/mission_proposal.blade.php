@@ -147,7 +147,8 @@
 
             <!-- Message personnalisé de l'entreprise -->
             <div class="message-box">
-                {{ $messageBody }}
+                {{-- Déjà nettoyé par sanitizeHtml à l'enregistrement : l'échapper encore afficherait « l&#039; » --}}
+                {!! $messageBody !!}
             </div>
 
             <p style="font-size: 13px; color: #64748b; text-align: center; margin-top: 24px;">

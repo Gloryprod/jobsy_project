@@ -1,224 +1,170 @@
-// 'use client';
-// import React, { useState } from 'react';
-// import { 
-//   Home, Sword, BookOpen, Backpack, Wallet, CheckCheck
-// } from 'lucide-react';
-// import { useUser } from '@/context/UserProvider';
-// import Link from 'next/link';
-
-// export default function Navigation() {
-//   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-//   const { user } = useUser();
-
-//   const navItems = [
-//     { id: 'home', name: 'Tableau de bord', icon: Home, link: '/dashboard/candidats'  },
-//     { id: 'missions', name: 'Missions', icon: Sword, link: '/dashboard/candidats/missions' },
-//     { id: 'missions_confirmées', name: 'Offres confirmées', icon: CheckCheck, link: '/dashboard/candidats/missions/en_cours' },
-//     { id: 'formations', name: 'Formations', icon: BookOpen, link: '/dashboard/candidats/formations' },
-//     { id: 'inventaire', name: 'Inventaire', icon: Backpack, link: '/dashboard/candidats/inventaire' },
-//     { id: 'wallet', name: 'Mes Gains', icon: Wallet, link: '/dashboard/candidats/loot' },
-//   ];
-
-//   const NavButton = ({ item }: { item: any }) => (
-//     <button
-//       onClick={() => {
-//         setMobileMenuOpen(false);
-//       }}
-//       className={`flex flex-col items-center cursor-pointer gap-1 px-3 py-2 rounded-lg transition ${
-//          'text-white' 
-//       }`}
-//     >
-//       <div className="relative">
-//         <item.icon className="w-4 h-4" />
-//         {item.badge && (
-//           <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
-//             {item.badge}
-//           </span>
-//         )}
-//       </div>
-//       <span className="text-xs">{item.name}</span>
-//     </button>
-//   );
-
-//   return (
-//     <>
-//       <aside className="hidden md:flex fixed left-0 top-16 bottom-0 w-64 bg-[#000080]/90 text-white border border-white/20 flex-col">
-//         <div className="flex-1 overflow-y-auto p-6">
-//           {/* <div className="mb-10 bg-white/10 rounded-2xl p-5 border border-white/10">
-//             <div className="flex items-center gap-4">
-//               <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#F0E68C] to-yellow-300 p-0.5">
-//                 <div className="w-full h-full rounded-full bg-[#000080] flex items-center justify-center">
-//                   <User className="w-8 h-8 text-white" />
-//                 </div>
-//               </div>
-//               <div>
-//                 <p className="text-white font-bold">{user?.nom} {user?.prenom}</p>
-//                 <p className="text-[#F0E68C] text-sm">Rang A • Expert Data</p>
-//               </div>
-//             </div>
-//           </div> */}
-
-//           {/* Menu principal */}
-//           <nav className="space-y-2">
-//             {navItems.map((item) => (
-//                 <Link href={item.link || '#'} key={item.id}>
-//                     <button
-//                         key={item.id}
-//                         className="w-full cursor-pointer flex items-center gap-2 px-2 py-3 rounded-xl transition-all" 
-//                     >
-//                         <item.icon className="w-4 h-4" />
-//                         <span>{item.name}</span>
-//                     </button>
-//                 </Link>
-//             ))}
-//           </nav>
-//         </div>
-
-//         {/* Loot rapide en bas */}
-//         <div className="p-6 border-t border-white/10">
-//           <div className="bg-white/10 rounded-2xl p-5 text-center border border-white/10">
-//             <p className="text-white/70 text-sm">Solde disponible</p>
-//             <p className="text-[#F0E68C] text-2xl font-bold mt-2">{user?.candidat?.wallet?.balance|| 0} FCFA</p>
-//           </div>
-//         </div>
-//       </aside>
-
-//       {/* Bottom Navigation Mobile */}
-//       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#000080]/95 backdrop-blur-2xl border-t border-white/20 z-50">
-//         <nav className="flex justify-around items-center h-16">
-//           {navItems.slice(0, 5).map((item) => (
-//             <Link href={item.link || '#'} key={item.id}>
-//               <NavButton key={item.id} item={item} />
-//             </Link>
-//           ))}
-//         </nav>
-//       </div>
-//     </>
-//   );
-// }
-
 'use client';
 
-import React from 'react';
-import { 
-  Home, Sword, BookOpen, Backpack, Wallet, CheckCheck, ChevronLeft, ChevronRight
-} from 'lucide-react';
-import { useUser } from '@/context/UserProvider';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { ChevronLeft, ChevronRight, LogOut, Menu } from 'lucide-react';
+import { useUser } from '@/context/UserProvider';
+import { useLogout } from '@/lib/logout';
+import { formaterFcfa } from '@/lib/formats';
+import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { BARRE_DU_BAS, GROUPES_CANDIDAT, pageActive } from './pages';
+
+const FOCUS = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#F0E68C]';
 
 interface NavigationProps {
-  showNav: boolean;
-  setShowNav: React.Dispatch<React.SetStateAction<boolean>>;
-  isMobile: boolean;
+  reduit: boolean;
+  setReduit: (reduit: boolean) => void;
 }
 
-export default function Navigation({ showNav, setShowNav, isMobile }: NavigationProps) {
+/** Barre latérale de l'espace candidat sur ordinateur (lot 8a) : pages groupées, solde, déconnexion. */
+export default function Navigation({ reduit, setReduit }: NavigationProps) {
   const { user } = useUser();
-  const pathname = usePathname();
+  const { handleLogout } = useLogout();
+  const active = pageActive(usePathname());
+  const solde = formaterFcfa(user?.candidat?.wallet?.balance);
 
-  const navItems = [
-    { id: 'home', name: 'Tableau de bord', icon: Home, link: '/dashboard/candidats' },
-    { id: 'missions', name: 'Missions', icon: Sword, link: '/dashboard/candidats/missions' },
-    { id: 'missions_confirmées', name: 'Offres confirmées', icon: CheckCheck, link: '/dashboard/candidats/missions/en_cours' },
-    { id: 'formations', name: 'Formations', icon: BookOpen, link: '/dashboard/candidats/formations' },
-    { id: 'inventaire', name: 'Inventaire', icon: Backpack, link: '/dashboard/candidats/inventaire' },
-    { id: 'wallet', name: 'Mes Gains', icon: Wallet, link: '/dashboard/candidats/loot' },
-  ];
-
-  // --- RENDU MOBILE (Barre basse) ---
-  // Sur mobile, si showNav est false, on ne l'affiche pas du tout
-  if (isMobile) {
-    if (!showNav) return null;
-    return (
-      <nav className="flex justify-around items-center h-16 bg-[#000080]/95 backdrop-blur-2xl border-t border-white/10 px-2 pb-safe">
-        {navItems.slice(0, 5).map((item) => {
-          const isActive = pathname === item.link;
-          return (
-            <Link 
-              href={item.link} 
-              key={item.id}
-              className={`flex flex-col items-center justify-center flex-1 py-1 gap-1 transition-all ${
-                isActive ? 'text-[#F0E68C] scale-105 font-medium' : 'text-white/60'
-              }`}
-            >
-              <item.icon className="w-5 h-5" />
-              <span className="text-[10px] tracking-tight truncate max-w-18">{item.name}</span>
-            </Link>
-          );
-        })}
-      </nav>
-    );
-  }
-
-  // --- RENDU DESKTOP (Sidebar latérale) ---
   return (
-    <div className="flex flex-col h-full justify-between p-4 w-full overflow-hidden">
+    <nav aria-label="Espace candidat" className="flex h-full w-full flex-col justify-between p-4 font-lisible">
+      <div className={`flex pb-4 ${reduit ? 'justify-center' : 'justify-end'}`}>
+        <button
+          type="button"
+          onClick={() => setReduit(!reduit)}
+          aria-expanded={!reduit}
+          aria-label={reduit ? 'Agrandir le menu' : 'Réduire le menu'}
+          className={`inline-flex size-11 cursor-pointer items-center justify-center rounded-lg bg-white/10 text-white/80 hover:bg-white/20 hover:text-white ${FOCUS}`}
+        >
+          {reduit ? <ChevronRight aria-hidden="true" className="h-4 w-4" /> : <ChevronLeft aria-hidden="true" className="h-4 w-4" />}
+        </button>
+      </div>
 
-      {/* En-tête avec bouton de réduction */}
-      <div className={`flex items-center pb-4 ${showNav ? "justify-between pl-2" : "justify-center"}`}>
-          {showNav && <span className="text-xs font-black uppercase tracking-wider text-white/50 transition-opacity duration-300">Navigation</span>}
+      <div className="no-scrollbar flex-1 space-y-5 overflow-y-auto pr-1">
+        {GROUPES_CANDIDAT.map((groupe, rang) => (
+          <div key={groupe.titre ?? rang} className="space-y-1.5">
+            {groupe.titre && !reduit && <p className="px-3 text-xs font-bold tracking-wider text-white/60 uppercase">{groupe.titre}</p>}
+            <ul className="w-full space-y-1">
+              {groupe.pages.map((page) => {
+                const estActive = active === page.id;
+                return (
+                  <li key={page.id}>
+                    <Link
+                      href={page.href}
+                      aria-current={estActive ? 'page' : undefined}
+                      title={reduit ? page.nom : undefined}
+                      className={`flex min-h-11 items-center rounded-xl text-sm font-semibold ${FOCUS} ${reduit ? 'justify-center p-2.5' : 'gap-3 px-3'} ${
+                        estActive ? 'bg-[#F0E68C] text-black' : 'text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <page.icone aria-hidden="true" className="h-4 w-4 shrink-0" />
+                      <span className={reduit ? 'sr-only' : 'whitespace-nowrap'}>{page.nom}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </div>
 
-          {/* Bouton Toggle toujours accessible */}
-          <button
-              onClick={() => setShowNav(!showNav)}
-              className="p-2 rounded-lg bg-white/10 text-white/80 hover:bg-white/20 hover:text-white transition cursor-pointer layout-button"
-              title={showNav ? "Réduire le menu" : "Agrandir le menu"}
+      <div className="space-y-2 border-t border-white/10 pt-4">
+        {solde && (
+          <Link
+            href="/dashboard/candidats/loot"
+            title={reduit ? `Solde : ${solde}` : undefined}
+            className={`block rounded-xl border border-white/10 bg-white/5 text-center hover:bg-white/10 ${FOCUS} ${reduit ? 'p-2' : 'p-3'}`}
           >
-              {!showNav ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          </button>
-      </div>    
+            <span className={reduit ? 'sr-only' : 'block text-xs text-white/70'}>Solde du Trésor</span>
+            <span className={`block font-black tracking-wide text-[#F0E68C] ${reduit ? 'text-[11px]' : 'text-lg'}`}>{reduit ? solde.replace(' FCFA', '') : solde}</span>
+          </Link>
+        )}
+        <button
+          type="button"
+          onClick={handleLogout}
+          title={reduit ? 'Se déconnecter' : undefined}
+          className={`flex min-h-11 w-full cursor-pointer items-center rounded-xl bg-red-500/10 text-sm font-semibold text-red-200 hover:bg-red-500/20 hover:text-white ${FOCUS} ${
+            reduit ? 'justify-center p-2.5' : 'gap-3 px-3'
+          }`}
+        >
+          <LogOut aria-hidden="true" className="h-4 w-4 shrink-0" />
+          <span className={reduit ? 'sr-only' : 'whitespace-nowrap'}>Se déconnecter</span>
+        </button>
+      </div>
+    </nav>
+  );
+}
 
-      {/* Liste des liens */}
-      <div className="flex-1 overflow-y-auto no-scrollbar py-2 space-y-1">
-        <nav className="space-y-1.5">
-          {navItems.map((item) => {
-            const isActive = pathname === item.link;
-            return (
-              <Link 
-                href={item.link} 
-                key={item.id}
-                title={!showNav ? item.name : ""}
-                className={`group flex items-center rounded-xl transition-all font-medium text-sm ${
-                    !showNav ? "justify-center p-3" : "px-4 py-3 gap-3"
-                } ${
-                  isActive 
-                    ? 'bg-white/10 text-[#F0E68C] shadow-sm border-l-4 border-[#F0E68C]' 
-                    : 'text-white/80 hover:bg-white/5 hover:text-white'
-                }`}
-              >
-                <item.icon className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${isActive ? 'text-[#F0E68C]' : 'text-white/60 group-hover:text-white'}`} />
-                
-                <span 
-                    className={`transition-all duration-300 origin-left overflow-hidden whitespace-nowrap ${
-                        !showNav ? "w-0 opacity-0 pointer-events-none" : "w-auto opacity-100"
-                    }`}
+/** Barre du bas sur téléphone : la boucle principale et « Plus », qui ouvre toutes les pages (D41). */
+export function BarreDuBas() {
+  const [plusOuvert, setPlusOuvert] = useState(false);
+  const { user } = useUser();
+  const { handleLogout } = useLogout();
+  const active = pageActive(usePathname());
+  const dansPlus = !!active && !BARRE_DU_BAS.some((p) => p.id === active);
+  const nom = [user?.prenom, user?.nom].filter(Boolean).join(' ') || 'Mon espace';
+  const entree = (estActive: boolean) =>
+    `flex min-h-14 flex-1 flex-col items-center justify-center gap-1 rounded-lg px-1 text-xs font-semibold ${FOCUS} ${estActive ? 'text-[#F0E68C]' : 'text-white/80 hover:text-white'}`;
+
+  return (
+    <nav aria-label="Navigation principale" className="border-t border-white/10 bg-[#000080] pb-[env(safe-area-inset-bottom)] font-lisible">
+      <ul className="flex items-stretch px-1">
+        {BARRE_DU_BAS.map((page) => (
+          <li key={page.id} className="flex flex-1">
+            <Link href={page.href} aria-current={active === page.id ? 'page' : undefined} className={entree(active === page.id)}>
+              <page.icone aria-hidden="true" className="h-5 w-5" />
+              <span>{page.court ?? page.nom}</span>
+            </Link>
+          </li>
+        ))}
+        <li className="flex flex-1">
+          <Sheet open={plusOuvert} onOpenChange={setPlusOuvert}>
+            <SheetTrigger asChild>
+              <button type="button" className={`${entree(dansPlus)} cursor-pointer`}>
+                <Menu aria-hidden="true" className="h-5 w-5" />
+                <span>Plus</span>
+              </button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-72 border-white/10 bg-[#000080] font-lisible text-white">
+              <SheetTitle className="px-5 pt-6 text-base font-bold text-[#F0E68C]">{nom}</SheetTitle>
+              <nav aria-label="Toutes les pages" className="grid gap-5 overflow-y-auto px-5 pb-6">
+                {GROUPES_CANDIDAT.map((groupe, rang) => (
+                  <div key={groupe.titre ?? rang} className="grid gap-1">
+                    {groupe.titre && <p className="px-2 text-xs font-bold tracking-wider text-white/60 uppercase">{groupe.titre}</p>}
+                    <ul className="grid gap-1">
+                      {groupe.pages.map((page) => (
+                        <li key={page.id}>
+                          <SheetClose asChild>
+                            <Link
+                              href={page.href}
+                              aria-current={active === page.id ? 'page' : undefined}
+                              className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold ${FOCUS} ${
+                                active === page.id ? 'bg-[#F0E68C] text-black' : 'hover:bg-white/10'
+                              }`}
+                            >
+                              <page.icone aria-hidden="true" className="h-4 w-4 shrink-0" />
+                              {page.nom}
+                            </Link>
+                          </SheetClose>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPlusOuvert(false);
+                    handleLogout();
+                  }}
+                  className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-xl bg-red-500/15 px-3 text-sm font-semibold text-red-100 hover:bg-red-500/25 ${FOCUS}`}
                 >
-                    {item.name}
-                </span>
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
-
-      {/* Bloc Solde / Cagnotte en bas */}
-      <div className="pt-4 border-t border-white/10">
-        <div className={`rounded-2xl border border-white/5 bg-white/5 p-3 text-center transition-all ${!showNav ? "px-1" : "p-4"}`}>
-          {showNav ? (
-            <>
-              <p className="text-white/60 text-xs font-medium transition-opacity">Solde disponible</p>
-              <p className="text-[#F0E68C] text-lg font-black mt-1 tracking-wide truncate">
-                {user?.candidat?.wallet?.balance?.toLocaleString() || 0} FCFA
-              </p>
-            </>
-          ) : (
-            <p className="text-[#F0E68C] text-xs font-black tracking-tighter truncate">
-              {user?.candidat?.wallet?.balance ? `${(user.candidat.wallet.balance / 1000).toFixed(0)}k` : 0}
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
+                  <LogOut aria-hidden="true" className="h-4 w-4 shrink-0" />
+                  Se déconnecter
+                </button>
+              </nav>
+            </SheetContent>
+          </Sheet>
+        </li>
+      </ul>
+    </nav>
   );
 }

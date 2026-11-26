@@ -130,8 +130,6 @@ Un lot n'est terminé qu'une fois fusionné, déployé par Vercel et vérifié s
 | 3b | **Combat et boss** : leçons, quiz, examen final, projet, certification | M | 3a |
 | 4a | **Fenêtre de statut** : page profil | M | Lot 1 |
 | 4b | **Inventaire** : documents et titres | S | 4a |
-| Réévaluation (API) | Prêt sur `fix/api-reevaluation` (back seul, depuis `main`) | — | 3 tests ajoutés (`RankReevaluationTest`) : promotion enregistrée sans file d'attente, une seule notification lue, notification d'un autre introuvable. Les 2 premiers échouent sans le changement. Suite complète : 138 tests |
-| 4c | Prêt sur `design/lot-4c-reevaluation` (après l'API de réévaluation) | — | Types, lint et build verts. API locale. 13 contrôles automatiques : aucune fenêtre sans promotion, promotion réelle par l'XP, contenu de la fenêtre, focus gardé, « Continuer » (promotion lue, autre notification intacte), pas de retour au rechargement, double promotion en une fenêtre, Échap, lecture en échec, « Voir les missions ». 375 px et animations réduites : fenêtre dans l'écran, aucune animation en boucle, aucune erreur dans la console |
 | 4c | **Réévaluation de rang** | S | 4a, lot B1 si la décision 3 est acceptée |
 | 5 | **Trésor et messages du Système** : gains, notifications, cloche | M | Lot 0 |
 | 6a | **L'Éveil** : inscription, connexion, premiers pas | M | Lot 0 |
@@ -690,6 +688,577 @@ Quand le rang change vraiment, le candidat le voit : une fenêtre du Système s'
 
 **Vérification** : tests de l'API ; API locale : promotion réelle (XP qui passe un seuil), fenêtre ouverte une seule fois, autres notifications intactes, double promotion, Échap, échec de la lecture ; clavier ; 375 px et animations réduites ; pas de régression sur le QG.
 
+## Lot 5 : le Trésor et les messages du Système (plan détaillé du 16/11/2026)
+
+Les gains (`/dashboard/candidats/loot`), les notifications (`/dashboard/candidats/notifications`) et la cloche de l'en-tête. Aucun changement d'API.
+
+**Comment circule l'argent** (`WalletService`).
+- Quand l'entreprise finance une mission, une opération `transfer` en attente (`pending`) apparaît chez le candidat : c'est la récompense **scellée**, nette de la commission de 10 %.
+- À la validation, elle passe à `completed` et le solde du candidat augmente.
+- Si la mission est arrêtée, elle passe à `cancelled`.
+- Un retrait retire tout de suite le montant du solde (`withdrawal`, `pending`). Il passe à `processing` pendant le virement, puis `completed`. S'il échoue (`failed`), le montant est rendu.
+
+**Constats.**
+- **Statuts faux.** Tout ce qui n'est pas `completed` s'affiche « En cours », avec un « + » : une récompense annulée et un retrait refusé (montant rendu) passent pour des gains à venir.
+- **Libellés en anglais.** Un retrait s'appelle « Withdrawal » (nom technique de l'opération).
+- **Montants.** Ils sont formatés selon la langue du téléphone (« 1,000 F »).
+- **Retrait.**
+  - Le bouton s'ouvre même avec un solde à 0.
+  - Le minimum de l'API (100 FCFA) n'est pas annoncé.
+  - Les réseaux ne sont pas des choix accessibles.
+  - La fenêtre n'a ni focus gardé ni Échap.
+  - Les messages parlent de « conseil » et de « mages ».
+- **Notifications.**
+  - Le message est coupé à deux lignes, sans moyen de le lire en entier.
+  - Seule l'offre d'une entreprise mène quelque part.
+  - « Tout marquer comme lu » ne met pas à jour la cloche, qui garde son compteur pendant une minute.
+  - Le chargement prend tout l'écran.
+- **La cloche.** Son compteur clignote en boucle et n'est pas plafonné.
+
+**Front.**
+- **Le Trésor** (`components/dashboardCandidat/tresor`).
+  - Couche Système : disponible, scellé (en séquestre, versé à la validation de la mission) et total gagné, en FCFA exacts.
+  - Bouton « Retirer » seulement si un retrait est possible.
+- **Le retrait.** Fenêtre accessible :
+  - montant, avec le solde et le minimum annoncés ;
+  - réseau en boutons radio ;
+  - numéro avec un exemple ;
+  - vérification avant l'envoi avec les règles de l'API ;
+  - refus de l'API affiché ;
+  - résultat annoncé.
+- **L'historique.** Couche réalité : chaque opération avec un libellé clair, la mission, la date, le montant signé et son vrai statut.
+- **Messages du Système** (`components/dashboardCandidat/notifications`).
+  - Regroupés par jour, message complet.
+  - Lien selon le type : offre reçue, relance d'offre, promotion de rang.
+  - Non lus signalés en texte, pas seulement par la couleur.
+  - « Tout marquer comme lu » partage le cache de la cloche.
+- **La cloche.** Plus de clignotement, compteur plafonné à « 9+ ».
+- Les pages gardent leur adresse et affichent les nouveaux composants.
+
+**Vérification** : API locale, compte avec récompense scellée, récompense versée, récompense annulée, retraits en attente, versé et refusé ; retrait refusé avant l'envoi, refusé par l'API et réussi pour de vrai (solde en base) ; notifications de chaque type ; tout marquer comme lu et la cloche à jour ; clavier ; 375 px et animations réduites ; pas de régression sur le QG.
+
+## Lot 6a : l'Éveil, inscription et connexion (plan détaillé du 17/11/2026)
+
+Le parcours d'entrée : choix du profil, inscription, confirmation de l'adresse, connexion, mot de passe oublié et réinitialisation.
+
+**Constats.**
+- **Pas d'étiquettes.** Les champs n'ont qu'un texte d'exemple, qui disparaît pendant la saisie. Les erreurs ne sont pas liées aux champs.
+- **Mot de passe.**
+  - La règle diffère d'un écran à l'autre. La réinitialisation n'exige pas de minuscule.
+  - Le profil accepte un mot de passe de 8 caractères sans autre règle, côté écran comme côté API.
+  - Seule la connexion permet d'afficher le mot de passe saisi.
+- **Messages.**
+  - Les résultats passent par des fenêtres d'alerte (SweetAlert).
+  - Les refus de l'API arrivent en anglais (« The email has already been taken. »).
+  - Un lien de réinitialisation expiré donne une erreur sans issue.
+- **Après l'inscription.** Le parcours s'arrête sur « vérifiez votre boîte mail », sans dire ce qui vient ensuite.
+- **Chargement.** « Loading... » en anglais pendant le chargement de la réinitialisation.
+
+**API (`fix/api-politique-mot-de-passe`, depuis `main`).** Reprend un travail resté en local depuis l'audit :
+- `PasswordPolicy` : une seule règle, avec des messages en français, pour l'inscription, la réinitialisation et le changement depuis le profil (candidat et entreprise) ;
+- trois réglages lus correctement quand leur valeur est vide dans le `.env` : `CORS_ALLOWED_ORIGINS`, `SESSION_SECURE_COOKIE` et `KKIAPAY_API_URL`.
+
+**Front** (`components/auth`).
+- **Un cadre commun** : une fenêtre du Système sur fond de nuit, le lien de retour et le titre. Plus de photo de fond, qui pesait lourd en 3G et rendait le texte difficile à lire.
+- **Des champs complets** : étiquette, aide, erreur liée au champ, autocomplétion. Le mot de passe s'affiche ou se masque, et ses règles se cochent pendant la saisie (`lib/password.ts`, même règle que l'API).
+- **Le choix du profil** : « Je cherche des missions » ou « Je recrute », chacun avec une phrase d'explication.
+- **L'inscription.**
+  - Erreurs de l'API traduites sous le bon champ.
+  - Adresse déjà inscrite : renvoi de l'e-mail de confirmation proposé.
+  - Après l'envoi, la suite en trois étapes : compte créé, adresse à confirmer (avec le renvoi), puis connexion et CV.
+- **La connexion.**
+  - Message clair pour des identifiants faux, un compte non confirmé (avec le renvoi) et trop de tentatives.
+  - Redirection selon le rôle.
+- **Le mot de passe oublié** : message affiché dans la page.
+- **La réinitialisation.**
+  - Lien incomplet ou expiré : explication et lien pour en demander un nouveau.
+  - Réussite : lien vers la connexion.
+- **L'adresse confirmée** : les prochaines étapes.
+- Le changement de mot de passe du profil (lot 4a) suit la même règle.
+
+**Vérification** : tests de l'API ; API locale : inscriptions candidat et entreprise réelles, refus de chaque champ, adresse déjà prise, connexion (identifiants faux, compte non confirmé, puis réussie), mot de passe oublié, réinitialisation réelle par le lien du journal, lien expiré ; clavier ; 375 px et animations réduites.
+
+## Lot 6b : l'accueil public (plan détaillé du 17/11/2026)
+
+La page d'accueil (`/`), avec l'en-tête et le pied de page communs aux pages publiques.
+
+**Constats.**
+- **Chiffres inventés.** « +2 400 jeunes actifs », « 92 % des inscrits gagnent leur premier salaire en moins de 7 jours », « 380 entreprises locales », « 7 jeunes diplômés sur 10 ». Aucun ne vient de la base.
+- **Faux témoignages.** Trois jeunes, des montants et un CDI chez une vraie entreprise, notés cinq étoiles.
+- **Logos de vraies entreprises.** MTN, Moov, SBEE, La Poste et Sobebra sont présentées comme clientes. Les images n'existent pas dans le dépôt : la section affiche six cadres vides.
+- **Promesses fausses.** « Payé le jour même », « virement instantané », « Télécharge l'app », « Résultat garanti ». La récompense est en réalité versée à la validation de la mission, et il n'y a pas d'application mobile.
+- **Pied de page.** Un numéro factice (+229 67 00 00 00), des réseaux sociaux qui mènent à `#`, et trois liens vers des pages qui n'existent pas (`/profil`, `/recrutement`, `/tarifs`).
+- **En-tête.** Le bouton du menu mobile n'a pas de nom pour les lecteurs d'écran, et l'inscription n'est accessible que par la page de connexion.
+- **Poids.** Une photo plein écran sur téléphone, et des animations à l'apparition de chaque bloc, même quand l'appareil demande moins d'animations.
+
+**Front** (`components/accueil`).
+- **« Le Système recrute. »** Une fenêtre du Système sur fond de nuit. Une phrase dit ce qu'est Jobsy, puis trois entrées : « Je cherche des missions », « Je recrute » et « Se connecter ».
+- **Le jeu en quatre étapes**, toutes réelles :
+  1. l'Éveil : le CV donne le rang de départ ;
+  2. les donjons : formations, quiz, examen final et certificat, avec de l'XP ;
+  3. les portails : missions ouvertes selon le rang, épreuve d'entrée ;
+  4. le Trésor : récompense mise sous séquestre par l'entreprise, versée à la validation, retrait Mobile Money.
+- **Les rangs, de E à S.** Le diplôme fixe le rang de départ, et l'XP fait monter.
+- **Les dernières missions ouvertes**, tirées de `GET /public_missions` (trois au plus) : rang requis, entreprise, lieu et récompense. S'il n'y en a aucune, ou si l'API ne répond pas, un message le dit sans bloquer la page.
+- **Pour les entreprises** : publier une mission, recevoir des candidats classés par rang et par score d'épreuve, déposer la récompense, valider la mission.
+- **L'en-tête public** : le logo, les pages existantes, « Se connecter » et « Créer un compte ». Le menu mobile a un nom accessible.
+- **Le pied de page** : seulement les pages qui existent, et le lien vers la page de contact.
+- Plus de photo ni d'animation à l'apparition. Le balayage des fenêtres du Système reste, et il est coupé quand l'appareil demande moins d'animations.
+- Les six sections remplacées sont supprimées.
+
+**Hors lot.** Les pages publiques Missions, Formations, Entreprises et Contact gardent leur contenu, avec le nouvel en-tête et le nouveau pied de page. La page de contact affiche elle aussi des numéros factices et une adresse à confirmer. Gloria doit fournir les vraies coordonnées.
+
+**Vérification** : API locale avec des missions réelles, puis sans mission, puis API arrêtée. Liens vers chaque entrée. Clavier et menu mobile. Pages Missions, Formations, Entreprises et Contact toujours lisibles sous l'en-tête. 375 px et animations réduites. Aucune erreur dans la console.
+
+## Lot 7 : la Guilde, l'espace entreprise (plan du 18/11/2026)
+
+L'espace entreprise compte environ 5 700 lignes. Il est découpé en cinq lots, chacun avec sa PR. Ils gardent tous la version sobre (décision 2) : les rangs et les fenêtres du Système servent de repères, sans effet de jeu.
+
+| Lot | Contenu |
+|---|---|
+| 7a | Tableau de bord, en-tête, navigation, portefeuille (recharge et historique) |
+| 7b | Missions : listes ouvertes et clôturées, création, modification, actions |
+| 7c | Candidatures et matching : liste des candidats d'une mission, profil, invitations |
+| 7d | Suivi des recrutés : offre, séquestre, validation et paiement |
+| 7e | Profil de l'entreprise |
+
+### Lot 7a : le tableau de bord de la Guilde (plan détaillé)
+
+**Constats.**
+- **Rang absent.** L'API ne chargeait pas le rang des candidats : toutes les candidatures affichaient « Rang Nouveau ». En revanche, elle renvoyait leur fiche complète, avec l'adresse et la date de naissance.
+- **Chiffre faux.** « N talents ont été recrutés » affichait en réalité le nombre de candidatures.
+- **Recharge.**
+  - Un montant vide ou de moins de 100 FCFA partait quand même vers l'API, et la fenêtre se fermait avant la réponse.
+  - La fenêtre n'avait ni étiquette liée au champ, ni Échap, ni focus gardé.
+  - Après le paiement, rien n'indique que le solde se met à jour à la confirmation.
+- **Page entière en erreur** si l'historique ne se charge pas.
+- **Historique.** Tout ce qui n'est pas terminé s'affiche « Échoué ». Une récompense versée s'affiche avec un montant négatif sans explication.
+- **Décor trompeur.** Une puce « VIP » sur la carte du portefeuille.
+- **En-tête.**
+  - Le logo mène à `/dashboard/entreprise`, une page qui n'existe pas (404).
+  - Le menu mobile mène à `/dashboard/entreprises/listCandidateProfile`, qui n'existe pas non plus.
+  - La cloche et le menu du compte n'ont pas de nom accessible et ne s'ouvrent pas au clavier.
+  - L'icône du logo clignote sans fin.
+- **Navigation.** Le bouton qui réduit le menu n'a pas de nom accessible, et la page en cours n'est pas annoncée. Faute de frappe : « Clotûrées ».
+
+**API (`fix/api-tableau-guilde`, depuis `main`).** Pour les candidatures à traiter, l'API renvoie le rang, le nom, la ville et le titre de la mission, et rien d'autre. Pour les missions terminées, elle ajoute `hired_count`, le nombre de candidats recrutés. 2 tests.
+
+**Front.**
+- **Le tableau de bord.**
+  - Les quatre compteurs de missions, chacun avec un libellé clair et un lien vers sa liste.
+  - Les candidatures à traiter, avec l'emblème du rang.
+  - Le portefeuille en FCFA exacts, avec les derniers mouvements dans la page.
+  - Les missions terminées à relancer, avec le vrai nombre de recrutés.
+- **La recharge.**
+  - Une fenêtre accessible, qui vérifie le montant comme l'API (de 100 à 10 000 000 FCFA, nombre entier).
+  - Les refus de l'API sont affichés.
+  - Après l'ouverture du paiement, un message dit que le solde sera mis à jour dès la confirmation, avec un bouton pour l'actualiser.
+- **Un historique qui ne se charge pas** ne bloque plus que son propre bloc.
+- **L'en-tête** : liens réparés, cloche et menu du compte accessibles, plus d'animation en boucle, menu mobile dans une fenêtre accessible.
+- **La navigation** : nom du bouton de réduction, page en cours annoncée (`aria-current`), libellés corrigés.
+
+**Vérification** : tests de l'API ; API locale avec une entreprise qui a des missions ouvertes, désactivées et clôturées, des candidatures, une mission terminée et des mouvements ; recharge (montants refusés, refus de l'API, ouverture du paiement) ; historique en erreur ; clavier ; 375 px et animations réduites.
+
+### Lot 7b : les missions de la Guilde (plan détaillé du 18/11/2026)
+
+**Constats.**
+- **Création impossible.** L'API exige l'urgence de la mission, mais le formulaire ne l'envoie pas : toute nouvelle mission est refusée, avec un message en anglais dans une bulle qui disparaît. La durée, montrée aux candidats, n'est pas demandée non plus.
+- **Formulaire.**
+  - Les étiquettes ne sont pas liées aux champs, et aucun champ n'est marqué obligatoire.
+  - Les erreurs ne s'affichent pas sous le bon champ.
+  - « Rémunération » n'a pas d'unité, et les exemples sont étrangers au Bénin (« Paris / Remote »).
+  - Une mission relancée reprend sa date limite passée, que l'API refuse.
+  - La page de création appelle `/missions/null` quand elle ne relance rien.
+- **Listes.**
+  - Un tableau à 6 colonnes déborde sur téléphone.
+  - Le nombre de candidatures compte aussi les brouillons.
+  - Toutes les actions sont cachées dans un menu « ⋯ » sans nom.
+- **Actions.**
+  - Après une suppression, la mission reste affichée jusqu'au rechargement.
+  - Le message de désactivation est inversé : « Mission activée » quand on désactive.
+  - Les confirmations passent par des fenêtres SweetAlert.
+- **Notifications.** À la clôture, la notification et l'e-mail aux candidats non retenus partent en file d'attente, que rien ne traite en production. Ils n'arrivent jamais. C'est le cas de cinq notifications, dont celle du candidat retenu.
+
+**API (`fix/api-notifications-immediates`, depuis `main`).** La notification dans l'application part tout de suite (`viaConnections`). Seul l'e-mail reste en file : il ne peut plus faire échouer la requête. Cela couvre cinq notifications : mission clôturée, candidat retenu, proposition acceptée, relances du candidat et de l'entreprise. 1 test.
+
+**Front** (`components/dashboardEntreprise/missions`).
+- **Des cartes de quête** à la place des tableaux, pour les missions ouvertes comme pour les missions clôturées. Chaque carte montre :
+  - le statut écrit en toutes lettres et le rang minimum ;
+  - la récompense et la date limite ;
+  - les candidatures envoyées, sans les brouillons, et les recrutés ;
+  - les actions en clair : candidatures, invitations, modifier, puis désactiver, clôturer ou supprimer, avec une confirmation accessible.
+- **Recherche et filtre** (toutes, ouvertes, désactivées). La suppression groupée est gardée.
+- **Le formulaire.**
+  - Étiquettes liées, champs obligatoires marqués, règles de l'API vérifiées avant l'envoi, erreurs sous chaque champ.
+  - Ajout de l'urgence et de la durée.
+  - Nom de l'entreprise prérempli.
+  - Avertissement quand un CDD ou un CDI est réservé aux rangs E ou D, qui ne voient que les missions ponctuelles.
+  - Date limite à choisir de nouveau pour une relance.
+
+**Vérification** : tests de l'API ; API locale : création réelle (refus de chaque champ, puis réussite), modification, relance d'une mission terminée, désactivation et réactivation, clôture (candidatures rejetées, notification enregistrée), suppression simple et groupée, refus d'une suppression de mission engagée ; recherche et filtre ; clavier ; 375 px et animations réduites.
+
+### Lot 7c : les candidatures et le matching (plan détaillé du 18/11/2026)
+
+Environ 2 000 lignes, découpées en deux PR :
+- **7c-A** : la page des candidatures d'une mission (candidatures reçues, prise de service, candidats suggérés) et le dossier du candidat ;
+- **7c-B** : le profil ouvert depuis les suggestions, l'envoi d'une invitation et la page des invitations.
+
+#### 7c-A : les candidatures (plan détaillé)
+
+**Constats.**
+- **Page des candidatures.**
+  - 330 lignes de code mort commenté.
+  - La mission n'est pas nommée.
+  - Le statut de chaque candidature (en attente, retenue, refusée) n'est pas affiché, et un candidat déjà retenu peut être coché de nouveau.
+  - Les rangs E et D sont rebaptisés par des titres inventés (« Apprenti Junior », « Agent Certifié »).
+  - Une candidature sans évaluation affiche un score vide. Les points forts et faibles de l'épreuve ne sont jamais montrés.
+- **Prise de service.**
+  - Le formulaire n'a ni étiquettes liées ni vérification. La validité de l'offre peut dépasser la date de prise de service.
+  - Les invitations partent en boucle : si la deuxième échoue, la première est déjà envoyée, et la page ne dit pas laquelle a échoué. La liste n'est pas rechargée.
+- **Candidats suggérés.**
+  - L'API proposait des candidats d'un rang trop bas pour postuler, et des candidats qui avaient déjà postulé.
+  - Les compétences communes ne s'affichaient jamais : la page lisait un champ qui n'existe pas (`matching_skills` au lieu de `matched`).
+  - L'icône clignote sans fin.
+- **Dossier du candidat.**
+  - La page plante si le candidat n'a pas d'analyse de CV ou pas de rang.
+  - Elle masque les expériences et les diplômes des rangs E et D.
+  - Le bouton « Contacter » ne fait rien. Les coordonnées, visibles une fois que le candidat a postulé, ne sont jamais affichées.
+  - « Failed to load » en anglais.
+
+**API (`fix/api-matching-rang`, depuis `main`).** Les candidats suggérés sont limités à ceux qui peuvent postuler : la règle de rang est celle de la candidature, et ceux qui ont déjà postulé sont écartés. Chaque suggestion porte le rang. 1 test.
+
+**Front** (`components/dashboardEntreprise/candidatures`).
+- **L'en-tête** : la mission (titre, rang minimum, récompense, date limite) et un retour aux missions.
+- **Les candidatures.**
+  - Chaque carte affiche l'emblème du rang réel, le nom, la ville et le statut en toutes lettres.
+  - Elle montre aussi le score d'épreuve et son niveau, ou « Évaluation en attente ». Le résumé, les points forts et les points faibles sont dans un détail repliable.
+  - Le lien mène au dossier.
+  - Recherche et filtre par statut. Seules les candidatures en attente peuvent être retenues.
+- **La prise de service.**
+  - Une fenêtre accessible, avec les règles de l'API vérifiées avant l'envoi et une validité de l'offre au plus tard le jour de la prise de service.
+  - Le résultat est donné candidat par candidat, et la liste est rechargée.
+- **Les candidats suggérés** : le rang, le pourcentage de correspondance, les compétences communes et manquantes, et le profil complet (inchangé jusqu'au lot 7c-B).
+- **Le dossier du candidat.**
+  - Les sections s'affichent dès qu'elles ont un contenu, quel que soit le rang.
+  - Les coordonnées s'affichent quand l'API les rend visibles. Sinon, la page explique quand elles le deviennent.
+
+**Vérification** : tests de l'API ; API locale : candidatures en attente, retenue et refusée, avec et sans évaluation ; prise de service (refus de chaque champ, validité après la prise de service), envoi réel à deux candidats dont un refusé par l'API ; suggestions (rang trop bas absent, compétences communes) ; dossier avec et sans CV, coordonnées visibles ou non ; clavier ; 375 px et animations réduites.
+
+#### 7c-B : les invitations (plan détaillé du 19/11/2026)
+
+**Constats.**
+- **Le profil ouvert depuis les suggestions.**
+  - Ce n'est pas une vraie fenêtre : le focus n'y reste pas, Échap ne la ferme pas et le bouton de fermeture n'a pas de nom.
+  - Un candidat sans domaine renseigné reçoit le titre inventé « Apprenti Junior Jobsy », et son rang n'est pas affiché.
+  - Si le profil ne se charge pas, la fenêtre reste vide, sans message.
+  - Les certifications Jobsy n'ont pas de lien de vérification, alors que l'API le permet.
+- **L'invitation.**
+  - Les étiquettes du formulaire ne sont pas liées, et les règles de l'API (objet, message de 10 caractères au moins) ne sont pas vérifiées avant l'envoi.
+  - Le message de réussite disparaît seul au bout de 2,5 secondes.
+  - Rien n'indique qu'un candidat est déjà invité : un second envoi est refusé.
+  - L'API accepte une invitation sur une mission désactivée ou clôturée, que le candidat ne pourra pas accepter.
+  - Les retours à la ligne du message disparaissent dans l'espace du candidat, et l'e-mail affiche les apostrophes codées (« l&#039;offre »).
+- **La page des invitations.**
+  - La mission n'est pas nommée. Le statut de l'offre (envoyée, refusée, acceptée) se lit mal, et le bouton principal clignote sans fin.
+  - L'API renvoie l'adresse e-mail de chaque candidat invité, même s'il n'a pas encore répondu ou s'il a refusé.
+  - Le formulaire de prise de service ne vérifie que la date et l'heure. Il n'a pas d'étiquettes liées, et la validité de l'offre peut dépasser la prise de service.
+  - « Modifier » reste proposé quand le candidat a déjà accepté l'offre, ce que l'API refuse.
+  - Messages en bulles qui disparaissent, pagination par 6, jargon (« onboarding »).
+
+**API (`fix/api-invitations`, depuis `main`).**
+- Une invitation sur une mission désactivée ou clôturée est refusée, avec un message clair.
+- La liste des invitations ne donne l'adresse e-mail du candidat qu'une fois l'invitation acceptée, comme les autres coordonnées.
+- L'e-mail d'invitation affiche le message tel qu'il a été écrit (il est déjà nettoyé à l'enregistrement).
+- Les suggestions et le profil complet ne renvoient plus de titre inventé quand le domaine est vide, et donnent le nom prénom d'abord, comme le reste de l'espace entreprise.
+- Tests pour chaque point.
+
+**Front.**
+- **Le profil** : une fenêtre accessible (fenêtre de dialogue, titre, focus rendu au bouton d'origine) qui affiche :
+  - le rang, les compétences et les badges équipés ;
+  - les certifications Jobsy avec leur lien de vérification, les formations externes et les diplômes ;
+  - un message clair avec « Réessayer » si le chargement échoue.
+- **L'invitation** se rédige dans la même fenêtre.
+  - Étiquettes liées et règles de l'API vérifiées avant l'envoi.
+  - Le résultat reste affiché, et un candidat déjà invité est signalé avec la date et l'état de son invitation.
+  - Les candidats suggérés déjà invités portent la mention « Invité ».
+- **La page des invitations.**
+  - Un en-tête avec la mission et un retour aux candidatures.
+  - Des cartes par invitation : statut de l'invitation et de l'offre en toutes lettres, date d'envoi, message envoyé dans un détail repliable, lien vers le dossier.
+  - Le filtre par statut et la recherche par nom.
+  - L'adresse e-mail seulement quand l'API la donne.
+  - La prise de service réutilise la fenêtre du lot 7c-A : mêmes règles, et préremplie quand on corrige une offre encore sans réponse. « Modifier » n'est proposé que dans ce cas, et « Envoyer une nouvelle offre » après un refus.
+- **Côté candidat** : les retours à la ligne du message de l'entreprise sont gardés.
+
+**Vérification** : tests de l'API ; API locale : invitation réelle depuis une suggestion (refus d'un message trop court, invitation enregistrée, mention « Invité », second envoi signalé) ; refus sur une mission clôturée ; page des invitations avec une invitation en attente, une refusée et une acceptée (adresse e-mail visible pour celle-ci seulement) ; prise de service sur l'invitation acceptée (refus de chaque champ, offre en base), modification d'une offre sans réponse ; message à la ligne dans l'espace du candidat ; clavier ; 375 px et animations réduites.
+
+### Lot 7d : les recrutés (plan détaillé du 19/11/2026)
+
+**Constats.**
+- **Le paiement du candidat peut se perdre en route.**
+  - « Valider et démarrer » lance la mission, puis tente de bloquer la récompense.
+  - Si ce blocage échoue (solde disponible trop bas) ou si la fenêtre KkiaPay est fermée, la mission est en cours sans séquestre.
+  - La page ne propose ensuite plus jamais de garantir la récompense, et l'API refuse la validation sans séquestre : le candidat ne peut pas être payé.
+- Le front choisit entre portefeuille et KkiaPay d'après le solde total, alors que l'API compte le solde disponible (le solde moins les fonds déjà bloqués).
+- « Recaler » agit au premier clic, sans confirmation.
+- L'état du paiement (bloqué, payé, rendu) n'est jamais affiché, et les statuts s'affichent en anglais (« service_started », « in_progress »).
+- Les offres sans réponse ou refusées sont mêlées aux recrutés.
+- 295 lignes de code mort commenté ; fenêtres PrimeReact sans titre lié ; étoiles de notation peu accessibles ; messages en bulles qui disparaissent.
+- **API.** La récompense peut être bloquée sur une offre que le candidat n'a pas acceptée, ou déjà terminée : les fonds resteraient bloqués sans moyen de les rendre. Un second paiement KkiaPay peut être lancé pour une récompense déjà bloquée.
+
+**API (`fix/api-sequestre`, depuis `main`).**
+- La récompense ne peut être bloquée que sur une offre acceptée et en cours (acceptée, prise de service, mission en cours, travail terminé), depuis le portefeuille comme après un paiement KkiaPay.
+- Le paiement KkiaPay d'une mission est refusé si l'offre n'est pas en cours, ou si la récompense est déjà bloquée ou payée.
+- Tests pour chaque point.
+
+**Front** (`components/dashboardEntreprise/recrutes`).
+- **L'en-tête** : la mission, un retour aux candidatures et le solde disponible.
+- **Une carte par recruté** (offre acceptée) :
+  - le statut en toutes lettres et la prise de service (date, heure, lieu) ;
+  - la présence signalée, la ponctualité et la note ;
+  - le contrat à télécharger.
+- **Le paiement** est affiché sur chaque carte : non garanti, bloqué, payé (avec la commission) ou rendu. Tant qu'il n'est pas garanti, la carte propose de le garantir :
+  - par un blocage sur le solde disponible, s'il suffit ;
+  - sinon par un paiement KkiaPay, avec un bouton pour actualiser après la confirmation.
+- **Confirmer la prise de service** : une fenêtre demande la ponctualité.
+  - Quand le solde le permet, la récompense est bloquée d'abord. Si ce blocage échoue, rien n'est lancé.
+  - Sinon la mission démarre quand même (le candidat est sur place), et la carte rappelle de garantir la récompense.
+- **Ne pas retenir** : une confirmation qui dit que la récompense bloquée redevient disponible.
+- **Valider le travail** : une note de 1 à 5 (boutons radio) et un avis facultatif de 2 000 caractères au plus. Ce n'est proposé qu'une fois la récompense garantie ; sinon la carte explique pourquoi.
+- **Les offres sans réponse** sont comptées, avec un lien vers les candidatures.
+
+**Vérification** : tests de l'API ; API locale : recrutés dans chaque état ; garantie par le solde (solde et séquestre en base) ; prise de service confirmée (blocage puis démarrage, contrat généré et téléchargé) ; candidat non retenu (séquestre rendu) ; validation avec note et avis (candidat payé, commission, mission terminée) ; validation impossible sans garantie ; paiement KkiaPay ouvert quand le solde ne suffit pas (passerelle simulée), puis séquestre constaté après actualisation ; clavier ; 375 px et animations réduites.
+
+### Lot 7e : le profil de l'entreprise (plan détaillé du 19/11/2026)
+
+**Constats.**
+- **La présentation s'affiche avec ses balises.** L'éditeur l'enregistre en HTML, et la page la montre comme du texte (« <p>…</p> »).
+- **Les enregistrements trompent.**
+  - Chaque formulaire se ferme avant la réponse de l'API.
+  - En cas de refus, une bulle disparaît, et la page affiche les valeurs refusées comme si elles étaient enregistrées.
+  - En cas de réussite, la page réaffiche un instant les anciennes valeurs.
+- **L'API refuse sans explication.** Le site web doit être une adresse complète (https://…), et les réseaux sociaux aussi. Le front ne le dit pas, et le refus arrive en anglais.
+- Les icônes des réseaux sociaux mènent à « # » quand le lien est vide, et n'ont pas de nom accessible.
+- La fenêtre des réseaux sociaux n'est pas une vraie fenêtre de dialogue.
+- **Le logo.** N'importe quel fichier est envoyé (l'API n'accepte que JPG, PNG ou WebP de 2 Mo au plus), et l'image est cassée tant qu'il n'y a pas de logo.
+- Les champs n'ont pas d'étiquettes liées, et le téléphone non plus.
+- **Mot de passe.** Pas d'étiquettes, aucune règle affichée, des champs qui ne se vident pas après la réussite.
+  - Le travail en cours sur les mots de passe (règle commune, champ avec « afficher ») est repris ici, comme au lot 6a pour le candidat.
+- **API.** Le nom de l'entreprise peut être vidé, alors qu'il s'affiche sur les missions et dans les invitations. Les coordonnées n'ont pas de longueur maximale : au-delà de 255 caractères, la base refuse l'écriture et l'API répond par une erreur.
+
+**API (`fix/api-profil-entreprise`, depuis `main`).**
+- Le nom de l'entreprise ne peut plus être vidé ; l'envoi du seul logo reste possible.
+- Les coordonnées sont limitées à 255 caractères, la taille de leurs colonnes.
+- Tests pour chaque point.
+
+**Front** (`components/dashboardEntreprise/profil`).
+- **L'en-tête** : le logo (ou les initiales), le nom, le secteur et la ville.
+  - « Changer le logo » vérifie le type et la taille avant l'envoi.
+  - Le résultat s'affiche dans la page.
+- **Trois cartes à modifier** : les informations de l'entreprise, la présentation, et les coordonnées avec les réseaux sociaux.
+  - Chacune passe de la lecture à un formulaire avec étiquettes liées.
+  - Les règles de l'API sont vérifiées avant l'envoi, et le formulaire ne se ferme qu'après la réussite.
+  - Les refus s'affichent sous chaque champ, en français.
+- **La présentation** s'affiche mise en forme, et se modifie avec le même éditeur que les missions.
+- **Les réseaux sociaux** ne s'affichent que s'ils sont renseignés, sous forme de liens nommés.
+- **Le mot de passe** reprend la règle commune (`lib/password`) et le champ avec « afficher » (`PasswordInput`).
+  - Les erreurs s'affichent sous chaque champ, par exemple un mot de passe actuel incorrect.
+  - Les champs se vident après la réussite.
+
+**Vérification** : tests de l'API ; API locale : affichage d'un profil complet et d'un profil vide ; logo refusé (type, taille) puis envoyé ; informations (nom vide et site sans https refusés, enregistrement réel) ; présentation mise en forme ; coordonnées et réseaux (refus, enregistrement, liens) ; mot de passe (règle, confirmation, mot de passe actuel faux, réussite puis connexion avec le nouveau) ; clavier ; 375 px et animations réduites.
+
+### Lot 8 : les finitions (plan du 19/11/2026)
+
+Le lot 8 regroupe quatre chantiers de nature différente. Il est découpé comme le lot 7, une PR par chantier (D40) :
+
+| Sous-lot | Contenu |
+|---|---|
+| 8a | Navigation : en-tête et navigation du candidat (barre du bas de 5 entrées sur téléphone), page en cours annoncée dans les deux espaces |
+| 8b | Accessibilité : passe axe sur chaque écran refait, corrections, lien d'évitement vers le contenu |
+| 8c | Performance : mesure Lighthouse mobile des écrans principaux, corrections (critère : tableau de bord utilisable en moins de 3 secondes en 4G) |
+| 8d | Administration aux couleurs du thème, sans gamification (décision 2) |
+| 8e | Pages publiques Missions, Formations, Entreprises et Contact : contenu honnête (D38) et accessibilité (D42) |
+
+#### 8a : la navigation (plan détaillé)
+
+**Constats.** L'en-tête et la navigation du candidat datent d'avant la refonte (D7).
+- **Sur téléphone, deux menus** se superposent : le menu de l'en-tête et la barre du bas.
+  - La barre du bas coupe ses intitulés (texte de 10 px, « Offres confirmées » tronqué).
+  - Elle n'atteint que 5 des 6 pages.
+- **Des pages manquent** : les invitations (D18) et les messages du Système n'y figurent pas. Le Trésor s'appelle encore « Mes Gains ».
+- **La page en cours** n'est pas annoncée. Elle n'est reconnue que sur l'adresse exacte : dans une formation ou une candidature, aucune entrée n'est active.
+- **Clavier et lecteurs d'écran.**
+  - Le bouton qui réduit le menu n'a pas de nom accessible.
+  - La cloche est un lien placé dans un bouton : deux arrêts au clavier pour une seule action.
+  - Le menu du compte ne se ferme pas avec Échap et ne se parcourt pas au clavier.
+- Le solde affiché n'est pas formaté (« 12500 FCFA ») et ne mène pas au Trésor.
+- 245 lignes de code commenté.
+- **Espace entreprise** : le menu mobile n'annonce pas la page en cours.
+
+**Front** (`components/dashboardCandidat/layout`).
+- **Une seule liste des pages** du candidat, partagée par la barre latérale, la barre du bas et le panneau « Plus ». Les intitulés restent ceux de la couche réalité (D9).
+- **Sur ordinateur**, une barre latérale groupée :
+  - Missions : missions, missions confirmées, invitations ;
+  - Progression : formations, inventaire ;
+  - Compte : Trésor, profil, messages.
+  - Elle se réduit avec un bouton nommé. Le solde formaté mène au Trésor, et la déconnexion est en bas.
+- **Sur téléphone**, une barre du bas de 5 entrées aux intitulés entiers : tableau de bord, missions, formations, Trésor, et « Plus » (D41).
+  - « Plus » ouvre un panneau avec toutes les pages, le profil et la déconnexion.
+  - Le menu de l'en-tête disparaît.
+- **L'en-tête** : le logo, la cloche (un seul lien, nommé avec le nombre de messages non lus) et le menu du compte accessible au clavier, comme dans l'espace entreprise.
+- **La page en cours** est annoncée (`aria-current`) et reconnue sur ses sous-pages : une formation active « Formations », une offre de mission active « Missions confirmées ».
+- **Espace entreprise** : la page en cours est annoncée dans le menu mobile.
+
+**Vérification** : à 1 280 px et à 375 px, chaque entrée mène à sa page ; entrée active sur les sous-pages ; barre du bas de 5 entrées sans texte coupé ; panneau « Plus » et menu du compte au clavier (Échap, focus rendu) ; menu réduit nommé ; cloche avec un seul arrêt ; menu mobile de l'entreprise ; aucun débordement, animations réduites, aucune erreur dans la console.
+
+#### 8b : l'accessibilité (plan détaillé)
+
+**Mesure.** axe-core 4.11 (règles WCAG 2.2 A et AA, et bonnes pratiques) sur 42 écrans et états ouverts : public, candidat, entreprise, à 1 280 px et à 375 px. 31 écrans n'ont aucune violation, dont tous les écrans refaits du candidat.
+
+**Constats.**
+- **Pages d'entrée (lot 6a).**
+  - Connexion, inscriptions et mot de passe oublié n'ont pas de titre de niveau 1 : le titre de la fenêtre est un titre de niveau 2.
+  - Le bouton « Afficher le mot de passe » mesure 20 px : la cible minimale est de 24 px.
+- **Éditeur de texte** (création et modification d'une mission, présentation de l'entreprise) : les menus de la barre d'outils (titre, couleurs, alignement) n'ont pas de nom.
+- **Menus déroulants** (compte, notifications) : ouverts, ils masquent toute la page aux lecteurs d'écran. Ils se comportent comme des fenêtres, alors qu'un menu ne doit pas l'être.
+- **Aucun lien d'évitement** : au clavier, il faut traverser l'en-tête et toute la navigation avant d'atteindre le contenu.
+- **Déconnexion** : les boutons de la fenêtre de confirmation n'ont pas assez de contraste (rouge et bleu clairs sur texte blanc).
+- Les pages publiques Missions, Formations, Entreprises et Contact cumulent les violations. Leur contenu n'a jamais été refait : elles relèvent du sous-lot 8e (D42).
+
+**Front.**
+- Les fenêtres du Système acceptent un titre de niveau 1, et les pages d'entrée l'utilisent.
+- Le bouton « Afficher le mot de passe » passe à 32 px.
+- Les menus de la barre d'outils de l'éditeur sont nommés (titre, couleur du texte, couleur de fond, alignement…), par une fonction commune à tous les éditeurs.
+- Les menus déroulants ne sont plus modaux : le reste de la page reste lisible, Échap et Tab les ferment.
+- Un lien « Aller au contenu » ouvre chaque page des espaces candidat et entreprise.
+- Les boutons de la confirmation de déconnexion prennent des couleurs contrastées.
+
+**Vérification** : la même passe axe, qui doit tomber à zéro violation sur les écrans refaits ; le lien d'évitement au clavier dans les deux espaces ; la fenêtre de déconnexion analysée ouverte ; les vérifications des lots touchés (6a, 7b, 7e, 8a).
+
+#### 8e : les pages publiques (plan détaillé)
+
+**Constats.** Ces quatre pages datent d'avant la refonte. Le lot 6b n'a repris que l'accueil, l'en-tête et le pied de page.
+- **Missions.**
+  - Les missions sont réelles, mais la page ajoute des chiffres inventés (« +680 missions », « 92 % payées en 24 h », « 2 400+ jeunes », « 380+ entreprises »).
+  - Chaque carte garde une image vide « à remplacer plus tard », et la récompense s'affiche sans unité (« 20000 »).
+  - Les boutons de filtre sont peu lisibles : texte de 10 px, contraste de 2,6:1.
+- **Formations.**
+  - La liste est entièrement inventée : six formations avec leur nombre d'étudiants et des certificats qui n'existent pas.
+  - La page affirme des certificats « reconnus par plus de 380 entreprises partenaires ».
+  - La recherche et les boutons ne font rien.
+- **Entreprises.**
+  - De faux témoignages sont attribués à MTN Bénin, Jumia Bénin et Sobebra.
+  - S'y ajoutent des chiffres inventés, des promesses invérifiables (« 5 à 20 candidatures en moins de 2 heures ») et de faux numéros de téléphone.
+  - Un bouton « Être rappelé en 5 minutes » ne fait rien, et le lien d'inscription mène à une page inexistante (`/register/entreprise`).
+- **Contact.**
+  - Faux numéros, adresse non confirmée, carte Google Maps à l'adresse factice.
+  - « Plus de 2 400 jeunes ont déjà gagné leur salaire » est inventé, et la marche à suivre pour s'inscrire est fausse (« remplis ton numéro »).
+  - Un bouton « Me faire rappeler » ne fait rien.
+- **Accessibilité** : aucune zone principale, titres sautés, contrastes insuffisants, boutons placés dans des liens, carte sans titre (passe axe du 8b).
+
+**API (`fix/api-formations-publiques`, depuis `main`).** `GET /public_courses` : les formations actives, sans compte, avec seulement ce qu'une page publique doit montrer (titre, description, type, compétences, XP, nombre de modules). Test.
+
+**Front** (`components/public`). Les quatre pages prennent le style de l'accueil (fenêtres du Système sur fond de nuit). Chacune a une zone principale, un titre de niveau 1, et un contenu qui vient de la base ou du code (D38).
+- **Missions** : les missions ouvertes, avec une recherche et un filtre par contrat accessibles.
+  - La carte est partagée avec l'accueil : rang requis, entreprise, lieu, récompense en FCFA, date limite.
+  - « Postuler » mène à la création du compte.
+- **Formations** : le vrai catalogue.
+  - Le type de chaque formation est expliqué (Standard, Logistique, Expert, D25), avec ses compétences, son XP et ses modules.
+  - La page dit que les formations sont gratuites et que chaque certificat se vérifie en ligne.
+- **Entreprises** : le fonctionnement réel (publication, candidats classés par rang et par épreuve, invitations, séquestre).
+  - Le coût réel : la récompense fixée par l'entreprise, dont Jobsy retient 10 % au paiement du candidat.
+  - La garantie : la récompense revient sur le solde si le candidat n'est pas retenu.
+  - Liens d'inscription corrects.
+- **Contact** : aucune coordonnée tant que Gloria n'a pas fourni les vraies (D38).
+  - Une foire aux questions exacte (inscription, coût, paiement, premier rang).
+  - Les liens utiles : créer un compte, se connecter, mot de passe oublié.
+
+**Vérification** : tests de l'API ; axe sans violation sur les quatre pages, à 1 280 px et à 375 px ; aucun chiffre, témoignage ou numéro inventé ; vraies missions et vraies formations affichées ; recherche et filtre au clavier ; aucun lien mort ; aucune erreur dans la console.
+
+#### 8c : la performance (plan détaillé du 22/11/2026)
+
+**Mesure.** Lighthouse 13.6, profil mobile par défaut (4G lente simulée, processeur ralenti 4 fois), médiane de 3 passages. Huit écrans : l'accueil, les missions publiques, la connexion, puis, avec un compte, le tableau de bord, les missions et les formations du candidat, le tableau de bord et les missions de l'entreprise. Front construit (`next build`), API de test locale.
+
+**Constats.**
+- **Pages publiques et connexion** : rapides. Contenu affiché en 1,2 s, score de 98 à 100.
+- **Tableaux de bord** : contenu principal affiché en 5,8 à 6,7 s, score de 56 à 69. Les causes :
+  - Tout le contenu se construit dans le navigateur : après le chargement du code, puis après les réponses de l'API.
+  - L'API exige l'en-tête `X-Requested-With` (protection CSRF). Chaque appel est donc précédé d'une requête de vérification CORS, et `max_age` à 0 la faisait redemander à chaque fois : 7 par chargement du tableau de bord du candidat.
+  - `GET /user` partait deux fois sur chaque page connectée : une fois pour le contexte, une fois pour la garde.
+  - Le tableau de bord du candidat attendait `/user` avant de demander les formations et les invitations, qui n'en ont pas besoin.
+  - À l'arrivée des quêtes du jour, le bas de la page sautait (décalage de 0,21 ; la limite recommandée est 0,1).
+- **Poids.**
+  - zod (64 Ko) était chargé sur les pages d'entrée pour une seule règle de mot de passe.
+  - SweetAlert2 (21 Ko) était chargé sur chaque page connectée pour la seule confirmation de déconnexion.
+  - Les polices Geist, qui ne servent plus qu'aux anciens écrans, étaient préchargées partout : 98 Ko de polices par page.
+
+**API (`fix/api-cors-preflight`, depuis `main`).** `max_age` passe à 7200 secondes, le plafond de Chrome : le navigateur garde la réponse de vérification 2 heures. Test.
+
+**Front.**
+- `/user` est lu une seule fois par page : le contexte et la garde partagent la même requête (SWR). Le cache est vidé à la déconnexion, pour la personne suivante sur le même poste.
+- Le tableau de bord du candidat demande ses listes en même temps, sans attendre `/user` quand elles n'en ont pas besoin.
+- Les quêtes du jour réservent leur place pendant le calcul.
+- La règle du mot de passe est écrite sans zod : même règle, mêmes messages.
+- SweetAlert2 se charge au clic sur « Se déconnecter ».
+- Geist n'est plus préchargée.
+
+**Résultats** (médianes, avant → après) :
+
+| Écran | Score | Premier affichage | Contenu principal | Décalage | Poids |
+|---|---|---|---|---|---|
+| Accueil | 100 → 100 | 1,2 → 1,2 s | 1,2 → 1,2 s | 0 → 0 | 499 → 383 Ko |
+| Missions publiques | 98 → 99 | 1,2 → 1,2 s | 1,2 → 1,2 s | 0 → 0 | 499 → 383 Ko |
+| Connexion | 98 → 100 | 1,2 → 1,2 s | 1,2 → 1,2 s | 0 → 0 | 484 → 368 Ko |
+| Tableau de bord du candidat | 56 → 70 | 2,3 → 1,2 s | 6,7 → 6,7 s | 0,21 → 0,02 | 601 → 452 Ko |
+| Missions du candidat | 68 → 73 | 1,6 → 1,2 s | 6,0 → 5,2 s | 0,05 → 0,05 | 532 → 460 Ko |
+| Formations du candidat | 69 → 73 | 2,3 → 1,2 s | 5,8 → 5,2 s | 0 → 0 | 514 → 442 Ko |
+| Tableau de bord de l'entreprise | 65 → 73 | 2,4 → 1,2 s | 6,1 → 5,5 s | 0,02 → 0,02 | 521 → 448 Ko |
+| Missions de l'entreprise | 90 → 97 | 2,5 → 1,2 s | 2,5 → 1,2 s | 0 → 0 | 515 → 442 Ko |
+
+- **Requêtes de vérification**, mesurées dans Chrome : avec l'ancienne valeur, 6 à chaque chargement du tableau de bord du candidat ; avec la nouvelle, aucune après la première visite. Lighthouse ne le voit pas, car il repart d'un navigateur vide à chaque passage. Le gain porte sur chaque page visitée après la première, et sur l'interrogation des notifications toutes les minutes.
+- **Tableau de bord du candidat** : la dernière réponse de l'API arrive à 3,2 s au lieu de 4,3 s. Le contenu principal ne bouge pas : il attend cette dernière réponse.
+- **Le critère des 3 secondes n'est pas atteint** sur les tableaux de bord (D43).
+- **Limites de la mesure.** Le serveur de test (`php artisan serve`) traite une requête à la fois : les appels à l'API passent l'un après l'autre, ce qui alourdit les chiffres ci-dessus. En production, s'ajoutent la distance jusqu'à Render et le réveil de l'API, mise en veille par le plan gratuit après un moment sans visite. Non mesuré ici.
+
+**Vérification** : la même mesure avant et après ; le nombre de requêtes de vérification et de lectures de `/user` dans Chrome ; déconnexion puis connexion d'un autre compte dans le même onglet ; les vérifications des lots touchés (4a, 4b, 4c, 5, 6a, 6b, 7a, 7e, 8a, 8b).
+
+#### 8d : l'administration (plan détaillé du 22/11/2026)
+
+**Règle** (décision 2) : l'administration garde ses écrans et ses fonctions. Elle prend seulement les couleurs et les polices du thème, sans gamification, comme la version sobre de l'espace entreprise.
+
+**Constats** (20 écrans, à 1 280 et à 375 px).
+- **En-tête et navigation** : des copies de ceux de l'espace entreprise d'avant le lot 7a, avec 300 lignes de code commenté.
+  - La cloche est factice : point rouge permanent, faux message « Nouveau message de Yin » avec une photo chargée depuis un site externe. L'API n'envoie aucune notification aux admins.
+  - Le lien « Profil » mène à une page qui n'existe pas. Next.js le précharge sur chaque écran : une erreur 404 par page, et une requête qui ne se termine jamais.
+  - Boutons sans nom (cloche, compte, menu réduit), deux bandeaux d'en-tête imbriqués, page en cours non annoncée, aucun lien d'évitement.
+  - Intitulés de la navigation trop pâles (blanc à 40 %, contraste de 3,2:1).
+- **Polices** : Geist partout, au lieu des polices du thème.
+- **Pages** : la passe axe trouve des violations sur les 20 écrans.
+  - 243 textes sans contraste suffisant, dont 120 dans la navigation ; le reste surtout en gris clair (`slate-400`, `gray-500`) sur fond clair.
+  - 67 boutons et 19 liens réduits à une icône, sans nom.
+  - Formulaires des formations, modules, examens et projets : champs sans étiquette liée, barre d'outils de l'éditeur sans noms, titre de niveau 2 au lieu de 1.
+  - Fenêtres de confirmation (SweetAlert2) aux couleurs par défaut, sans contraste suffisant, et bibliothèque chargée sur chaque écran.
+- À 375 px, aucun débordement.
+- **Trouvés pendant la correction.**
+  - Le fil d'Ariane renvoyait l'admin vers le tableau de bord de l'entreprise, et quatre de ses liens menaient à des pages inexistantes (questions et projets d'examen, logistique, candidats) : une erreur 404 sur ces écrans.
+  - La page de modification d'un projet final s'ouvrait vide : elle lisait mal la réponse de l'API (`{ project }`). Aucun lien n'y mène ; la modification se fait depuis la liste.
+  - Avatars des candidats en blanc sur une couleur tirée du nom (jusqu'à 1,4:1) ; badges de rang et de catégorie écrits dans la couleur de l'API, souvent trop claire.
+  - Avertissements et badges qui clignotaient sans fin.
+  - `ModuleForm` (577 lignes), une ancienne copie de `ModuleForms`, n'est plus utilisé.
+
+**Front.**
+- **En-tête et navigation partagés avec l'espace entreprise** : les composants du lot 7a prennent la liste des pages et le nom de l'espace en paramètre. L'administration les utilise, sans cloche ni lien « Profil ». Sa navigation reconnaît les sous-pages (une formation active « Formations »). Les anciens composants sont supprimés.
+- **Mise en page** comme l'espace entreprise : lien « Aller au contenu », zone principale, police lisible du thème, titres de page dans la police du Système en bleu marine.
+- **Contrastes** : les gris clairs passent au gris du thème (`slate-600`), les pastilles colorées à des teintes plus foncées.
+- **Noms** : boutons et liens réduits à une icône, champs et listes des formulaires, barre d'outils de l'éditeur (fonction commune du lot 8b).
+- **Titres** : un titre de niveau 1 par écran, sans niveau sauté.
+- **Confirmations** : SweetAlert2 aux couleurs du thème (bleu marine, rouge foncé), chargée au clic.
+- **Liens** : fil d'Ariane vers le tableau de bord de l'administration, liens morts corrigés, page de modification d'un projet préremplie.
+- **Couleurs calculées** : avatars sur fond bleu marine ; badges de rang et de catégorie en texte foncé, la couleur de l'API gardée en fond et en bordure ; plus de clignotement permanent.
+- `ModuleForm` est supprimé.
+- Pas de changement d'API.
+
+**Vérification** : la même passe axe, qui doit tomber à zéro violation sur les 20 écrans ; plus aucune erreur dans la console ; navigation (page en cours, sous-pages, menu réduit nommé, menu mobile, lien d'évitement) ; une action réelle par formulaire touché (créer une formation, un module, une question d'examen, un projet) et une confirmation SweetAlert2 ; 375 px sans débordement ; les vérifications des lots qui partagent l'en-tête (7a, 8a, 8b).
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -798,6 +1367,17 @@ Repères à confirmer :
 - D33 (lot 4b) : l'inventaire lit les titres dans `/candidate/inventory`, les diplômes et certifications externes dans `/candidat/profile`, et les certificats Jobsy dans `/courses/my-learnings`, qui donne le lien de vérification. Les copies des documents répétées dans chaque badge ne sont plus utilisées.
 - D34 (lot 4b) : la limite de 5 titres équipés est recopiée dans le front, comme la commission en D19 : l'API la fixe dans `BadgeController` sans la renvoyer. Si elle change, `inventaire/regles.ts` doit suivre. Le refus de l'API reste affiché.
 - D35 (lot 4c) : la réévaluation réutilise la notification `rank_promoted` du lot B1 au lieu d'un nouvel état en base : la fenêtre s'ouvre tant que cette notification n'est pas lue. La fenêtre vit sur le QG seulement, la page où le candidat arrive.
+- D36 (lot 6a) : les pages de connexion et de mot de passe servent aussi aux entreprises : elles vouvoient, comme avant. L'inscription du candidat aussi, pour rester cohérente avec la connexion.
+- D37 (lot 6a) : le lot 6a passe avant les jetons (J1 à J4), dont le barème et les prix attendent Gloria. La « révélation du rang » de l'Éveil reste la quête du CV et la réévaluation (lot 4c). Une notification de rang après l'analyse du CV et la validation viendra plus tard.
+- D38 (lot 6b) : l'accueil ne montre ni chiffre, ni témoignage, ni logo d'entreprise tant qu'ils ne viennent pas de la base ou d'un accord écrit. Les coordonnées de contact du pied de page sont retirées en attendant les vraies, que Gloria doit fournir.
+- D39 (lot 7) : l'espace entreprise est découpé en cinq lots (7a à 7e), un par écran ou groupe d'écrans, chacun avec sa PR, comme les lots 2 et 3.
+- D40 (lot 8) : le lot 8 est découpé en quatre sous-lots (8a à 8d), un par chantier, chacun avec sa PR.
+- D41 (lot 8a) : la barre du bas du candidat garde les entrées de la boucle principale (tableau de bord, missions, formations, Trésor) et un « Plus » pour le reste. Les missions confirmées et les invitations restent à un geste, depuis « Plus » et depuis les quêtes du jour du tableau de bord. Facile à revoir après le test avec les jeunes (critère 1).
+- D42 (lot 8) : les pages publiques Missions, Formations, Entreprises et Contact n'ont jamais été refaites (le lot 6b n'a repris que l'accueil, l'en-tête et le pied de page). La page Entreprises affiche des chiffres inventés, de faux témoignages attribués à de vraies marques, de faux numéros et un bouton sans effet. Elles forment le sous-lot 8e, traité juste après le 8b, avec la règle de D38.
+- D43 (lot 8c, à valider par Gloria) : le critère de 3 secondes sur les tableaux de bord ne s'atteint pas par le front seul. Le reste dépend de l'hébergement, donc de Gloria. Recommandation, dans l'ordre :
+  1. Corriger le déploiement Vercel (Root Directory sur `jobsyfront`) : sans cela, le front n'est pas construit. C'est un préalable.
+  2. Servir l'API sous le domaine du front (réécritures de Next.js ou de Vercel vers Render). Plus aucune requête de vérification, cookies du même site, et un rendu des tableaux de bord côté serveur devient possible ensuite. Demande de revoir la configuration des cookies et de Sanctum.
+  3. Sortir l'API du plan gratuit de Render, qui la met en veille : la première visite attend son réveil.
 
 ## Avancement
 
@@ -822,6 +1402,35 @@ Repères à confirmer :
 | 3b-B2 | Fusionné le 10/11/2026 | #21 | Types, lint et build verts. API locale réunie (salles + projet). 63 contrôles automatiques : accueil (règles, livrables, critères, XP), démarrage, chrono, focus ; brouillon enregistré, échec annoncé puis « Réessayer » ; livrables manquants, focus sur le premier ; fichier refusé (format, taille, refus de l'API), envoyé, consultable et remplacé, bouton atteint au clavier ; refus de l'API sous le bon livrable ; confirmation et Échap ; copie chez le jury ; correction en échec par l'admin (vraie route), compte à rebours, délai vieilli, 2e et dernière tentative avec des livrables vides, réussite et certificat ; grâce puis envoi automatique du brouillon ; copie blanche ; tentatives épuisées ; projet absent ; coupure réseau ; horloge du navigateur en avance d'une heure sans tentative perdue. 375 px et animations réduites : aucun débordement, aucune animation en boucle, aucune erreur dans la console. Boss en QCM (32), salles (31) et donjons (50) toujours verts |
 | 4a | Fusionné le 14/11/2026 | #24 | Types, lint et build verts. Aucun changement d'API. API locale (code de `main`), 2 comptes. 64 contrôles automatiques : statistiques comparées à la base (missions, réputation, ponctualité, formations), aucune statistique inventée pour un candidat neuf, pas de fausse validation, puis validation réelle de l'admin ; informations et contact modifiés, annulés, refusés (avant l'envoi et par l'API), coupure réseau, enregistrés en base ; CV refusé, envoyé, remplacé, supprimé ; diplôme en double, ajout et suppression ; certification ; mot de passe trop court, faux, changé, puis connexion réelle ; focus à chaque étape, boutons de fichier au clavier. 375 px et animations réduites : aucun débordement, aucune animation en boucle, champs en 16 px, aucune erreur dans la console. QG contrôlé après le partage du bloc de rang |
 | 4b | Fusionné le 14/11/2026 | #25 | Types, lint et build verts. Aucun changement d'API. API locale (code de `main`), 2 comptes, titres de test supprimés après la vérification. 36 contrôles automatiques : candidat neuf (aucun titre, conditions et progression, documents vides, aucun bonus) ; candidat avec 6 titres débloqués : équiper, limite de 5 expliquée sans requête, retirer, clavier, refus de l'API et coupure réseau sans changement en base, focus qui suit le titre ; titres, progression et documents comparés à la base ; fichiers consultables ; page de vérification du certificat ouverte ; inventaire indisponible. 375 px et animations réduites : aucun débordement, aucune animation en boucle, aucun texte sous 14 px, aucune erreur dans la console. Fenêtre de statut toujours à 64 contrôles sur 64 |
+| Réévaluation (API) | Fusionné le 15/11/2026 (back seul) | #27 | 3 tests ajoutés (`RankReevaluationTest`) : promotion enregistrée sans file d'attente, une seule notification lue, notification d'un autre introuvable. Les 2 premiers échouent sans le changement. Suite complète : 138 tests |
+| 4c | Fusionné le 15/11/2026 | #28 | Types, lint et build verts. API locale. 13 contrôles automatiques : aucune fenêtre sans promotion, promotion réelle par l'XP, contenu de la fenêtre, focus gardé, « Continuer » (promotion lue, autre notification intacte), pas de retour au rechargement, double promotion en une fenêtre, Échap, lecture en échec, « Voir les missions ». 375 px et animations réduites : fenêtre dans l'écran, aucune animation en boucle, aucune erreur dans la console |
+| 5 | Prêt sur `design/lot-5-tresor` (depuis `main`) | — | Types, lint et build verts. Aucun changement d'API. API locale, 2 comptes. 29 contrôles automatiques : soldes et historique conformes aux opérations en base (récompense versée, scellée, annulée ; retraits versé, en cours, refusé) ; retrait : Échap et focus rendu, champs manquants, minimum, solde dépassé, refus de l'API, retrait réel enregistré en base avec solde à jour ; solde vide sans bouton ; messages : non lus en texte, message complet, liens par type, regroupement par jour, cloche annoncée puis mise à jour sans recharger après « Tout marquer comme lu » ; QG sans réévaluation pour une promotion déjà lue. 375 px et animations réduites : aucun débordement, fenêtre dans l'écran, aucune animation en boucle (logo de l'en-tête corrigé), aucune erreur dans la console |
+| Mot de passe (API) | Prêt sur `fix/api-politique-mot-de-passe` (back seul, depuis `main`) | — | 3 tests ajoutés (`PasswordPolicyTest`), qui échouent tous sans le changement. Suite complète : 149 tests |
+| 6a | Prêt sur `design/lot-6a-eveil` (depuis `main`, après l'API du mot de passe) | — | Types, lint et build verts. API locale. 31 contrôles automatiques : choix du profil, étiquettes, champs manquants et focus, règles cochées, mot de passe affichable, inscriptions candidat et entreprise réelles en base, adresse déjà prise (message en français et renvoi), connexion (identifiants faux, compte non confirmé, confirmation par le lien du journal, réussite), règle appliquée au profil, mot de passe oublié, réinitialisation réelle puis lien déjà utilisé et lien incomplet, connexion avec le nouveau mot de passe. 375 px et animations réduites : aucun débordement, aucune animation en boucle. Lot 4a toujours à 64 contrôles sur 64 |
+| 6b | Prêt sur `design/lot-6b-accueil` (empilé sur le lot 6a) | — | Types, lint et build verts. Aucun changement d'API. API locale. 36 contrôles automatiques : un seul titre, aucun chiffre, témoignage, logo ni promesse inventés, aucune image ; quatre étapes et six rangs ; les trois dernières missions de l'API dans l'ordre, montant exact ; entrées candidat, entreprise et connexion ; 9 liens internes vivants, plus de « # » ; clavier ; Missions, Formations, Entreprises et Contact lisibles sous l'en-tête à 1280 et 375 px ; menu mobile (nom, Échap, focus rendu) ; aucune mission ; API injoignable ; 375 px et animations réduites ; aucune erreur dans la console |
+| API 7a | Prêt sur `fix/api-tableau-guilde` (depuis `main`) | — | Candidatures à traiter : rang chargé, fiche limitée au nom, à la ville et au rang. Missions terminées : `hired_count`. 2 tests, qui échouent sans la correction. Suite : 148 tests |
+| 7a | Prêt sur `design/lot-7a-guilde` (empilé sur le lot 6b) | — | Types, lint et build verts. API locale avec l'API 7a. 33 contrôles automatiques : compteurs conformes à la base ; candidatures envoyées seulement, avec le rang réel, sans adresse ni e-mail dans la réponse ; portefeuille et mouvements exacts (libellés, signes, statuts) ; vrai nombre de recrutés ; navigation (page en cours, menu réduit nommé) ; logo réparé ; cloche et menu du compte au clavier ; 8 liens vivants ; recharge (vide, moins de 100, décimal, plus de 10 000 000 refusés sans appel à l'API ; Échap ; refus de l'API ; montant envoyé ; annonce après l'ouverture du paiement) ; historique en erreur ; 375 px, menu mobile, animations réduites ; entreprise sans activité ; aucune erreur dans la console. Non vérifié : le paiement KkiaPay réel |
+| API 7b | Prêt sur `fix/api-notifications-immediates` (depuis `main`) | — | Cinq notifications : le canal « database » part tout de suite (`viaConnections`), l'e-mail reste en file. 1 test, qui échoue sans la correction. Suite : 147 tests |
+| 7b | Prêt sur `design/lot-7b-missions` (empilé sur le lot 7a) | — | Types, lint et build verts. API locale avec l'API 7b et une file en base, comme en production. 34 contrôles automatiques : cartes (candidatures sans brouillon, recrutés, statut), recherche et filtre ; désactivation (confirmation, message juste, focus rendu) et réactivation ; clôture (candidat refusé et prévenu dans l'application) ; suppression d'une mission engagée refusée dans la fenêtre ; suppression groupée avec la mission engagée signalée ; création réelle (refus de chaque champ, avertissement CDD dès le rang E, urgence et durée enregistrées), modification, relance avec une nouvelle date ; cache séparé des missions clôturées ; 375 px et animations réduites ; aucune erreur dans la console. Lot 7a toujours vert (33) |
+| API 7c | Prêt sur `fix/api-matching-rang` (depuis `main`) | — | Candidats suggérés : rang minimum de la candidature appliqué, candidats déjà là écartés, rang renvoyé. 1 test, qui échoue sans la correction. Suite : 147 tests |
+| 7c-A | Prêt sur `design/lot-7c-candidatures` (empilé sur le lot 7b) | — | Types, lint et build verts. API locale avec l'API 7c. 25 contrôles automatiques : en-tête de la mission ; rang réel, score et niveau, évaluation en attente, statuts écrits, plus de titres inventés ; évaluation (résumé, points forts et à surveiller) ; seules les candidatures en attente retenues ; filtre et recherche ; suggestions (rang suffisant, compétences communes, ni rang trop bas ni candidat déjà là) ; profil ouvert puis focus rendu ; prise de service (envoi vide, validité après la prise de service refusée, bilan avec un envoi réel et un refus, focus sur le bilan, offre en base, liste rechargée) ; dossier avec coordonnées, dossier sans lien (coordonnées masquées et expliquées, expériences et formation), dossier introuvable ; 375 px et animations réduites ; aucune erreur dans la console |
+| API 7c-B | Prêt sur `fix/api-invitations` (empilé sur `fix/api-matching-rang`) | — | Invitation refusée sur une mission désactivée ou clôturée ; e-mail du candidat donné seulement après acceptation ; message de l'e-mail sans double échappement ; plus de titre inventé dans les suggestions et le profil, nom donné prénom d'abord comme ailleurs. 4 tests, qui échouent sans la correction. Suite : 151 tests |
+| 7c-B | Prêt sur `design/lot-7c-invitations` (empilé sur le lot 7c-A) | — | Types, lint et build verts. API locale avec l'API 7c-B. 35 contrôles automatiques : suggestions déjà invitées signalées ; profil (fenêtre nommée, rang, compétences, certifications, Échap et focus rendu) ; invitation (préremplie, message trop court refusé, envoi réel, focus sur la confirmation, retours à la ligne gardés en base, mention « Invité », pas de second envoi) ; refus en clair sur une mission clôturée ; page des invitations (mission nommée, e-mail seulement après acceptation, statuts écrits, filtres, recherche, message à la ligne) ; offre envoyée à un invité (refus de chaque champ, offre en base, liste rechargée) ; offre corrigée (préremplie, en base, fenêtre à jour) ; dossier d'un invité avec ses coordonnées ; message à la ligne côté candidat ; 375 px et animations réduites ; aucune erreur dans la console |
+| API 7d | Prêt sur `fix/api-sequestre` (depuis `main`) | — | Séquestre possible seulement sur une offre acceptée et en cours (portefeuille et webhook KkiaPay) ; paiement KkiaPay refusé pour une offre hors cours ou une récompense déjà garantie. 3 tests, qui échouent sans la correction. Suite : 149 tests |
+| 7d | Prêt sur `design/lot-7d-recrutes` (empilé sur le lot 7c-B) | — | Types, lint et build verts. API locale avec l'API 7d. 34 contrôles automatiques : lien depuis la mission ouverte, solde disponible, offres sans réponse écartées et comptées, aucun statut en anglais ; état de chaque recruté ; garantie par le solde (fenêtre, séquestre et solde en base, carte à jour) ; prise de service (ponctualité obligatoire, blocage annoncé, blocage refusé sans démarrage, démarrage réel, contrat généré et téléchargé) ; candidat non retenu (refus 403 expliqué, séquestre annulé et fonds rendus) ; validation (note obligatoire, paiement net, commission, +250 points, compte débité) ; solde insuffisant : validation impossible, paiement KkiaPay ouvert sans voler le focus, intention créée, séquestre constaté après actualisation (webhook simulé) ; 375 px et animations réduites ; aucune erreur dans la console. Lot 7b : 34 contrôles |
+| API 7e | Prêt sur `fix/api-profil-entreprise` (depuis `main`) | — | Nom de l'entreprise obligatoire quand il est envoyé (le logo seul reste possible) ; coordonnées limitées à 255 caractères. 3 tests, dont 2 qui échouent sans la correction (le troisième garde l'envoi du logo seul). Suite : 149 tests |
+| 7e | Prêt sur `design/lot-7e-profil` (empilé sur le lot 7d) | — | Types, lint et build verts. API locale avec l'API 7e. 30 contrôles automatiques : en-tête (nom, secteur, réseaux renseignés seulement, initiales sans logo) ; présentation mise en forme ; liens du site, de l'e-mail et du téléphone ; informations (étiquettes, nom vide et site invalide refusés, refus de l'API en français avec saisie gardée, enregistrement réel, https:// ajouté, lecture à jour, focus) ; présentation (éditeur nommé, enregistrement réel, paragraphes) ; coordonnées (e-mail et ancien numéro à 8 chiffres refusés, enregistrement réel, lien ajouté à l'en-tête) ; logo (type et taille refusés, faux fichier refusé par l'API, envoi réel) ; profil vide ; mot de passe (champs obligatoires, règle, confirmation, mot de passe actuel faux, « Afficher », réussite puis connexion avec le nouveau) ; 375 px et animations réduites ; aucune erreur dans la console. Correction du focus après un envoi (7c-B, 7d) : lots 7c-B 35 et 7d 34 contrôles |
+| 8a | Prêt sur `design/lot-8a-navigation` (empilé sur le lot 7e) | — | Pas de changement d'API. Types, lint et build verts. 23 contrôles automatiques : barre latérale (9 pages groupées, solde formaté vers le Trésor, tableau de bord annoncé) ; cloche en un seul lien ; chaque entrée mène à sa page et y est annoncée ; sous-pages (candidature, offre) ; menu réduit nommé ; menu du compte au clavier (Échap, focus rendu) ; à 375 px, barre du bas de 5 entrées aux intitulés entiers, plus de second menu, « Plus » (toutes les pages, Échap et focus rendu, page en cours annoncée, mise en valeur), déconnexion ; menu mobile de l'entreprise ; aucun débordement ni animation en boucle ; aucune erreur dans la console. Lots 7a (33) et 5 (29) relancés |
+| 8b | Prêt sur `design/lot-8b-accessibilite` (empilé sur le lot 8a) | — | Pas de changement d'API. Types, lint et build verts. axe-core 4.11 (WCAG 2.2 A et AA, bonnes pratiques) : 46 écrans et états analysés, **zéro violation sur les 42 écrans refaits** (avant : 11 écrans en défaut, dont les 4 pages publiques laissées au 8e) ; lien « Aller au contenu » premier arrêt, visible au focus, menant au contenu, dans les deux espaces ; éditeur nommé en français ; menus ouverts et confirmation de déconnexion analysés. Lots relancés : 6a (31), 7a (33), 7b (34), 7e (30), 8a (23) |
+| API 8e | Prêt sur `fix/api-formations-publiques` (depuis `main`) | — | `GET /public_courses` : formations actives, sans compte, champs utiles seulement (titre, description, type, type de contenu, compétences, XP, nombre de modules). 1 test. Suite : 158 tests |
+| 8e | Prêt sur `design/lot-8e-pages-publiques` (empilé sur le lot 8b) | — | Types, lint et build verts. API locale avec l'API 8e. 35 contrôles automatiques : sur l'accueil et les quatre pages, un titre de niveau 1 et une zone principale, aucun chiffre, témoignage, numéro ni bouton inventé, axe sans violation à 1 280 et 375 px, page en cours annoncée ; aucun lien mort (l'ancien `/register/entreprise`) ; missions et formations conformes à l'API ; recherche, filtre au clavier, foire aux questions au clavier ; lien d'évitement ; aucune erreur dans la console. Passe axe complète : 46 écrans sur 46 sans violation. Lot 6b relancé (36) |
+| API 8c | Prêt sur `fix/api-cors-preflight` (depuis `main`) | — | Réponse de vérification CORS gardée 2 heures par le navigateur (`max_age` à 7200 secondes au lieu de 0). 1 test, qui échoue sans la correction. Suite : 161 tests |
+| 8c | Prêt sur `design/lot-8c-performance` (empilé sur le lot 8e) | — | Types, lint et build verts. API locale avec l'API 8c. Lighthouse mobile, médiane de 3 passages, 8 écrans : 72 à 149 Ko de moins par page (polices de 98 à 46 Ko) ; premier affichage des tableaux de bord de 1,6–2,5 s à 1,2 s ; décalage du tableau de bord du candidat de 0,21 à 0,02 ; contenu principal des tableaux de bord de 5,8–6,7 s à 5,2–6,7 s, **critère des 3 secondes non atteint** (D43). Dans Chrome : `/user` lu une fois par page, requêtes de vérification de 6 par chargement à aucune après la première visite, dernière réponse du tableau de bord du candidat à 3,2 s au lieu de 4,3 s ; déconnexion du candidat puis connexion d'une entreprise dans le même onglet sans renvoi. Lots relancés : 4a (64), 4b (36), 4c (13), 5 (29), 6a (31), 6b (36), 7a (33), 7e (30), 8a (23), 8b (axe : 46 écrans sans violation, 4) |
+| 8d | Prêt sur `design/lot-8d-administration` (empilé sur le lot 8c) | — | Pas de changement d'API. Types et build verts ; ESLint : aucun fichier moins bon qu'avant (les `any` déjà présents dans l'administration restent). axe-core 4.11 sur les 20 écrans de l'administration : de 20 écrans en défaut (243 contrastes, 67 boutons et 19 liens sans nom, champs sans étiquette, titres) à **zéro violation** ; aucune erreur dans la console (avant : un 404 par écran) ; aucun débordement à 375 px. 47 contrôles automatiques, deux passages complets : plus de cloche factice ni de lien « Profil », un seul en-tête, 6 pages et leurs sous-pages annoncées, menu réduit nommé, menu du compte au clavier, lien d'évitement, fil d'Ariane vivant ; formation créée en base, puis supprimée après une confirmation aux couleurs du thème (« Annuler » ne supprime rien) ; module et projet final modifiés en base, puis rétablis ; question d'examen créée avec la bonne réponse annoncée, puis retirée ; menu mobile (6 pages, page en cours, Échap et focus rendu) ; 10 pages chargées à 375 px sans débordement ; aucune erreur dans la console. Lots relancés : 7a (33), 8a (23), 8b (4 ; passe axe : 42 écrans sans violation) |
+
+Constats pour Gloria (lot 8d) :
+- Dans le suivi des offres d'une mission (administration, Entreprises, puis les missions d'une entreprise), les boutons « Voir » et « Relancer manuellement » n'ont aucune action. Ils sont gardés et nommés, en attendant de savoir ce qu'ils doivent faire.
+- La page de modification d'un projet final (`/dashboard/admin/courses/{id}/final_project/{id}`) n'est atteinte par aucun lien : la modification se fait depuis la liste des projets. Elle est corrigée, mais elle pourrait être supprimée.
 
 Constat pour Gloria (lot 2b) : les questions de secours de l'API, servies quand l'IA est indisponible, vouvoient le candidat (« Qu'est-ce qui vous motive… »), alors que l'interface le tutoie. À harmoniser dans `ApplicationAIService` si elle le souhaite.
 
