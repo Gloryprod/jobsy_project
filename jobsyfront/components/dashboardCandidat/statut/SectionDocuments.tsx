@@ -1,13 +1,14 @@
 "use client";
 
 import { useRef, useState, type FormEvent } from "react";
-import api, { STORAGE_URL } from "@/lib/api";
+import api from "@/lib/api";
 import { champsRefuses, statutErreur } from "@/lib/erreurs";
 import { ConfirmationRefus } from "../commun/ConfirmationRefus";
 import { BoutonDossier, BoutonFichier, CarteDossier, Champ, MessageErreurDossier, MessageReussite } from "./ElementsDossier";
 import { FICHIER_PREUVE, messageEnvoi, verifierFichier } from "./regles";
 
-export type DocumentAffiche = { id: number; titre: string; detail?: string | null; fichier?: string | null };
+/** lien : lien signé vers le fichier, donné par l'API (valable 30 minutes) */
+export type DocumentAffiche = { id: number; titre: string; detail?: string | null; lien?: string | null };
 
 export type ChampDocument = { nom: string; libelle: string; refusDoublon?: string };
 
@@ -124,8 +125,8 @@ export function SectionDocuments({ id, titre, explication, nomUn, nomCourt, acco
               <div className="grid min-w-0 gap-0.5">
                 <p className="font-semibold break-words text-slate-900">{document.titre}</p>
                 {document.detail && <p className="text-sm text-slate-600">{document.detail}</p>}
-                {document.fichier && (
-                  <a href={`${STORAGE_URL}/${document.fichier}`} target="_blank" rel="noreferrer" className="justify-self-start text-sm font-bold text-[#000080] underline underline-offset-2">
+                {document.lien && (
+                  <a href={document.lien} target="_blank" rel="noreferrer" className="justify-self-start text-sm font-bold text-[#000080] underline underline-offset-2">
                     Voir le fichier<span className="sr-only"> : {document.titre}</span>
                   </a>
                 )}

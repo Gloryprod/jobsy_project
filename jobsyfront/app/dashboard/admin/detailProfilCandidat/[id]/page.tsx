@@ -227,7 +227,7 @@
 //                                     {/* Boutons d'action rapides */}
 //                                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
 //                                         <button 
-//                                             onClick={() => window.open(`${STORAGE_URL}/${diplome.fichier}`, '_blank')}
+//                                             onClick={() => diplome.fichier_url && window.open(diplome.fichier_url, '_blank')}
 //                                             className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
 //                                             title="Voir le document"
 //                                         >
@@ -371,7 +371,7 @@
 'use client';
 
 import React, { use } from 'react';
-import api, { STORAGE_URL } from "@/lib/api";
+import api from "@/lib/api";
 import useSWR from "swr";
 import { toast } from 'react-hot-toast';
 import { ThreeDots } from 'react-loader-spinner';
@@ -459,6 +459,8 @@ interface Candidat {
     id: number;
     intitule: string;
     fichier: string;
+    // Lien signé donné par l'API, valable 30 minutes (disque privé)
+    fichier_url: string | null;
   }>;
 }
 
@@ -756,14 +758,14 @@ export default function DetailProfil({ params }: { params: Promise<{ id: string 
                         {/* Actions Rapides */}
                         <div className="flex items-center gap-1">
                           <button 
-                            onClick={() => window.open(`${STORAGE_URL}/${diplome.fichier}`, '_blank')}
+                            onClick={() => diplome.fichier_url && window.open(diplome.fichier_url, '_blank')}
                             className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
                             title="Voir le document"
                           >
                             <Eye aria-hidden="true" size={16} />
                           </button>
                           <a 
-                            href={`${STORAGE_URL}/${diplome.fichier}`}
+                            href={diplome.fichier_url ?? undefined}
                             target="_blank"
                             download 
                             className="p-2 text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors"

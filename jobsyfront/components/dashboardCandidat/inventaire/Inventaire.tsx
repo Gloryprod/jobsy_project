@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import useSWR from "swr";
-import api, { STORAGE_URL } from "@/lib/api";
+import api from "@/lib/api";
 import { messageErreur, statutErreur } from "@/lib/erreurs";
 import { useUser } from "@/context/UserProvider";
 import { BoutonSysteme, FenetreSysteme } from "@/components/systeme";
@@ -185,8 +185,8 @@ export function Inventaire() {
                   {diplomes.map((diplome) => (
                     <li key={diplome.id} className="grid gap-1 rounded-lg border border-slate-200 p-3">
                       <p className="font-semibold break-words text-slate-900">{diplome.intitule}</p>
-                      {diplome.fichier && (
-                        <a href={`${STORAGE_URL}/${diplome.fichier}`} target="_blank" rel="noreferrer" className={`justify-self-start text-sm ${LIEN}`}>
+                      {diplome.fichier_url && (
+                        <a href={diplome.fichier_url} target="_blank" rel="noreferrer" className={`justify-self-start text-sm ${LIEN}`}>
                           Voir le fichier<span className="sr-only"> : {diplome.intitule}</span>
                         </a>
                       )}
@@ -208,8 +208,8 @@ export function Inventaire() {
                     <li key={formation.id} className="grid gap-1 rounded-lg border border-slate-200 p-3">
                       <p className="font-semibold break-words text-slate-900">{formation.titre}</p>
                       {formation.organisme && <p className="text-sm text-slate-600">{formation.organisme}</p>}
-                      {formation.certificat && (
-                        <a href={`${STORAGE_URL}/${formation.certificat}`} target="_blank" rel="noreferrer" className={`justify-self-start text-sm ${LIEN}`}>
+                      {formation.certificat_url && (
+                        <a href={formation.certificat_url} target="_blank" rel="noreferrer" className={`justify-self-start text-sm ${LIEN}`}>
                           Voir le fichier<span className="sr-only"> : {formation.titre}</span>
                         </a>
                       )}

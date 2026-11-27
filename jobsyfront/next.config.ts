@@ -1,11 +1,24 @@
 import type { NextConfig } from 'next'
 
-// Les fichiers (logos, photos...) sont servis par l'API Laravel sous /storage : on autorise son domaine,
-// lu depuis NEXT_PUBLIC_API_URL (racine du back), en plus de localhost pour le développement.
-const apiUrl = new URL(process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000')
+// D43, facultatif : l'API servie sous le domaine du front. Avec API_ORIGIN (racine du back) et NEXT_PUBLIC_API_URL=/ ,
+// le navigateur appelle /api et /storage sur le domaine du front et Next.js les relaie au back : plus de requête de
+// vérification CORS, et des cookies de session propres au site. Sans API_ORIGIN, rien ne change.
+const apiOrigin = process.env.API_ORIGIN?.replace(/\/+$/, '')
+
+// Les fichiers (logos, photos...) sont servis par l'API Laravel sous /storage : on autorise son domaine
+// (API_ORIGIN, sinon NEXT_PUBLIC_API_URL quand c'est une adresse complète), en plus de localhost pour le développement.
+const urlPublique = process.env.NEXT_PUBLIC_API_URL ?? ''
+const apiUrl = new URL(apiOrigin || (/^https?:\/\//.test(urlPublique) ? urlPublique : 'http://localhost:8000'))
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  async rewrites() {
+    if (!apiOrigin) return []
+    return [
+      { source: '/api/:path*', destination: `${apiOrigin}/api/:path*` },
+      { source: '/storage/:path*', destination: `${apiOrigin}/storage/:path*` },
+    ]
+  },
   // Les console.log de debug (utilisateur connecté, listes de candidats...) ne partent pas en production
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,

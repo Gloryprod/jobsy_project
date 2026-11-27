@@ -1259,6 +1259,43 @@ Le lot 8 regroupe quatre chantiers de nature différente. Il est découpé comme
 
 **Vérification** : la même passe axe, qui doit tomber à zéro violation sur les 20 écrans ; plus aucune erreur dans la console ; navigation (page en cours, sous-pages, menu réduit nommé, menu mobile, lien d'évitement) ; une action réelle par formulaire touché (créer une formation, un module, une question d'examen, un projet) et une confirmation SweetAlert2 ; 375 px sans débordement ; les vérifications des lots qui partagent l'en-tête (7a, 8a, 8b).
 
+#### D43 : l'API servie sous le domaine du front (préparé le 26/11/2026)
+
+**But** (D43, point 2) : supprimer les requêtes de vérification CORS et garder des cookies de session propres au site, sans changer le code de l'API.
+
+**Front** (`next.config.ts`). Avec la variable `API_ORIGIN` (racine de l'API), Next.js relaie `/api/*` et `/storage/*` vers l'API. Avec `NEXT_PUBLIC_API_URL=/`, le navigateur appelle ces chemins sur le domaine du front. **Sans `API_ORIGIN`, rien ne change** : la branche peut être fusionnée avant la décision.
+
+**Mise en service par Gloria**, une fois le déploiement Vercel corrigé (D43, point 1) :
+- Vercel : `API_ORIGIN` = l'adresse de l'API sur Render, `NEXT_PUBLIC_API_URL=/`, puis redéployer.
+- Render : `AUTH_COOKIE_SAMESITE=strict` (au lieu de `none`) et `SESSION_DOMAIN` vide.
+- Retour arrière : retirer `API_ORIGIN`, remettre l'ancienne valeur de `NEXT_PUBLIC_API_URL` et d'`AUTH_COOKIE_SAMESITE`, redéployer.
+
+**Mesure** : banc local, Lighthouse mobile, tableau de bord du candidat, 3 passages à froid.
+
+| | Sans D43 | Avec D43 |
+|---|---|---|
+| Score | 71 | 82 |
+| Contenu principal | 6,5 s | 4,3 s |
+| Requêtes de vérification | 6 | 0 |
+| Dernier appel à l'API terminé | 2,8 s | 1,6 s |
+
+- Le gain sera plus faible pour une personne qui revient : avec l'API 8c, le navigateur garde déjà les réponses de vérification 2 heures. Il porte sur la première visite et sur chaque nouvelle adresse appelée.
+- Le serveur de test traite une requête à la fois, ce qui grossit le coût des vérifications. En production, s'ajoute le trajet de Vercel jusqu'à Render.
+- Même avec D43, le critère des 3 secondes n'est pas atteint sur ce banc.
+
+**Vérification en mode D43** : 15 contrôles automatiques.
+- Connexion et tableaux de bord : aucun appel direct à l'API, aucune requête de vérification, cookies posés pour le domaine du front.
+- Jeton expiré : la session se renouvelle par `/api/refresh` et la page reste ouverte.
+- Dépôt d'un fichier relayé, lien signé qui s'ouvre, déconnexion.
+- Logos relayés par `/storage` et par l'optimiseur d'images.
+- Lots relancés en mode D43 : 6a (31), 4a (64), 8a (23), fichiers privés (15) et livrable d'examen (10).
+
+**À vérifier avant la mise en service** (impossible en local) :
+- La taille maximale d'un envoi relayé par Vercel : les livrables d'examen vont jusqu'à 20 Mo.
+- Le délai d'attente de Vercel pendant le réveil de l'API sur le plan gratuit de Render.
+- La mise en cache. Pour les projets Vercel créés après le 6 avril 2026, les réponses relayées sont mises en cache selon leurs en-têtes. Les réponses de l'API sont marquées `private` : un cache partagé ne les garde pas.
+- Les adresses IP. L'API ne déclare aucun proxy de confiance : derrière Render, et Vercel en plus, elle voit sans doute l'adresse du relais. Les limites par adresse des visiteurs non connectés seraient alors partagées entre tous. À vérifier sur Render, et à traiter si besoin avec `trustProxies`.
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -1427,6 +1464,7 @@ Repères à confirmer :
 | API 8c | Prêt sur `fix/api-cors-preflight` (depuis `main`) | — | Réponse de vérification CORS gardée 2 heures par le navigateur (`max_age` à 7200 secondes au lieu de 0). 1 test, qui échoue sans la correction. Suite : 161 tests |
 | 8c | Prêt sur `design/lot-8c-performance` (empilé sur le lot 8e) | — | Types, lint et build verts. API locale avec l'API 8c. Lighthouse mobile, médiane de 3 passages, 8 écrans : 72 à 149 Ko de moins par page (polices de 98 à 46 Ko) ; premier affichage des tableaux de bord de 1,6–2,5 s à 1,2 s ; décalage du tableau de bord du candidat de 0,21 à 0,02 ; contenu principal des tableaux de bord de 5,8–6,7 s à 5,2–6,7 s, **critère des 3 secondes non atteint** (D43). Dans Chrome : `/user` lu une fois par page, requêtes de vérification de 6 par chargement à aucune après la première visite, dernière réponse du tableau de bord du candidat à 3,2 s au lieu de 4,3 s ; déconnexion du candidat puis connexion d'une entreprise dans le même onglet sans renvoi. Lots relancés : 4a (64), 4b (36), 4c (13), 5 (29), 6a (31), 6b (36), 7a (33), 7e (30), 8a (23), 8b (axe : 46 écrans sans violation, 4) |
 | 8d | Prêt sur `design/lot-8d-administration` (empilé sur le lot 8c) | — | Pas de changement d'API. Types et build verts ; ESLint : aucun fichier moins bon qu'avant (les `any` déjà présents dans l'administration restent). axe-core 4.11 sur les 20 écrans de l'administration : de 20 écrans en défaut (243 contrastes, 67 boutons et 19 liens sans nom, champs sans étiquette, titres) à **zéro violation** ; aucune erreur dans la console (avant : un 404 par écran) ; aucun débordement à 375 px. 47 contrôles automatiques, deux passages complets : plus de cloche factice ni de lien « Profil », un seul en-tête, 6 pages et leurs sous-pages annoncées, menu réduit nommé, menu du compte au clavier, lien d'évitement, fil d'Ariane vivant ; formation créée en base, puis supprimée après une confirmation aux couleurs du thème (« Annuler » ne supprime rien) ; module et projet final modifiés en base, puis rétablis ; question d'examen créée avec la bonne réponse annoncée, puis retirée ; menu mobile (6 pages, page en cours, Échap et focus rendu) ; 10 pages chargées à 375 px sans débordement ; aucune erreur dans la console. Lots relancés : 7a (33), 8a (23), 8b (4 ; passe axe : 42 écrans sans violation) |
+| D43 (préparation) | Prêt sur `feat/front-api-meme-domaine` (empilé sur `fix/front-fichiers-prives`) | — | Facultatif : sans `API_ORIGIN`, rien ne change. Types et build verts ; ESLint : aucun fichier moins bon. Mode D43 : 15 contrôles automatiques (aucun appel direct à l'API ni requête de vérification, cookies du domaine du front, jeton renouvelé par /api/refresh, dépôt relayé, lien signé, déconnexion, logos et optimiseur d'images). Lighthouse, tableau de bord du candidat, 3 passages à froid : contenu principal de 6,5 à 4,3 s, score de 71 à 82, requêtes de vérification de 6 à 0. Lots relancés en mode D43 : 6a (31), 4a (64), 8a (23), fichiers privés (15), livrable (10). Taille des envois relayés, délai pendant le réveil de Render et adresses IP : à vérifier sur Vercel et Render |
 
 Constats pour Gloria (lot 8d) :
 - Dans le suivi des offres d'une mission (administration, Entreprises, puis les missions d'une entreprise), les boutons « Voir » et « Relancer manuellement » n'ont aucune action. Ils sont gardés et nommés, en attendant de savoir ce qu'ils doivent faire.
