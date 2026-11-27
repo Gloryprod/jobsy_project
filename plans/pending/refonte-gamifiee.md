@@ -1134,6 +1134,93 @@ Le lot 8 regroupe quatre chantiers de nature différente. Il est découpé comme
 
 **Vérification** : la même passe axe, qui doit tomber à zéro violation sur les écrans refaits ; le lien d'évitement au clavier dans les deux espaces ; la fenêtre de déconnexion analysée ouverte ; les vérifications des lots touchés (6a, 7b, 7e, 8a).
 
+#### 8e : les pages publiques (plan détaillé)
+
+**Constats.** Ces quatre pages datent d'avant la refonte. Le lot 6b n'a repris que l'accueil, l'en-tête et le pied de page.
+- **Missions.**
+  - Les missions sont réelles, mais la page ajoute des chiffres inventés (« +680 missions », « 92 % payées en 24 h », « 2 400+ jeunes », « 380+ entreprises »).
+  - Chaque carte garde une image vide « à remplacer plus tard », et la récompense s'affiche sans unité (« 20000 »).
+  - Les boutons de filtre sont peu lisibles : texte de 10 px, contraste de 2,6:1.
+- **Formations.**
+  - La liste est entièrement inventée : six formations avec leur nombre d'étudiants et des certificats qui n'existent pas.
+  - La page affirme des certificats « reconnus par plus de 380 entreprises partenaires ».
+  - La recherche et les boutons ne font rien.
+- **Entreprises.**
+  - De faux témoignages sont attribués à MTN Bénin, Jumia Bénin et Sobebra.
+  - S'y ajoutent des chiffres inventés, des promesses invérifiables (« 5 à 20 candidatures en moins de 2 heures ») et de faux numéros de téléphone.
+  - Un bouton « Être rappelé en 5 minutes » ne fait rien, et le lien d'inscription mène à une page inexistante (`/register/entreprise`).
+- **Contact.**
+  - Faux numéros, adresse non confirmée, carte Google Maps à l'adresse factice.
+  - « Plus de 2 400 jeunes ont déjà gagné leur salaire » est inventé, et la marche à suivre pour s'inscrire est fausse (« remplis ton numéro »).
+  - Un bouton « Me faire rappeler » ne fait rien.
+- **Accessibilité** : aucune zone principale, titres sautés, contrastes insuffisants, boutons placés dans des liens, carte sans titre (passe axe du 8b).
+
+**API (`fix/api-formations-publiques`, depuis `main`).** `GET /public_courses` : les formations actives, sans compte, avec seulement ce qu'une page publique doit montrer (titre, description, type, compétences, XP, nombre de modules). Test.
+
+**Front** (`components/public`). Les quatre pages prennent le style de l'accueil (fenêtres du Système sur fond de nuit). Chacune a une zone principale, un titre de niveau 1, et un contenu qui vient de la base ou du code (D38).
+- **Missions** : les missions ouvertes, avec une recherche et un filtre par contrat accessibles.
+  - La carte est partagée avec l'accueil : rang requis, entreprise, lieu, récompense en FCFA, date limite.
+  - « Postuler » mène à la création du compte.
+- **Formations** : le vrai catalogue.
+  - Le type de chaque formation est expliqué (Standard, Logistique, Expert, D25), avec ses compétences, son XP et ses modules.
+  - La page dit que les formations sont gratuites et que chaque certificat se vérifie en ligne.
+- **Entreprises** : le fonctionnement réel (publication, candidats classés par rang et par épreuve, invitations, séquestre).
+  - Le coût réel : la récompense fixée par l'entreprise, dont Jobsy retient 10 % au paiement du candidat.
+  - La garantie : la récompense revient sur le solde si le candidat n'est pas retenu.
+  - Liens d'inscription corrects.
+- **Contact** : aucune coordonnée tant que Gloria n'a pas fourni les vraies (D38).
+  - Une foire aux questions exacte (inscription, coût, paiement, premier rang).
+  - Les liens utiles : créer un compte, se connecter, mot de passe oublié.
+
+**Vérification** : tests de l'API ; axe sans violation sur les quatre pages, à 1 280 px et à 375 px ; aucun chiffre, témoignage ou numéro inventé ; vraies missions et vraies formations affichées ; recherche et filtre au clavier ; aucun lien mort ; aucune erreur dans la console.
+
+#### 8c : la performance (plan détaillé du 22/11/2026)
+
+**Mesure.** Lighthouse 13.6, profil mobile par défaut (4G lente simulée, processeur ralenti 4 fois), médiane de 3 passages. Huit écrans : l'accueil, les missions publiques, la connexion, puis, avec un compte, le tableau de bord, les missions et les formations du candidat, le tableau de bord et les missions de l'entreprise. Front construit (`next build`), API de test locale.
+
+**Constats.**
+- **Pages publiques et connexion** : rapides. Contenu affiché en 1,2 s, score de 98 à 100.
+- **Tableaux de bord** : contenu principal affiché en 5,8 à 6,7 s, score de 56 à 69. Les causes :
+  - Tout le contenu se construit dans le navigateur : après le chargement du code, puis après les réponses de l'API.
+  - L'API exige l'en-tête `X-Requested-With` (protection CSRF). Chaque appel est donc précédé d'une requête de vérification CORS, et `max_age` à 0 la faisait redemander à chaque fois : 7 par chargement du tableau de bord du candidat.
+  - `GET /user` partait deux fois sur chaque page connectée : une fois pour le contexte, une fois pour la garde.
+  - Le tableau de bord du candidat attendait `/user` avant de demander les formations et les invitations, qui n'en ont pas besoin.
+  - À l'arrivée des quêtes du jour, le bas de la page sautait (décalage de 0,21 ; la limite recommandée est 0,1).
+- **Poids.**
+  - zod (64 Ko) était chargé sur les pages d'entrée pour une seule règle de mot de passe.
+  - SweetAlert2 (21 Ko) était chargé sur chaque page connectée pour la seule confirmation de déconnexion.
+  - Les polices Geist, qui ne servent plus qu'aux anciens écrans, étaient préchargées partout : 98 Ko de polices par page.
+
+**API (`fix/api-cors-preflight`, depuis `main`).** `max_age` passe à 7200 secondes, le plafond de Chrome : le navigateur garde la réponse de vérification 2 heures. Test.
+
+**Front.**
+- `/user` est lu une seule fois par page : le contexte et la garde partagent la même requête (SWR). Le cache est vidé à la déconnexion, pour la personne suivante sur le même poste.
+- Le tableau de bord du candidat demande ses listes en même temps, sans attendre `/user` quand elles n'en ont pas besoin.
+- Les quêtes du jour réservent leur place pendant le calcul.
+- La règle du mot de passe est écrite sans zod : même règle, mêmes messages.
+- SweetAlert2 se charge au clic sur « Se déconnecter ».
+- Geist n'est plus préchargée.
+
+**Résultats** (médianes, avant → après) :
+
+| Écran | Score | Premier affichage | Contenu principal | Décalage | Poids |
+|---|---|---|---|---|---|
+| Accueil | 100 → 100 | 1,2 → 1,2 s | 1,2 → 1,2 s | 0 → 0 | 499 → 383 Ko |
+| Missions publiques | 98 → 99 | 1,2 → 1,2 s | 1,2 → 1,2 s | 0 → 0 | 499 → 383 Ko |
+| Connexion | 98 → 100 | 1,2 → 1,2 s | 1,2 → 1,2 s | 0 → 0 | 484 → 368 Ko |
+| Tableau de bord du candidat | 56 → 70 | 2,3 → 1,2 s | 6,7 → 6,7 s | 0,21 → 0,02 | 601 → 452 Ko |
+| Missions du candidat | 68 → 73 | 1,6 → 1,2 s | 6,0 → 5,2 s | 0,05 → 0,05 | 532 → 460 Ko |
+| Formations du candidat | 69 → 73 | 2,3 → 1,2 s | 5,8 → 5,2 s | 0 → 0 | 514 → 442 Ko |
+| Tableau de bord de l'entreprise | 65 → 73 | 2,4 → 1,2 s | 6,1 → 5,5 s | 0,02 → 0,02 | 521 → 448 Ko |
+| Missions de l'entreprise | 90 → 97 | 2,5 → 1,2 s | 2,5 → 1,2 s | 0 → 0 | 515 → 442 Ko |
+
+- **Requêtes de vérification**, mesurées dans Chrome : avec l'ancienne valeur, 6 à chaque chargement du tableau de bord du candidat ; avec la nouvelle, aucune après la première visite. Lighthouse ne le voit pas, car il repart d'un navigateur vide à chaque passage. Le gain porte sur chaque page visitée après la première, et sur l'interrogation des notifications toutes les minutes.
+- **Tableau de bord du candidat** : la dernière réponse de l'API arrive à 3,2 s au lieu de 4,3 s. Le contenu principal ne bouge pas : il attend cette dernière réponse.
+- **Le critère des 3 secondes n'est pas atteint** sur les tableaux de bord (D43).
+- **Limites de la mesure.** Le serveur de test (`php artisan serve`) traite une requête à la fois : les appels à l'API passent l'un après l'autre, ce qui alourdit les chiffres ci-dessus. En production, s'ajoutent la distance jusqu'à Render et le réveil de l'API, mise en veille par le plan gratuit après un moment sans visite. Non mesuré ici.
+
+**Vérification** : la même mesure avant et après ; le nombre de requêtes de vérification et de lectures de `/user` dans Chrome ; déconnexion puis connexion d'un autre compte dans le même onglet ; les vérifications des lots touchés (4a, 4b, 4c, 5, 6a, 6b, 7a, 7e, 8a, 8b).
+
 ## Décisions prises le 17/10/2026
 
 1. Le concept « deux couches » (réalité claire, fenêtres du Système sombres par-dessus) est la direction.
@@ -1249,6 +1336,10 @@ Repères à confirmer :
 - D40 (lot 8) : le lot 8 est découpé en quatre sous-lots (8a à 8d), un par chantier, chacun avec sa PR.
 - D41 (lot 8a) : la barre du bas du candidat garde les entrées de la boucle principale (tableau de bord, missions, formations, Trésor) et un « Plus » pour le reste. Les missions confirmées et les invitations restent à un geste, depuis « Plus » et depuis les quêtes du jour du tableau de bord. Facile à revoir après le test avec les jeunes (critère 1).
 - D42 (lot 8) : les pages publiques Missions, Formations, Entreprises et Contact n'ont jamais été refaites (le lot 6b n'a repris que l'accueil, l'en-tête et le pied de page). La page Entreprises affiche des chiffres inventés, de faux témoignages attribués à de vraies marques, de faux numéros et un bouton sans effet. Elles forment le sous-lot 8e, traité juste après le 8b, avec la règle de D38.
+- D43 (lot 8c, à valider par Gloria) : le critère de 3 secondes sur les tableaux de bord ne s'atteint pas par le front seul. Le reste dépend de l'hébergement, donc de Gloria. Recommandation, dans l'ordre :
+  1. Corriger le déploiement Vercel (Root Directory sur `jobsyfront`) : sans cela, le front n'est pas construit. C'est un préalable.
+  2. Servir l'API sous le domaine du front (réécritures de Next.js ou de Vercel vers Render). Plus aucune requête de vérification, cookies du même site, et un rendu des tableaux de bord côté serveur devient possible ensuite. Demande de revoir la configuration des cookies et de Sanctum.
+  3. Sortir l'API du plan gratuit de Render, qui la met en veille : la première visite attend son réveil.
 
 ## Avancement
 
@@ -1293,6 +1384,10 @@ Repères à confirmer :
 | 7e | Prêt sur `design/lot-7e-profil` (empilé sur le lot 7d) | — | Types, lint et build verts. API locale avec l'API 7e. 30 contrôles automatiques : en-tête (nom, secteur, réseaux renseignés seulement, initiales sans logo) ; présentation mise en forme ; liens du site, de l'e-mail et du téléphone ; informations (étiquettes, nom vide et site invalide refusés, refus de l'API en français avec saisie gardée, enregistrement réel, https:// ajouté, lecture à jour, focus) ; présentation (éditeur nommé, enregistrement réel, paragraphes) ; coordonnées (e-mail et ancien numéro à 8 chiffres refusés, enregistrement réel, lien ajouté à l'en-tête) ; logo (type et taille refusés, faux fichier refusé par l'API, envoi réel) ; profil vide ; mot de passe (champs obligatoires, règle, confirmation, mot de passe actuel faux, « Afficher », réussite puis connexion avec le nouveau) ; 375 px et animations réduites ; aucune erreur dans la console. Correction du focus après un envoi (7c-B, 7d) : lots 7c-B 35 et 7d 34 contrôles |
 | 8a | Prêt sur `design/lot-8a-navigation` (empilé sur le lot 7e) | — | Pas de changement d'API. Types, lint et build verts. 23 contrôles automatiques : barre latérale (9 pages groupées, solde formaté vers le Trésor, tableau de bord annoncé) ; cloche en un seul lien ; chaque entrée mène à sa page et y est annoncée ; sous-pages (candidature, offre) ; menu réduit nommé ; menu du compte au clavier (Échap, focus rendu) ; à 375 px, barre du bas de 5 entrées aux intitulés entiers, plus de second menu, « Plus » (toutes les pages, Échap et focus rendu, page en cours annoncée, mise en valeur), déconnexion ; menu mobile de l'entreprise ; aucun débordement ni animation en boucle ; aucune erreur dans la console. Lots 7a (33) et 5 (29) relancés |
 | 8b | Prêt sur `design/lot-8b-accessibilite` (empilé sur le lot 8a) | — | Pas de changement d'API. Types, lint et build verts. axe-core 4.11 (WCAG 2.2 A et AA, bonnes pratiques) : 46 écrans et états analysés, **zéro violation sur les 42 écrans refaits** (avant : 11 écrans en défaut, dont les 4 pages publiques laissées au 8e) ; lien « Aller au contenu » premier arrêt, visible au focus, menant au contenu, dans les deux espaces ; éditeur nommé en français ; menus ouverts et confirmation de déconnexion analysés. Lots relancés : 6a (31), 7a (33), 7b (34), 7e (30), 8a (23) |
+| API 8e | Prêt sur `fix/api-formations-publiques` (depuis `main`) | — | `GET /public_courses` : formations actives, sans compte, champs utiles seulement (titre, description, type, type de contenu, compétences, XP, nombre de modules). 1 test. Suite : 158 tests |
+| 8e | Prêt sur `design/lot-8e-pages-publiques` (empilé sur le lot 8b) | — | Types, lint et build verts. API locale avec l'API 8e. 35 contrôles automatiques : sur l'accueil et les quatre pages, un titre de niveau 1 et une zone principale, aucun chiffre, témoignage, numéro ni bouton inventé, axe sans violation à 1 280 et 375 px, page en cours annoncée ; aucun lien mort (l'ancien `/register/entreprise`) ; missions et formations conformes à l'API ; recherche, filtre au clavier, foire aux questions au clavier ; lien d'évitement ; aucune erreur dans la console. Passe axe complète : 46 écrans sur 46 sans violation. Lot 6b relancé (36) |
+| API 8c | Prêt sur `fix/api-cors-preflight` (depuis `main`) | — | Réponse de vérification CORS gardée 2 heures par le navigateur (`max_age` à 7200 secondes au lieu de 0). 1 test, qui échoue sans la correction. Suite : 161 tests |
+| 8c | Prêt sur `design/lot-8c-performance` (empilé sur le lot 8e) | — | Types, lint et build verts. API locale avec l'API 8c. Lighthouse mobile, médiane de 3 passages, 8 écrans : 72 à 149 Ko de moins par page (polices de 98 à 46 Ko) ; premier affichage des tableaux de bord de 1,6–2,5 s à 1,2 s ; décalage du tableau de bord du candidat de 0,21 à 0,02 ; contenu principal des tableaux de bord de 5,8–6,7 s à 5,2–6,7 s, **critère des 3 secondes non atteint** (D43). Dans Chrome : `/user` lu une fois par page, requêtes de vérification de 6 par chargement à aucune après la première visite, dernière réponse du tableau de bord du candidat à 3,2 s au lieu de 4,3 s ; déconnexion du candidat puis connexion d'une entreprise dans le même onglet sans renvoi. Lots relancés : 4a (64), 4b (36), 4c (13), 5 (29), 6a (31), 6b (36), 7a (33), 7e (30), 8a (23), 8b (axe : 46 écrans sans violation, 4) |
 
 Constat pour Gloria (lot 2b) : les questions de secours de l'API, servies quand l'IA est indisponible, vouvoient le candidat (« Qu'est-ce qui vous motive… »), alors que l'interface le tutoie. À harmoniser dans `ApplicationAIService` si elle le souhaite.
 
