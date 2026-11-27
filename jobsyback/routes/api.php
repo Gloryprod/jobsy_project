@@ -27,6 +27,7 @@ use App\Http\Controllers\Entreprise\MissionController as EntrepriseMissionContro
 use App\Http\Controllers\Entreprise\PaymentController;
 use App\Http\Controllers\MissionTrackingController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PublicCourseController;
 use App\Http\Controllers\PublicMissionController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\Entreprise\DashboardController;
@@ -51,6 +52,7 @@ Route::post('/webhooks/kkiapay', [WebhookController::class, 'handleKkiaPay']);
 Route::post('/webhooks/kkiapay/payouts', [WebhookController::class, 'handleKkiaPayPayouts'])->middleware('throttle:60,1,webhook');
 Route::post('/webhooks/kkiapay/deposits', [WebhookController::class, 'depositWebhook']);
 Route::get('/public_missions', [PublicMissionController::class, 'index']);
+Route::get('/public_courses', [PublicCourseController::class, 'index']);
 Route::get('/certificates/verify/{hash}', [CertificateVerificationController::class, 'verify']);
 Route::get('/courses/{courseId}/{hash}/certificate/download', [CertificateVerificationController::class, 'downloadCertificate']);
 
