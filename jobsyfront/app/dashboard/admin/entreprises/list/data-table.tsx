@@ -24,7 +24,6 @@ import { Checkbox } from "@/components/ui/checkbox"
 import React, { useState } from 'react';
 import api from '@/lib/api';
 import { Trash2, Search } from "lucide-react" 
-import Swal from 'sweetalert2';
 import { toast } from 'react-hot-toast';
  
 interface DataTableProps<TData, TValue> {
@@ -61,14 +60,16 @@ export function DataTable<TData, TValue>({
         if (!bulkDeleteUrl) return
         const selectedIds = table.getSelectedRowModel().rows.map((row: any) => row.original.id)
 
+        // Chargée au clic : la bibliothèque ne pèse pas sur l'écran
+        const { default: Swal } = await import("sweetalert2");
         const result = await Swal.fire({
         title: `Voulez-vous supprimer ces ${selectedIds.length} offres ?`,
         icon: "warning",
         showCancelButton: true,
         confirmButtonText: "Oui, supprimer",
         cancelButtonText: "Annuler",
-        confirmButtonColor: "#d33",
-        cancelButtonColor: "#3085d6",
+        confirmButtonColor: "#b91c1c",
+        cancelButtonColor: "#000080",
         });
 
         if (result.isConfirmed) {
@@ -104,7 +105,7 @@ export function DataTable<TData, TValue>({
                 </div>
                 
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
                     <Input
                         value={globalFilter ?? ""}
                         onChange={e => setGlobalFilter(e.target.value)}
@@ -131,7 +132,7 @@ export function DataTable<TData, TValue>({
                                     </TableHead>
 
                                     {headerGroup.headers.map((header) => (
-                                        <TableHead key={header.id} className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
+                                        <TableHead key={header.id} className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.15em] text-slate-600">
                                             {header.isPlaceholder
                                                 ? null
                                                 : flexRender(
@@ -169,7 +170,7 @@ export function DataTable<TData, TValue>({
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={columns.length + 1} className="h-40 text-center">
-                                        <div className="flex flex-col items-center justify-center text-slate-400 italic gap-2">
+                                        <div className="flex flex-col items-center justify-center text-slate-600 italic gap-2">
                                             <Search size={32} className="opacity-20" />
                                             <p>Aucune donnée trouvée...</p>
                                         </div>
@@ -183,7 +184,7 @@ export function DataTable<TData, TValue>({
 
             {/* Pagination */}
             <div className="flex items-center justify-between py-6 px-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">
                     Page {table.getState().pagination.pageIndex + 1} sur {table.getPageCount()}
                 </p>
                 <div className="flex items-center gap-3">

@@ -25,7 +25,7 @@ export default function AdminSubmissionsPage({ params }: { params: Promise<{ id:
     return (
       <div className="flex flex-col items-center justify-center py-16 space-y-3">
         <Loader2 className="w-6 h-6 text-slate-700 animate-spin" />
-        <p className="text-xs font-bold text-slate-400">Chargement des soumissions...</p>
+        <p className="text-xs font-bold text-slate-600">Chargement des soumissions...</p>
       </div>
     );
   }
@@ -34,7 +34,7 @@ export default function AdminSubmissionsPage({ params }: { params: Promise<{ id:
   if (error) {
     return (
       <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3 text-rose-700 text-xs font-bold">
-        <AlertCircle className="w-5 h-5 shrink-0 text-rose-600" />
+        <AlertCircle className="w-5 h-5 shrink-0 text-rose-700" />
         <span>Impossible de charger les soumissions. Vérifiez votre connexion ou retentez ultérieurement.</span>
       </div>
     );

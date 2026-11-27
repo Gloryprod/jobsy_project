@@ -1,17 +1,19 @@
 'use client';
 
-import { LogOut, User, Archive, LayoutDashboard, ClipboardCheck, ChevronLeft, ChevronRight } from "lucide-react";
+import { LogOut, User, Archive, LayoutDashboard, ClipboardCheck, ChevronLeft, ChevronRight, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLogout } from "@/lib/logout";
 
-interface NavigationProps {
-    isCollapsed: boolean;
-    setIsCollapsed: (collapsed: boolean) => void;
-}
+/** Une page de la navigation. Avec `prefixe`, elle reste annoncée sur ses sous-pages ; sinon, seulement à son adresse exacte. */
+export type PageEspace = { id: string; name: string; icon: LucideIcon; href: string; prefixe?: string };
+export type SectionEspace = { title: string; items: PageEspace[] };
+
+export const estActive = (pathname: string, page: PageEspace) =>
+    pathname === page.href || (!!page.prefixe && pathname.startsWith(page.prefixe));
 
 // Partagé avec le menu mobile de l'en-tête : une seule liste des pages de l'espace entreprise
-export const SECTIONS_ENTREPRISE = [
+export const SECTIONS_ENTREPRISE: SectionEspace[] = [
     {
         title: "Menu",
         items: [{ id: "home", name: "Tableau de bord", icon: LayoutDashboard, href: "/dashboard/entreprises" }]
@@ -31,12 +33,18 @@ export const SECTIONS_ENTREPRISE = [
 
 const FOCUS = "focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#F0E68C]";
 
-export default function Navigation({ isCollapsed, setIsCollapsed }: NavigationProps) {
+interface NavigationProps {
+    isCollapsed: boolean;
+    setIsCollapsed: (collapsed: boolean) => void;
+}
+
+/** Barre latérale des espaces sobres (entreprise, administration) : pages groupées, page en cours annoncée, menu réduit, déconnexion. */
+export function NavigationEspace({ isCollapsed, setIsCollapsed, sections, libelle }: NavigationProps & { sections: SectionEspace[]; libelle: string }) {
     const { handleLogout } = useLogout();
     const pathname = usePathname();
 
     return (
-        <nav aria-label="Espace entreprise" className="flex flex-col h-full justify-between p-4 w-full font-lisible">
+        <nav aria-label={libelle} className="flex flex-col h-full justify-between p-4 w-full font-lisible">
             <div className={`flex pb-4 ${isCollapsed ? "justify-center" : "justify-end"}`}>
                 <button
                     type="button"
@@ -50,14 +58,14 @@ export default function Navigation({ isCollapsed, setIsCollapsed }: NavigationPr
             </div>
 
             <div className="overflow-y-auto no-scrollbar flex-1 pr-1 space-y-6">
-                {SECTIONS_ENTREPRISE.map((section) => (
+                {sections.map((section) => (
                     <div key={section.title} className="space-y-1.5">
                         {!isCollapsed && (
                             <p className="px-3 text-xs font-bold uppercase tracking-wider text-white/60">{section.title}</p>
                         )}
                         <ul className="space-y-1 w-full">
                             {section.items.map((item) => {
-                                const isActive = pathname === item.href;
+                                const isActive = estActive(pathname, item);
                                 return (
                                     <li key={item.id}>
                                         <Link
@@ -94,4 +102,8 @@ export default function Navigation({ isCollapsed, setIsCollapsed }: NavigationPr
             </div>
         </nav>
     );
+}
+
+export default function Navigation(props: NavigationProps) {
+    return <NavigationEspace {...props} sections={SECTIONS_ENTREPRISE} libelle="Espace entreprise" />;
 }

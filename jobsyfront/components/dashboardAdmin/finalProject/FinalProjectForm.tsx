@@ -136,7 +136,7 @@ export default function FinalExamProjectForm({ courseId, initialData, onSuccess,
   };
 
   const inputClass = "w-full mt-1 p-3 bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-[#000080]/20 focus:border-[#000080] outline-none transition-all font-medium";
-  const labelClass = "block text-xs font-black text-slate-500 uppercase tracking-wider";
+  const labelClass = "block text-xs font-black text-slate-600 uppercase tracking-wider";
 
   return (
     <div className="p-6 md:p-8 w-full mx-auto animate-fadeIn">
@@ -147,10 +147,10 @@ export default function FinalExamProjectForm({ courseId, initialData, onSuccess,
           <h2 className="text-base font-black text-slate-900">
             {isEditing ? "Modifier le Projet d'Examen" : "Créer le Projet d'Examen"}
           </h2>
-          <p className="text-[11px] text-slate-400 font-medium">Examen final pratique - Mode Expert</p>
+          <p className="text-[11px] text-slate-600 font-medium">Examen final pratique - Mode Expert</p>
         </div>
         {onCancel && (
-          <button type="button" onClick={onCancel} className="cursor-pointer text-xs font-bold text-slate-400 hover:text-slate-900 flex items-center gap-1 transition-all">
+          <button type="button" onClick={onCancel} className="cursor-pointer text-xs font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1 transition-all">
             <ArrowLeft className="w-3.5 h-3.5" /> Annuler
           </button>
         )}
@@ -166,8 +166,8 @@ export default function FinalExamProjectForm({ courseId, initialData, onSuccess,
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Titre du Projet</label>
-              <input
+              <label htmlFor="champ-title" className={labelClass}>Titre du Projet</label>
+              <input id="champ-title"
                 {...register("title")}
                 type="text"
                 placeholder="Ex : Réalisation d'une API de Micro-crédit robuste"
@@ -176,8 +176,8 @@ export default function FinalExamProjectForm({ courseId, initialData, onSuccess,
             </div>
 
             <div>
-              <label className={labelClass}>Domaine d&apos;application</label>
-              <select {...register("domain")} className={inputClass}>
+              <label htmlFor="champ-domain" className={labelClass}>Domaine d&apos;application</label>
+              <select id="champ-domain" {...register("domain")} className={inputClass}>
                 <option value="web_development">Développement Web / Mobile</option>
                 <option value="design">Design Graphique & UI/UX</option>
                 <option value="human_resources">Ressources Humaines & Management</option>
@@ -187,8 +187,8 @@ export default function FinalExamProjectForm({ courseId, initialData, onSuccess,
           </div>
 
           <div>
-            <label className={labelClass}>Mise en contexte / Énoncé détaillé</label>
-            <textarea
+            <label htmlFor="champ-context_rich_text" className={labelClass}>Mise en contexte / Énoncé détaillé</label>
+            <textarea id="champ-context_rich_text"
               {...register("context_rich_text")}
               rows={8}
               placeholder="Décrivez précisément le cas d'entreprise ou le problème à résoudre par l'apprenant. Rédigez ici vos questions de cas pratique ou les fonctionnalités attendues."
@@ -202,7 +202,7 @@ export default function FinalExamProjectForm({ courseId, initialData, onSuccess,
           <div className="flex items-center gap-2 text-slate-800 font-bold text-xs uppercase tracking-wide mb-2">
             <Settings className="w-4 h-4 text-[#000080]" /> Formulaire de Réponse de l&apos;Apprenant
           </div>
-          <p className="text-xs text-slate-400">Définissez ce que l&apos;étudiant verra sur son espace de rendu (zones de texte pour cas pratiques, URLs ou fichiers à uploader).</p>
+          <p className="text-xs text-slate-600">Définissez ce que l&apos;étudiant verra sur son espace de rendu (zones de texte pour cas pratiques, URLs ou fichiers à uploader).</p>
 
           <div className="space-y-3">
             {inputFields.map((field, index) => (
@@ -210,10 +210,11 @@ export default function FinalExamProjectForm({ courseId, initialData, onSuccess,
                 
                 {/* Libellé / Question posée à l'étudiant */}
                 <div className="flex-1 w-full">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">
+                  <label htmlFor={`champ-livrable-${index}`} className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1">
                     Libellé du champ / Consigne de rendu
                   </label>
                   <input
+                    id={`champ-livrable-${index}`}
                     {...register(`inputs_schema.${index}.label` as const)}
                     type="text"
                     placeholder="Ex: Entrez l'URL de votre dépôt GitHub"
@@ -225,6 +226,7 @@ export default function FinalExamProjectForm({ courseId, initialData, onSuccess,
                 {/* Type de champ */}
                 <div className="w-full md:w-40">
                   <select
+                    aria-label={`Type du champ de réponse ${index + 1}`}
                     {...register(`inputs_schema.${index}.type` as const)}
                     className="w-full text-xs p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 font-semibold focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                   >
@@ -249,17 +251,17 @@ export default function FinalExamProjectForm({ courseId, initialData, onSuccess,
                     {...register(`inputs_schema.${index}.required` as const)}
                     className="rounded text-blue-600 border-slate-300 focus:ring-blue-500"
                   />
-                  <label htmlFor={`required_${field.id}`} className="text-[10px] font-bold text-slate-400 uppercase">Obligatoire</label>
+                  <label htmlFor={`required_${field.id}`} className="text-[10px] font-bold text-slate-600 uppercase">Obligatoire</label>
                 </div>
 
                 {/* Bouton de suppression d'un champ */}
                 {inputFields.length > 1 && (
-                  <button
+                  <button aria-label={`Supprimer le champ de réponse ${index + 1}`}
                     type="button"
                     onClick={() => removeInput(index)}
                     className="p-1.5 text-slate-300 hover:text-red-500 rounded-lg hover:bg-red-50 transition-all shrink-0"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 aria-hidden="true" className="w-4 h-4" />
                   </button>
                 )}
               </div>
@@ -269,7 +271,7 @@ export default function FinalExamProjectForm({ courseId, initialData, onSuccess,
           <button
             type="button"
             onClick={() => appendInput({ key: `input_${Date.now()}_${inputFields.length}`, type: "textarea", label: "", placeholder: "", required: true })}
-            className="cursor-pointer flex items-center justify-center gap-2 w-full p-3 border-2 border-dashed border-slate-200/60 rounded-xl text-slate-400 hover:border-slate-300 hover:text-slate-600 transition-all text-[10px] font-black uppercase tracking-wider bg-white"
+            className="cursor-pointer flex items-center justify-center gap-2 w-full p-3 border-2 border-dashed border-slate-200/60 rounded-xl text-slate-600 hover:border-slate-300 hover:text-slate-600 transition-all text-[10px] font-black uppercase tracking-wider bg-white"
           >
             <Plus className="w-3.5 h-3.5" /> Ajouter un champ de réponse
           </button>
@@ -287,6 +289,7 @@ export default function FinalExamProjectForm({ courseId, initialData, onSuccess,
                 
                 {/* Libellé du critère */}
                 <input
+                  aria-label={`Critère ${index + 1}`}
                   {...register(`evaluation_criteria.${index}.name` as const)}
                   placeholder="Ex : Propreté et organisation du code ou Structure de l&apos;analyse"
                   className="flex-1 text-xs font-bold text-slate-700 bg-transparent border-b border-slate-150 focus:border-blue-500 outline-none pb-1"
@@ -297,20 +300,21 @@ export default function FinalExamProjectForm({ courseId, initialData, onSuccess,
                   <input
                     type="number"
                     min="1"
+                    aria-label={`Points du critère ${index + 1}`}
                     {...register(`evaluation_criteria.${index}.max_points` as const, { valueAsNumber: true })}
                     className="w-16 text-center text-xs p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-black"
                   />
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Pts</span>
+                  <span className="text-[10px] font-bold text-slate-600 uppercase">Pts</span>
                 </div>
 
                 {/* Suppression d'un critère */}
                 {criteriaFields.length > 1 && (
-                  <button
+                  <button aria-label={`Supprimer le critère ${index + 1}`}
                     type="button"
                     onClick={() => removeCriteria(index)}
                     className="p-1.5 text-slate-300 hover:text-red-500 rounded-lg hover:bg-red-50 transition-all shrink-0"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 aria-hidden="true" className="w-4 h-4" />
                   </button>
                 )}
               </div>
@@ -320,7 +324,7 @@ export default function FinalExamProjectForm({ courseId, initialData, onSuccess,
           <button
             type="button"
             onClick={() => appendCriteria({ name: "", max_points: 5 })}
-            className="cursor-pointer flex items-center justify-center gap-2 w-full p-3 border-2 border-dashed border-slate-200/60 rounded-xl text-slate-400 hover:border-slate-300 hover:text-slate-600 transition-all text-[10px] font-black uppercase tracking-wider bg-white"
+            className="cursor-pointer flex items-center justify-center gap-2 w-full p-3 border-2 border-dashed border-slate-200/60 rounded-xl text-slate-600 hover:border-slate-300 hover:text-slate-600 transition-all text-[10px] font-black uppercase tracking-wider bg-white"
           >
             <Plus className="w-3.5 h-3.5" /> Ajouter un critère de notation
           </button>
@@ -329,30 +333,30 @@ export default function FinalExamProjectForm({ courseId, initialData, onSuccess,
         {/* Section 4 : Paramètres de Validation Globale */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center pt-4 border-t border-slate-100">
           <div>
-            <label className={labelClass}>Note de passage / 20</label>
-            <input
+            <label htmlFor="champ-passing_score" className={labelClass}>Note de passage / 20</label>
+            <input id="champ-passing_score"
               {...register("passing_score", { valueAsNumber: true })}
               type="number"
               min="1"
               max="20"
               className={inputClass}
             />
-            <p className="text-[10px] text-slate-400 mt-1">Généralement réglé à 15.</p>
+            <p className="text-[10px] text-slate-600 mt-1">Généralement réglé à 15.</p>
           </div>
 
           <div>
-            <label className={labelClass}>Temps limite (Minutes)</label>
-            <input
+            <label htmlFor="champ-time_limit_minutes" className={labelClass}>Temps limite (Minutes)</label>
+            <input id="champ-time_limit_minutes"
               {...register("time_limit_minutes", { valueAsNumber: true })}
               type="number"
               placeholder="Laisser vide si illimité"
               className={inputClass}
             />
-            <p className="text-[10px] text-slate-400 mt-1">Ex: 180 pour 3 heures d&apos;examen.</p>
+            <p className="text-[10px] text-slate-600 mt-1">Ex: 180 pour 3 heures d&apos;examen.</p>
           </div>
 
           <div className="flex flex-col items-end justify-center bg-[#000080]/5 p-4 rounded-2xl border border-[#000080]/10">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total des critères</span>
+            <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Total des critères</span>
             <span className="text-2xl font-black text-[#000080]">{totalMaxPoints} <span className="text-xs">Points</span></span>
           </div>
         </div>

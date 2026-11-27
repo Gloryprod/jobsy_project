@@ -101,7 +101,7 @@
 
 //             <div className="mb-8">
 //                 <h1 className="text-2xl font-black text-slate-800 flex items-center justify-center">Gestion des Candidats</h1>
-//                 <p className="text-slate-500 flex items-center justify-center"><i>Détails du profil candidat</i></p>
+//                 <p className="text-slate-600 flex items-center justify-center"><i>Détails du profil candidat</i></p>
 //             </div>
 
 //             <div className="bg-white w-full p-4 md:p-6 border border-slate-100 rounded-3xl md:rounded-[3rem] shadow-sm relative">
@@ -155,7 +155,7 @@
 //                     <p className="text-sm md:text-lg font-bold text-slate-600 uppercase tracking-wide">
 //                         {data?.domaine_competence || "Domaine non défini"}
 //                     </p>
-//                     <p className="text-xs md:text-sm text-slate-400 font-medium italic">
+//                     <p className="text-xs md:text-sm text-slate-600 font-medium italic">
 //                         {data?.ville || "Ville non précisée"}
 //                     </p>
 //                     </div>
@@ -211,7 +211,7 @@
 //                         </div>
 //                         <h2 className="text-xl font-bold text-gray-800">Parcours Académique</h2>
 //                     </div>
-//                     <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+//                     <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">
 //                         {data?.diplomes?.length || 0} Diplôme(s)
 //                     </span>
 //                 </div>
@@ -227,8 +227,8 @@
 //                                     {/* Boutons d'action rapides */}
 //                                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
 //                                         <button 
-//                                             onClick={() => window.open(`${STORAGE_URL}/${diplome.fichier}`, '_blank')}
-//                                             className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+//                                             onClick={() => diplome.fichier_url && window.open(diplome.fichier_url, '_blank')}
+//                                             className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
 //                                             title="Voir le document"
 //                                         >
 //                                             <Eye size={18} />
@@ -237,7 +237,7 @@
 //                                             href={`${STORAGE_URL}/${diplome.fichier}`}
 //                                             target="_blank"
 //                                             download 
-//                                             className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+//                                             className="p-2 text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
 //                                         >
 //                                             <Download size={18} />
 //                                         </a>
@@ -254,7 +254,7 @@
 //                     ) : (
 //                         <div className="col-span-full py-10 flex flex-col items-center justify-center border-2 border-dashed border-slate-100 rounded-2xl">
 //                             <GraduationCap size={40} className="text-slate-200 mb-2" />
-//                             <p className="text-gray-400 text-sm italic">Aucun diplôme n&apos;a été ajouté par le candidat.</p>
+//                             <p className="text-gray-600 text-sm italic">Aucun diplôme n&apos;a été ajouté par le candidat.</p>
 //                         </div>
 //                     )}
 //                 </div>
@@ -280,13 +280,13 @@
                                     
 //                                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-1 mb-2">
 //                                         <h3 className="text-lg font-bold text-[#000080]">{exp?.JobTitle}</h3>
-//                                         <span className="flex items-center gap-1 text-sm font-medium text-gray-500 bg-gray-50 px-3 py-1 rounded-full">
+//                                         <span className="flex items-center gap-1 text-sm font-medium text-gray-600 bg-gray-50 px-3 py-1 rounded-full">
 //                                             <Calendar size={14} /> {exp?.Duration}
 //                                         </span>
 //                                     </div>
                                     
 //                                     <p className="text-gray-700 font-semibold mb-2 flex items-center gap-2">
-//                                         <MapPin size={14} className="text-gray-400" /> {exp?.Company}
+//                                         <MapPin size={14} className="text-gray-600" /> {exp?.Company}
 //                                     </p>
                                     
 //                                     <p className="text-gray-600 leading-relaxed text-sm bg-blue-50/30 p-4 rounded-xl border border-blue-50">
@@ -296,7 +296,7 @@
 //                             ))) : (
 //                                 <div className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-gray-100 rounded-2xl">
 //                                     <Award size={32} className="text-gray-200 mb-2" />
-//                                     <p className="text-gray-400 text-sm italic">Aucune expérience</p>
+//                                     <p className="text-gray-600 text-sm italic">Aucune expérience</p>
 //                                 </div>
 //                             )
 //                         }
@@ -307,7 +307,7 @@
 //                     {/* SECTION ÉDUCATION / DIPLÔMES */}
 //                     <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
 //                         <div className="flex items-center gap-3 mb-6">
-//                             <div className="p-2 bg-green-50 text-green-600 rounded-lg">
+//                             <div className="p-2 bg-green-50 text-green-700 rounded-lg">
 //                                 <GraduationCap size={24} />
 //                             </div>
 //                             <h2 className="text-xl font-bold text-gray-800">Éducation</h2>
@@ -319,14 +319,14 @@
 //                                     <div key={index} className="group p-4 rounded-2xl border border-transparent hover:border-green-100 hover:bg-green-50/30 transition-all">
 //                                         <h3 className="font-bold text-gray-800 leading-tight mb-1">{edu.Degree}</h3>
 //                                         <p className="text-sm text-green-700 font-medium mb-2">{edu.Institution}</p>
-//                                         <p className="text-xs text-gray-400 flex items-center gap-1">
+//                                         <p className="text-xs text-gray-600 flex items-center gap-1">
 //                                             <Calendar size={12} /> {edu.Duration}
 //                                     </p>
 //                                 </div>
 //                             ) )) : (
 //                                 <div className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-gray-100 rounded-2xl">
 //                                     <GraduationCap size={32} className="text-gray-200 mb-2" />
-//                                     <p className="text-gray-400 text-sm italic">Aucun diplôme ou formation n&apos;a été ajouté par le candidat.</p>
+//                                     <p className="text-gray-600 text-sm italic">Aucun diplôme ou formation n&apos;a été ajouté par le candidat.</p>
 //                                 </div>
 //                             )}
 //                         </div>
@@ -335,7 +335,7 @@
 //                     {/* SECTION CERTIFICATIONS */}
 //                     <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
 //                         <div className="flex items-center gap-3 mb-6">
-//                             <div className="p-2 bg-orange-50 text-orange-600 rounded-lg">
+//                             <div className="p-2 bg-orange-50 text-orange-700 rounded-lg">
 //                                 <Award size={24} />
 //                             </div>
 //                             <h2 className="text-xl font-bold text-gray-800">Certifications</h2>
@@ -347,7 +347,7 @@
 //                                     <div key={index} className="group p-4 rounded-2xl border border-transparent hover:border-orange-100 hover:bg-orange-50/30 transition-all">
 //                                         <h3 className="font-bold text-gray-800 leading-tight mb-1">{cert.CourseName}</h3>
 //                                         <p className="text-sm text-orange-700 font-medium mb-2">{cert.Provider}</p>
-//                                         <p className="text-xs text-gray-400 flex items-center gap-1">
+//                                         <p className="text-xs text-gray-600 flex items-center gap-1">
 //                                             <Calendar size={12} /> {cert.Date}
 //                                         </p>
 //                                     </div>
@@ -356,7 +356,7 @@
 //                         ) : (
 //                             <div className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-gray-100 rounded-2xl">
 //                                 <Award size={32} className="text-gray-200 mb-2" />
-//                                 <p className="text-gray-400 text-sm italic">Aucune certification renseignée</p>
+//                                 <p className="text-gray-600 text-sm italic">Aucune certification renseignée</p>
 //                             </div>
 //                         )}
 //                     </div>
@@ -371,7 +371,7 @@
 'use client';
 
 import React, { use } from 'react';
-import api, { STORAGE_URL } from "@/lib/api";
+import api from "@/lib/api";
 import useSWR from "swr";
 import { toast } from 'react-hot-toast';
 import { ThreeDots } from 'react-loader-spinner';
@@ -459,6 +459,8 @@ interface Candidat {
     id: number;
     intitule: string;
     fichier: string;
+    // Lien signé donné par l'API, valable 30 minutes (disque privé)
+    fichier_url: string | null;
   }>;
 }
 
@@ -488,7 +490,7 @@ export default function DetailProfil({ params }: { params: Promise<{ id: string 
     return (
       <div className="flex flex-col justify-center items-center min-h-[70vh] gap-4">
         <ThreeDots height="80" width="80" color="#000080" visible={true} />
-        <p className="text-slate-500 font-semibold text-sm animate-pulse">Chargement du profil candidat...</p>
+        <p className="text-slate-600 font-semibold text-sm animate-pulse">Chargement du profil candidat...</p>
       </div>
     );
   }
@@ -496,11 +498,11 @@ export default function DetailProfil({ params }: { params: Promise<{ id: string 
   if (error) {
     return (
       <div className="min-h-[50vh] flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mb-4 border border-red-100">
+        <div className="w-16 h-16 bg-red-50 text-red-700 rounded-2xl flex items-center justify-center mb-4 border border-red-100">
           <FileText size={32} />
         </div>
         <h3 className="text-xl font-bold text-slate-800 mb-2">Erreur de chargement</h3>
-        <p className="text-slate-500 max-w-md text-sm mb-6">Impossible de récupérer les informations du profil candidat.</p>
+        <p className="text-slate-600 max-w-md text-sm mb-6">Impossible de récupérer les informations du profil candidat.</p>
         <button 
           onClick={() => window.location.reload()}
           className="px-6 py-2.5 bg-[#000080] text-white font-bold rounded-xl text-xs uppercase tracking-wider hover:bg-[#000060] transition-all shadow-md"
@@ -526,7 +528,7 @@ export default function DetailProfil({ params }: { params: Promise<{ id: string 
 
         <div className="mb-8">
             <h1 className="text-2xl font-black text-slate-800 flex items-center justify-center">Gestion des Candidats</h1>
-            <p className="text-slate-500 flex items-center justify-center"><i>Détails du profil candidat</i></p>
+            <p className="text-slate-600 flex items-center justify-center"><i>Détails du profil candidat</i></p>
         </div>
 
         <div className="max-w-7xl mx-auto space-y-6">
@@ -544,19 +546,19 @@ export default function DetailProfil({ params }: { params: Promise<{ id: string 
             </h2>
 
             <span
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-black uppercase tracking-wider text-white"
-            style={{ backgroundColor: rankColor }}
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-[11px] font-black uppercase tracking-wider text-slate-900"
+            style={{ backgroundColor: `${rankColor}20`, borderColor: rankColor }}
             >
             Rang {data?.rank.rank || 'E'}
             </span>
 
             {data?.is_validate ? (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-100">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-100">
                 <ShieldCheck size={12} />
                 Vérifié
             </span>
             ) : (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider bg-amber-50 text-amber-600 border border-amber-100">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-100">
                 <Clock size={12} />
                 En attente
             </span>
@@ -568,7 +570,7 @@ export default function DetailProfil({ params }: { params: Promise<{ id: string 
             {data?.domaine_competence || "Apprenti Junior Jobsy"}
         </p>
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-500 font-medium pt-1">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-600 font-medium pt-1">
             {data?.ville && (
             <span className="flex items-center gap-1.5">
                 <MapPin size={13} />
@@ -637,7 +639,7 @@ export default function DetailProfil({ params }: { params: Promise<{ id: string 
                   </div>
                   <div>
                     <h3 className="text-lg font-black text-slate-900">Compétences & Expertise</h3>
-                    <p className="text-xs text-slate-400">Savoir-faire techniques et qualités comportementales</p>
+                    <p className="text-xs text-slate-600">Savoir-faire techniques et qualités comportementales</p>
                   </div>
                 </div>
                 <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-black">
@@ -658,7 +660,7 @@ export default function DetailProfil({ params }: { params: Promise<{ id: string 
                       />
                       <span>{skill.name}</span>
                       {skill.category?.name && (
-                        <span className="text-[10px] text-slate-400 font-medium ml-1 bg-white px-2 py-0.5 rounded-md border border-slate-100">
+                        <span className="text-[10px] text-slate-600 font-medium ml-1 bg-white px-2 py-0.5 rounded-md border border-slate-100">
                           {skill.category.name}
                         </span>
                       )}
@@ -668,7 +670,7 @@ export default function DetailProfil({ params }: { params: Promise<{ id: string 
               ) : (
                 <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                   <BrainCircuit size={32} className="mx-auto text-slate-300 mb-2" />
-                  <p className="text-xs font-bold text-slate-400">Aucune compétence renseignée pour ce candidat.</p>
+                  <p className="text-xs font-bold text-slate-600">Aucune compétence renseignée pour ce candidat.</p>
                 </div>
               )}
             </div>
@@ -677,12 +679,12 @@ export default function DetailProfil({ params }: { params: Promise<{ id: string 
             <div className="bg-white p-6 md:p-8 border border-slate-200/80 rounded-3xl shadow-sm">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-amber-50 text-amber-600 rounded-xl border border-amber-100">
+                  <div className="p-2.5 bg-amber-50 text-amber-700 rounded-xl border border-amber-100">
                     <Briefcase size={22} />
                   </div>
                   <div>
                     <h3 className="text-lg font-black text-slate-900">Expériences Professionnelles</h3>
-                    <p className="text-xs text-slate-400">Historique des postes et responsabilités</p>
+                    <p className="text-xs text-slate-600">Historique des postes et responsabilités</p>
                   </div>
                 </div>
                 <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-black">
@@ -698,8 +700,8 @@ export default function DetailProfil({ params }: { params: Promise<{ id: string 
                       <div className="bg-slate-50/70 group-hover:bg-white p-4 md:p-5 rounded-2xl border border-slate-100 group-hover:border-amber-200 group-hover:shadow-sm transition-all">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
                           <h4 className="font-bold text-slate-900 text-base">{exp.JobTitle}</h4>
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 bg-white px-2.5 py-1 rounded-lg border border-slate-200/60 shrink-0">
-                            <Calendar size={12} className="text-amber-500" />
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-600 bg-white px-2.5 py-1 rounded-lg border border-slate-200/60 shrink-0">
+                            <Calendar size={12} className="text-amber-700" />
                             {exp.Duration}
                           </span>
                         </div>
@@ -719,7 +721,7 @@ export default function DetailProfil({ params }: { params: Promise<{ id: string 
               ) : (
                 <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                   <Briefcase size={32} className="mx-auto text-slate-300 mb-2" />
-                  <p className="text-xs font-bold text-slate-400">Aucune expérience enregistrée.</p>
+                  <p className="text-xs font-bold text-slate-600">Aucune expérience enregistrée.</p>
                 </div>
               )}
             </div>
@@ -733,7 +735,7 @@ export default function DetailProfil({ params }: { params: Promise<{ id: string 
                   </div>
                   <div>
                     <h3 className="text-lg font-black text-slate-900">Parcours Académique & Diplômes</h3>
-                    <p className="text-xs text-slate-400">Pièces justificatives et diplômes certifiés</p>
+                    <p className="text-xs text-slate-600">Pièces justificatives et diplômes certifiés</p>
                   </div>
                 </div>
                 <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-black">
@@ -756,17 +758,17 @@ export default function DetailProfil({ params }: { params: Promise<{ id: string 
                         {/* Actions Rapides */}
                         <div className="flex items-center gap-1">
                           <button 
-                            onClick={() => window.open(`${STORAGE_URL}/${diplome.fichier}`, '_blank')}
-                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
+                            onClick={() => diplome.fichier_url && window.open(diplome.fichier_url, '_blank')}
+                            className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
                             title="Voir le document"
                           >
-                            <Eye size={16} />
+                            <Eye aria-hidden="true" size={16} />
                           </button>
                           <a 
-                            href={`${STORAGE_URL}/${diplome.fichier}`}
+                            href={diplome.fichier_url ?? undefined}
                             target="_blank"
                             download 
-                            className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors"
+                            className="p-2 text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors"
                             title="Télécharger"
                           >
                             <Download size={16} />
@@ -778,7 +780,7 @@ export default function DetailProfil({ params }: { params: Promise<{ id: string 
                         <h4 className="font-bold text-slate-900 text-sm leading-snug line-clamp-2 group-hover:text-[#000080] transition-colors">
                           {diplome.intitule}
                         </h4>
-                        <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
+                        <p className="text-[11px] text-slate-600 mt-1 flex items-center gap-1">
                           <FileText size={12} />
                           Document vérifié
                         </p>
@@ -789,7 +791,7 @@ export default function DetailProfil({ params }: { params: Promise<{ id: string 
               ) : (
                 <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                   <GraduationCap size={32} className="mx-auto text-slate-300 mb-2" />
-                  <p className="text-xs font-bold text-slate-400">Aucun diplôme téléversé pour le moment.</p>
+                  <p className="text-xs font-bold text-slate-600">Aucun diplôme téléversé pour le moment.</p>
                 </div>
               )}
             </div>
@@ -812,8 +814,8 @@ export default function DetailProfil({ params }: { params: Promise<{ id: string 
                   {educationList.map((edu, idx) => (
                     <div key={idx} className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
                       <h4 className="font-bold text-xs text-slate-900">{edu.Degree}</h4>
-                      <p className="text-[11px] text-slate-500 font-medium mt-0.5">{edu.Institution}</p>
-                      <span className="text-[10px] text-slate-400 font-semibold block mt-1">{edu.Duration}</span>
+                      <p className="text-[11px] text-slate-600 font-medium mt-0.5">{edu.Institution}</p>
+                      <span className="text-[10px] text-slate-600 font-semibold block mt-1">{edu.Duration}</span>
                     </div>
                   ))}
                 </div>
@@ -824,7 +826,7 @@ export default function DetailProfil({ params }: { params: Promise<{ id: string 
             {certifications.length > 0 && (
               <div className="bg-white p-6 border border-slate-200/80 rounded-3xl shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+                  <div className="p-2 bg-emerald-50 text-emerald-700 rounded-xl">
                     <Award size={20} />
                   </div>
                   <h3 className="text-base font-black text-slate-900">Certifications</h3>
@@ -833,10 +835,10 @@ export default function DetailProfil({ params }: { params: Promise<{ id: string 
                 <div className="space-y-3">
                   {certifications.map((cert, idx) => (
                     <div key={idx} className="flex items-start gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                      <Award size={16} className="text-emerald-500 shrink-0 mt-0.5" />
+                      <Award size={16} className="text-emerald-700 shrink-0 mt-0.5" />
                       <div>
                         <h4 className="font-bold text-xs text-slate-900">{cert.CourseName}</h4>
-                        <p className="text-[11px] text-slate-500">{cert.Provider} • {cert.Date}</p>
+                        <p className="text-[11px] text-slate-600">{cert.Provider} • {cert.Date}</p>
                       </div>
                     </div>
                   ))}

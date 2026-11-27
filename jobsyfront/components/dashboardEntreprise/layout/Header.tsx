@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bell, Briefcase, ChevronDown, LogOut, Menu, User } from "lucide-react";
@@ -18,7 +18,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { SECTIONS_ENTREPRISE } from "./Navigation";
+import { SECTIONS_ENTREPRISE, estActive, type SectionEspace } from "./Navigation";
 
 const FOCUS = "focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#F0E68C]";
 const BOUTON_ICONE = `relative inline-flex size-11 items-center justify-center rounded-xl text-white hover:bg-white/10 cursor-pointer ${FOCUS}`;
@@ -89,20 +89,32 @@ function Cloche({ conteneur }: { conteneur: HTMLElement | null }) {
     );
 }
 
-/** En-tête de l'espace entreprise (lot 7a) : logo, notifications, compte, menu mobile. */
-export default function Header() {
+interface EnteteEspaceProps {
+    sections: SectionEspace[];
+    /** Destination du logo */
+    accueil: string;
+    /** Nom affiché dans le menu du compte et en titre du menu mobile */
+    nom: string;
+    /** « Espace entreprise », « Administration » */
+    espace: string;
+    /** Page du profil, si l'espace en a une */
+    profil?: string;
+    /** Cloche des notifications, si l'espace en reçoit ; elle reçoit l'en-tête comme conteneur de son menu */
+    cloche?: (conteneur: HTMLElement | null) => ReactNode;
+}
+
+/** En-tête des espaces sobres (lot 7a, partagé avec l'administration au lot 8d) : logo, notifications, compte, menu mobile. */
+export function EnteteEspace({ sections, accueil, nom, espace, profil, cloche }: EnteteEspaceProps) {
     const [menuOuvert, setMenuOuvert] = useState(false);
     // Les menus sont rendus dans l'en-tête, qui reste leur repère pour les lecteurs d'écran
     const [entete, setEntete] = useState<HTMLElement | null>(null);
     const pathname = usePathname();
-    const { user } = useUser();
     const { handleLogout } = useLogout();
-    const nomEntreprise = user?.entreprise?.nom_entreprise || "Mon entreprise";
 
     return (
         <header ref={setEntete} className="fixed top-0 left-0 right-0 z-50 h-18 border-b border-white/10 bg-[#000080] font-lisible">
             <div className="mx-auto flex h-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
-                <Link href="/dashboard/entreprises" className={`flex items-center gap-2.5 rounded-lg ${FOCUS}`}>
+                <Link href={accueil} className={`flex items-center gap-2.5 rounded-lg ${FOCUS}`}>
                     <span className="rounded-xl bg-white/10 p-2">
                         <Briefcase aria-hidden="true" className="w-5 h-5 text-white" strokeWidth={2.5} />
                     </span>
@@ -111,7 +123,7 @@ export default function Header() {
                 </Link>
 
                 <div className="flex items-center gap-2">
-                    <Cloche conteneur={entete} />
+                    {cloche?.(entete)}
 
                     {/* Un menu n'est pas une fenêtre : non modal, il laisse la page lisible et se ferme avec Échap ou Tab */}
                     <DropdownMenu modal={false}>
@@ -120,19 +132,23 @@ export default function Header() {
                                 <User aria-hidden="true" className="w-5 h-5 text-white" />
                             </span>
                             <span className="grid">
-                                <span className="text-sm font-bold leading-tight text-white">{nomEntreprise}</span>
-                                <span className="text-xs text-[#F0E68C]">Espace entreprise</span>
+                                <span className="text-sm font-bold leading-tight text-white">{nom}</span>
+                                <span className="text-xs text-[#F0E68C]">{espace}</span>
                             </span>
                             <ChevronDown aria-hidden="true" className="w-4 h-4 text-white/70" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent container={entete} align="end" className="w-52 font-lisible">
-                            <DropdownMenuItem asChild className="min-h-11">
-                                <Link href="/dashboard/entreprises/profile">
-                                    <User aria-hidden="true" className="w-4 h-4" />
-                                    Mon profil
-                                </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
+                            {profil && (
+                                <>
+                                    <DropdownMenuItem asChild className="min-h-11">
+                                        <Link href={profil}>
+                                            <User aria-hidden="true" className="w-4 h-4" />
+                                            Mon profil
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                </>
+                            )}
                             <DropdownMenuItem onSelect={handleLogout} className="min-h-11 text-red-700 focus:text-red-700">
                                 <LogOut aria-hidden="true" className="w-4 h-4 text-red-700" />
                                 Se déconnecter
@@ -147,26 +163,29 @@ export default function Header() {
                             </button>
                         </SheetTrigger>
                         <SheetContent side="right" className="w-72 border-white/10 bg-[#000080] font-lisible text-white">
-                            <SheetTitle className="px-5 pt-6 text-base font-bold text-[#F0E68C]">{nomEntreprise}</SheetTitle>
-                            <nav aria-label="Espace entreprise" className="grid gap-5 overflow-y-auto px-5 pb-6">
-                                {SECTIONS_ENTREPRISE.map((section) => (
+                            <SheetTitle className="px-5 pt-6 text-base font-bold text-[#F0E68C]">{nom}</SheetTitle>
+                            <nav aria-label={espace} className="grid gap-5 overflow-y-auto px-5 pb-6">
+                                {sections.map((section) => (
                                     <div key={section.title} className="grid gap-1">
                                         <p className="px-2 text-xs font-bold uppercase tracking-wider text-white/60">{section.title}</p>
                                         <ul className="grid gap-1">
-                                            {section.items.map((item) => (
-                                                <li key={item.id}>
-                                                    <SheetClose asChild>
-                                                        <Link
-                                                            href={item.href}
-                                                            aria-current={pathname === item.href ? "page" : undefined}
-                                                            className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold ${FOCUS} ${pathname === item.href ? "bg-[#F0E68C] text-black" : "hover:bg-white/10"}`}
-                                                        >
-                                                            <item.icon aria-hidden="true" className="w-4 h-4 shrink-0" />
-                                                            {item.name}
-                                                        </Link>
-                                                    </SheetClose>
-                                                </li>
-                                            ))}
+                                            {section.items.map((item) => {
+                                                const active = estActive(pathname, item);
+                                                return (
+                                                    <li key={item.id}>
+                                                        <SheetClose asChild>
+                                                            <Link
+                                                                href={item.href}
+                                                                aria-current={active ? "page" : undefined}
+                                                                className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold ${FOCUS} ${active ? "bg-[#F0E68C] text-black" : "hover:bg-white/10"}`}
+                                                            >
+                                                                <item.icon aria-hidden="true" className="w-4 h-4 shrink-0" />
+                                                                {item.name}
+                                                            </Link>
+                                                        </SheetClose>
+                                                    </li>
+                                                );
+                                            })}
                                         </ul>
                                     </div>
                                 ))}
@@ -187,5 +206,20 @@ export default function Header() {
                 </div>
             </div>
         </header>
+    );
+}
+
+/** En-tête de l'espace entreprise (lot 7a). */
+export default function Header() {
+    const { user } = useUser();
+    return (
+        <EnteteEspace
+            sections={SECTIONS_ENTREPRISE}
+            accueil="/dashboard/entreprises"
+            nom={user?.entreprise?.nom_entreprise || "Mon entreprise"}
+            espace="Espace entreprise"
+            profil="/dashboard/entreprises/profile"
+            cloche={(conteneur) => <Cloche conteneur={conteneur} />}
+        />
     );
 }

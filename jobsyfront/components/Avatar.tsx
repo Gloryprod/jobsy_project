@@ -1,21 +1,5 @@
 import Avatar from '@mui/material/Avatar';
 
-function stringToColor(string: string) {
-  let hash = 0;
-  let i;
-
-  for (i = 0; i < string.length; i += 1) {
-    hash = string.charCodeAt(i) + ((hash << 5) - hash);
-  }
-
-  let color = '#';
-  for (i = 0; i < 3; i += 1) {
-    const value = (hash >> (i * 8)) & 0xff;
-    color += `00${value.toString(16)}`.slice(-2);
-  }
-  return color;
-}
-
 function stringAvatar(firstName: string, lastName: string,  width: number, height: number, fontSize: number) {
   // On s'assure d'avoir au moins une lettre ou une chaîne vide pour éviter les crashs
   const firstLetter = firstName?.[0] || '';
@@ -23,7 +7,8 @@ function stringAvatar(firstName: string, lastName: string,  width: number, heigh
 
   return {
     sx: {
-      bgcolor: stringToColor(`${firstName}${lastName}`),
+      // Bleu marine du thème : les initiales en blanc restent lisibles quel que soit le nom
+      bgcolor: "#000080",
       width: width, 
       height: height,
       fontSize: fontSize

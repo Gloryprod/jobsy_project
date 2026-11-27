@@ -179,7 +179,7 @@ export function FicheStatut() {
           nomUn="un diplôme"
           nomCourt="Diplôme"
           accordAjoute="ajouté"
-          documents={(d.diplomes ?? []).map((diplome) => ({ id: diplome.id, titre: diplome.intitule, fichier: diplome.fichier }))}
+          documents={(d.diplomes ?? []).map((diplome) => ({ id: diplome.id, titre: diplome.intitule, lien: diplome.fichier_url }))}
           champs={[{ nom: "intitule", libelle: "Intitulé du diplôme", refusDoublon: "Tu as déjà ajouté un diplôme avec cet intitulé." }]}
           champFichier="fichier"
           routeAjout="/candidat/diplome"
@@ -194,7 +194,7 @@ export function FicheStatut() {
           nomUn="une certification"
           nomCourt="Certification"
           accordAjoute="ajoutée"
-          documents={(d.formations ?? []).map((formation) => ({ id: formation.id, titre: formation.titre, detail: formation.organisme, fichier: formation.certificat }))}
+          documents={(d.formations ?? []).map((formation) => ({ id: formation.id, titre: formation.titre, detail: formation.organisme, lien: formation.certificat_url }))}
           champs={[
             { nom: "titre", libelle: "Intitulé du certificat" },
             { nom: "organisme", libelle: "Organisme qui l'a délivré" },

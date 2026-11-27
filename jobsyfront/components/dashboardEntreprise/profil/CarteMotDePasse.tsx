@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import api from "@/lib/api";
 import { champsRefuses, statutErreur } from "@/lib/erreurs";
-import { PASSWORD_HINT, apiErrorMessage, passwordSchema } from "@/lib/password";
+import { PASSWORD_HINT, apiErrorMessage, erreurMotDePasse } from "@/lib/password";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { CLASSES_SAISIE } from "@/components/dashboardCandidat/commun/saisie";
 import { CarteRealite } from "@/components/dashboardCandidat/qg/CarteRealite";
@@ -43,8 +43,8 @@ export function CarteMotDePasse() {
     setErreurEnvoi(null);
     const trouvees: Partial<Record<Nom, string>> = {};
     if (!v.currentPassword) trouvees.currentPassword = "Saisissez votre mot de passe actuel.";
-    const regle = passwordSchema.safeParse(v.newPassword);
-    if (!regle.success) trouvees.newPassword = regle.error.issues[0].message;
+    const regle = erreurMotDePasse(v.newPassword);
+    if (regle) trouvees.newPassword = regle;
     if (v.newPassword !== v.newPassword_confirmation) trouvees.newPassword_confirmation = "Les deux mots de passe ne sont pas identiques.";
     if (Object.keys(trouvees).length > 0) return signaler(trouvees);
 

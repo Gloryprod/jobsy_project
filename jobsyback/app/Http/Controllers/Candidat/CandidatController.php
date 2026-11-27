@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Jobs\AnalyzeCVJob;
 use App\Models\Candidat;
+use App\Support\PasswordPolicy;
 use Illuminate\Support\Facades\Hash;
 
 
@@ -283,10 +284,11 @@ class CandidatController extends Controller
     }
     
     public function updatePassword(Request $request) {
+        // Même règle qu'à l'inscription : sinon le profil permettait de repasser à un mot de passe faible
         $request->validate([
             'currentPassword' => 'required',
-            'newPassword' => 'required|min:8|confirmed',
-        ]);
+            'newPassword' => ['required', 'confirmed', ...PasswordPolicy::rules()],
+        ], PasswordPolicy::messages('newPassword'));
 
         $candidat = $request->user()->candidat;
 

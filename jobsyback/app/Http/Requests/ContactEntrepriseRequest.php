@@ -21,14 +21,15 @@ class ContactEntrepriseRequest extends FormRequest
      */
     public function rules(): array
     {
+        // 255 caractères : la taille des colonnes (au-delà, MySQL refuse l'écriture et l'API répondait par une erreur 500)
         return [
-            'telephone' => 'nullable|string',
-            'nom_promoteur' => 'nullable|string',
-            'email' => 'nullable|email',
-            'linkedin' => 'nullable|url',
-            'facebook' => 'nullable|url',
-            'instagram' => 'nullable|url', 
-            'twitter' => 'nullable|url',
+            'telephone' => 'nullable|string|max:255',
+            'nom_promoteur' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'linkedin' => 'nullable|url|max:255',
+            'facebook' => 'nullable|url|max:255',
+            'instagram' => 'nullable|url|max:255',
+            'twitter' => 'nullable|url|max:255',
         ];
     }
 }

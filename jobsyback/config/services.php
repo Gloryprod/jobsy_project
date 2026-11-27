@@ -48,8 +48,9 @@ return [
         'public_key' => env('KKIAPAY_PUBLIC_KEY'),
         'private_key' => env('KKIAPAY_PRIVATE_KEY'),
         'sandbox' => (bool) env('KKIAPAY_SANDBOX', false),
-        // Racine de l'API, sans /api/v1 (ex : https://api.kkiapay.me ou https://api-sandbox.kkiapay.me)
-        'api_url' => env('KKIAPAY_API_URL', env('KKIAPAY_SANDBOX', false) ? 'https://api-sandbox.kkiapay.me' : 'https://api.kkiapay.me'),
+        // Racine de l'API, sans /api/v1 (ex : https://api.kkiapay.me ou https://api-sandbox.kkiapay.me).
+        // « ?: » : la ligne vide du .env.example vaut "" et ne doit pas remplacer l'URL par défaut.
+        'api_url' => env('KKIAPAY_API_URL') ?: (env('KKIAPAY_SANDBOX', false) ? 'https://api-sandbox.kkiapay.me' : 'https://api.kkiapay.me'),
         // « Hash secret » défini dans le tableau de bord Kkiapay, renvoyé dans l'en-tête x-kkiapay-secret
         'webhook_secret' => env('KKIAPAY_WEBHOOK_SECRET'),
         // Endpoint de virement Mobile Money (à confirmer avec Kkiapay)

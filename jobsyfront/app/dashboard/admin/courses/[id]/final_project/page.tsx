@@ -8,7 +8,6 @@ import api from "@/lib/api";
 import { toast } from "react-hot-toast";
 import { ThreeDots } from "react-loader-spinner";
 import { useRouter } from "next/navigation";
-import Swal from "sweetalert2";
 import FinalProjectForm from "@/components/dashboardAdmin/finalProject/FinalProjectForm";
 
 interface InputSchemaField {
@@ -65,6 +64,8 @@ export default function ManageExamProject({ params, onBack }: { params: Promise<
   const handleDeleteProject = async () => {
     if (!project) return;
 
+    // Chargée au clic : la bibliothèque ne pèse pas sur l'écran
+    const { default: Swal } = await import("sweetalert2");
     const result = await Swal.fire({
       title: "Voulez-vous supprimer ce projet d'examen ?",
       text: "Cette action supprimera également les livrables soumis par les étudiants et est irréversible.",
@@ -72,8 +73,8 @@ export default function ManageExamProject({ params, onBack }: { params: Promise<
       showCancelButton: true,
       confirmButtonText: "Oui, supprimer",
       cancelButtonText: "Annuler",
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
+      confirmButtonColor: "#b91c1c",
+      cancelButtonColor: "#000080",
     });
 
     if (result.isConfirmed) {
@@ -143,7 +144,7 @@ export default function ManageExamProject({ params, onBack }: { params: Promise<
       {/* BARRE D'ENTÊTE */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
         <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs text-slate-400 font-bold uppercase tracking-wider">
+          <div className="flex items-center gap-2 text-xs text-slate-600 font-bold uppercase tracking-wider">
             {onBack && (
               <button onClick={onBack} className="hover:text-slate-900 flex items-center gap-1 transition-all cursor-pointer">
                 <ArrowLeft className="w-3.5 h-3.5" /> Retour
@@ -158,7 +159,7 @@ export default function ManageExamProject({ params, onBack }: { params: Promise<
 
         {project && (
           <div className="bg-slate-100 px-4 py-2 rounded-xl text-center shrink-0">
-            <p className="text-[10px] text-slate-500 font-black uppercase tracking-wider">Barème Total</p>
+            <p className="text-[10px] text-slate-600 font-black uppercase tracking-wider">Barème Total</p>
             <p className="text-lg font-black text-[#000080]">{totalMaxPoints} Pts</p>
           </div>
         )}
@@ -171,8 +172,8 @@ export default function ManageExamProject({ params, onBack }: { params: Promise<
             <FileText className="w-8 h-8" />
           </div>
           <div className="max-w-sm">
-            <h3 className="text-sm font-black text-slate-800">Aucun projet d&apos;examen enregistré</h3>
-            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+            <h2 className="text-sm font-black text-slate-800">Aucun projet d&apos;examen enregistré</h2>
+            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
               Le parcours expert requiert un projet pratique à la place des QCM. Les candidats ne pourront pas être certifiés sur Jobsy tant qu&apos;un cas d&apos;entreprise n&apos;est pas défini.
             </p>
           </div>
@@ -207,7 +208,7 @@ export default function ManageExamProject({ params, onBack }: { params: Promise<
 
               {/* Énoncé / Sujet */}
               <div className="space-y-2">
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider">Mise en contexte / Énoncé</h3>
+                <h2 className="text-xs font-black text-slate-600 uppercase tracking-wider">Mise en contexte / Énoncé</h2>
                 <SafeHtml
                   className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap font-medium bg-slate-50/50 p-4 rounded-2xl border border-slate-100"
                   html={project.context_rich_text}
@@ -217,9 +218,9 @@ export default function ManageExamProject({ params, onBack }: { params: Promise<
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Formulaire de l'apprenant (Inputs attendus) */}
                 <div className="space-y-2.5">
-                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <h2 className="text-xs font-black text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
                     <Settings className="w-3.5 h-3.5" /> Réponses à fournir
-                  </h3>
+                  </h2>
                   <div className="space-y-2">
                     {project.inputs_schema?.map((input) => (
                       <div 
@@ -227,7 +228,7 @@ export default function ManageExamProject({ params, onBack }: { params: Promise<
                         className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-white text-xs font-bold text-slate-600"
                       >
                         <span className="truncate pr-2">{input.label}</span>
-                        <span className="shrink-0 text-[9px] uppercase tracking-wider bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md">
+                        <span className="shrink-0 text-[9px] uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
                           {input.type} {input.required && "• requis"}
                         </span>
                       </div>
@@ -237,9 +238,9 @@ export default function ManageExamProject({ params, onBack }: { params: Promise<
 
                 {/* Grille de notation d'évaluation */}
                 <div className="space-y-2.5">
-                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <h2 className="text-xs font-black text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
                     <Award className="w-3.5 h-3.5" /> Grille de notation
-                  </h3>
+                  </h2>
                   <div className="space-y-2">
                     {project.evaluation_criteria?.map((criteria, idx) => (
                       <div 
@@ -272,7 +273,7 @@ export default function ManageExamProject({ params, onBack }: { params: Promise<
               {/* Vérifier les soumissions */}
               <button
                 onClick={() => router.push(`/dashboard/admin/courses/${id}/final_project/${project.id}/submissions`)}
-                className="cursor-pointer p-2 text-slate-400 hover:text-[#000080] hover:bg-slate-50 rounded-xl transition-all border border-transparent hover:border-slate-200"
+                className="cursor-pointer p-2 text-slate-600 hover:text-[#000080] hover:bg-slate-50 rounded-xl transition-all border border-transparent hover:border-slate-200"
                 title="Vérifier les soumissions des candidats"
               >
                 <Check className="w-4 h-4" />
@@ -284,7 +285,7 @@ export default function ManageExamProject({ params, onBack }: { params: Promise<
                   setEditMode(true);
                   setIsFormOpen(true);
                 }}
-                className="cursor-pointer p-2 text-slate-400 hover:text-[#000080] hover:bg-slate-50 rounded-xl transition-all border border-transparent hover:border-slate-200"
+                className="cursor-pointer p-2 text-slate-600 hover:text-[#000080] hover:bg-slate-50 rounded-xl transition-all border border-transparent hover:border-slate-200"
                 title="Modifier le projet"
               >
                 <Edit3 className="w-4 h-4" />
@@ -294,7 +295,7 @@ export default function ManageExamProject({ params, onBack }: { params: Promise<
               <button
                 disabled={deleting}
                 onClick={handleDeleteProject}
-                className="cursor-pointer p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100"
+                className="cursor-pointer p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100"
                 title="Supprimer le projet"
               >
                 {deleting ? (

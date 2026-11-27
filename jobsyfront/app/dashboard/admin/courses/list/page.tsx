@@ -21,7 +21,6 @@ import { MoreHorizontal, Eye, Edit, Trash } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation" 
-import Swal from 'sweetalert2';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 const fetcher = (url: string) => api.get(url).then(res => res.data.data);
@@ -70,14 +69,16 @@ export default function AdminCourses() {
 
     const handleDelete = async (course_id:number) =>{
 
+        // Chargée au clic : la bibliothèque ne pèse pas sur l'écran
+        const { default: Swal } = await import("sweetalert2");
         const result = await Swal.fire({
         title: `Voulez-vous supprimer cette formation ?`,
         icon: "warning",
         showCancelButton: true,
         confirmButtonText: "Oui, supprimer",
         cancelButtonText: "Annuler",
-        confirmButtonColor: "#d33",
-        cancelButtonColor: "#3085d6",
+        confirmButtonColor: "#b91c1c",
+        cancelButtonColor: "#000080",
         });
         
         if (result.isConfirmed) {
@@ -113,7 +114,7 @@ export default function AdminCourses() {
 
             <div className="mb-8">
                 <h1 className="text-2xl font-black text-slate-800 flex items-center justify-center">Gestion des Formations</h1>
-                <p className="text-slate-500 flex items-center justify-center"><i>Consultez les formations disponibles.</i></p>
+                <p className="text-slate-600 flex items-center justify-center"><i>Consultez les formations disponibles.</i></p>
             </div>
 
             <div className='pt-12'>
@@ -126,7 +127,7 @@ export default function AdminCourses() {
 
                 {/* Barre de Recherche */}
                 <div className="mb-6 relative w-full max-w-sm flex items-end justify-end">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 " size={16} />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 " size={16} />
                     <input
                         type="text"
                         placeholder="Rechercher une formation..."
@@ -140,12 +141,12 @@ export default function AdminCourses() {
                     <table className="w-full text-left border-collapse">
                         <thead className="bg-slate-50 border-b border-slate-100">
                         <tr>
-                            <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest">#</th>
-                            <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest">Titre</th>
-                            <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest">Mode de validation</th>
-                            <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest">Points</th>
-                            <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest">Date de création</th>
-                            <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">Actions</th>
+                            <th className="p-6 text-[10px] font-black uppercase text-slate-600 tracking-widest">#</th>
+                            <th className="p-6 text-[10px] font-black uppercase text-slate-600 tracking-widest">Titre</th>
+                            <th className="p-6 text-[10px] font-black uppercase text-slate-600 tracking-widest">Mode de validation</th>
+                            <th className="p-6 text-[10px] font-black uppercase text-slate-600 tracking-widest">Points</th>
+                            <th className="p-6 text-[10px] font-black uppercase text-slate-600 tracking-widest">Date de création</th>
+                            <th className="p-6 text-[10px] font-black uppercase text-slate-600 tracking-widest text-center">Actions</th>
                         </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
@@ -155,13 +156,13 @@ export default function AdminCourses() {
                             <td className="p-4 font-bold text-slate-800">{course.title}</td>
                             <td className="p-4 font-black text-slate-600">{course.validation_mode === 'A' ? 'Standard' : course.validation_mode === 'B' ? 'Logistique' : 'Expert'}</td>
                             <td className="p-4 font-black text-[#000080] text-xl">{course.reward_xp}</td>
-                            <td className="p-4 text-slate-500">{new Date(course.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</td>
+                            <td className="p-4 text-slate-600">{new Date(course.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</td>
                             <td className="p-4">
                                 <div className="flex justify-center gap-3">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" className="h-8 w-8 p-0 cursor-pointer">
-                                            <MoreHorizontal className="h-4 w-4" />
+                                        <Button aria-label={`Actions : ${course.title}`} variant="ghost" className="h-8 w-8 p-0 cursor-pointer">
+                                            <MoreHorizontal aria-hidden="true" className="h-4 w-4" />
                                         </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
@@ -178,7 +179,7 @@ export default function AdminCourses() {
                                         (<DropdownMenuItem onClick={() => router.push(`/dashboard/admin/courses/${course.id}/final_project  `)} className="cursor-pointer"><Eye className="h-4 w-4" />Projet Pratique</DropdownMenuItem>)
                                          : (<DropdownMenuItem onClick={() => router.push(`/dashboard/admin/courses/${course.id}/final_exam  `)} className="cursor-pointer"><Eye className="h-4 w-4" />Examen Final</DropdownMenuItem>)}
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuItem className="text-red-500 cursor-pointer" onClick={() => handleDelete(course.id)}><Trash className="h-4 w-4" />Supprimer</DropdownMenuItem>
+                                        <DropdownMenuItem className="text-red-700 cursor-pointer" onClick={() => handleDelete(course.id)}><Trash className="h-4 w-4" />Supprimer</DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
@@ -194,30 +195,30 @@ export default function AdminCourses() {
                         <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                             <Search size={24} className="text-slate-300" />
                         </div>
-                        <p className="text-slate-400 font-medium italic">Aucun résultat pour cette recherche.</p>
+                        <p className="text-slate-600 font-medium italic">Aucun résultat pour cette recherche.</p>
                         </div>
                     )}
 
                     {/* Pagination UI */}
                     {totalPages > 1 && (
                         <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                        <p className="text-xs font-black text-slate-600 uppercase tracking-widest">
                             Page {currentPage} sur {totalPages}
                         </p>
                         <div className="flex gap-2">
-                            <button 
+                            <button aria-label="Page précédente" 
                             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                             disabled={currentPage === 1}
                             className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-[#000080] hover:text-white transition-all cursor-pointer"
                             >
-                            <ChevronLeft size={20} />
+                            <ChevronLeft aria-hidden="true" size={20} />
                             </button>
-                            <button 
+                            <button aria-label="Page suivante" 
                             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                             disabled={currentPage === totalPages}
                             className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-[#000080] hover:text-white transition-all cursor-pointer"
                             >
-                            <ChevronRight size={20} />
+                            <ChevronRight aria-hidden="true" size={20} />
                             </button>
                         </div>
                         </div>

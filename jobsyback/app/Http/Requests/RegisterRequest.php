@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use App\Support\PasswordPolicy;
 
 class RegisterRequest extends FormRequest
 {
@@ -20,13 +21,7 @@ class RegisterRequest extends FormRequest
             'prenom' => 'nullable|string|max:255',
             'email' => 'required|email|unique:users,email',
             // Même exigence que le formulaire du front et la réinitialisation (sinon contournable par un appel direct)
-            'password' => [
-                'required', 'string', 'min:8',
-                'regex:/[a-z]/',       // minuscule
-                'regex:/[A-Z]/',       // majuscule
-                'regex:/[0-9]/',       // chiffre
-                'regex:/[^a-zA-Z0-9]/' // caractère spécial
-            ],
+            'password' => ['required', ...PasswordPolicy::rules()],
             'role' => 'required|in:JEUNE,ENTREPRISE',
             'bio' => 'nullable|string',
             'adresse' => 'nullable|string',
@@ -36,6 +31,11 @@ class RegisterRequest extends FormRequest
             'description' => 'nullable|string',
             'site_web' => 'nullable|string',
         ];
+    }
+
+    public function messages()
+    {
+        return PasswordPolicy::messages('password');
     }
 
     //  public function failedValidation(Validator $validator)

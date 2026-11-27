@@ -11,7 +11,7 @@ import api from "@/lib/api";
 
 export default function EditModule({ params }: { params: Promise<{ id: string; finalProjectId: string }> }){
     const {id, finalProjectId } = use(params);
-    const pageLink = `/dashboard/admin/courses/${id}/final-project/${finalProjectId}`;
+    const pageLink = `/dashboard/admin/courses/${id}/final_project/${finalProjectId}`;
 
     const [finalProject, setFinalProject] = useState(null)
     const [loading, setLoading] = useState(true)
@@ -19,7 +19,8 @@ export default function EditModule({ params }: { params: Promise<{ id: string; f
     useEffect(() => {
         api.get(`/exam-projects/${finalProjectId}`)
         .then(res => {
-            setFinalProject(res.data)
+            // L'API répond { project } : sans cela, le formulaire de modification s'ouvrait vide
+            setFinalProject(res.data.project)
             setLoading(false)
         })
         .catch(() => setLoading(false))
@@ -32,7 +33,7 @@ export default function EditModule({ params }: { params: Promise<{ id: string; f
     );
     if (!finalProject) return (
         <div className="min-h-screen flex items-center justify-center">
-            <p className="text-red-400">Erreur de chargement des informations du projet final.</p>
+            <p className="text-red-700">Erreur de chargement des informations du projet final.</p>
         </div>
     );
 
@@ -43,7 +44,7 @@ export default function EditModule({ params }: { params: Promise<{ id: string; f
             </div>
 
             <div className="w-full mx-auto my-10 p-4 bg-white shadow-xl rounded-2xl border border-gray-100">
-                <h2 className="text-2xl font-bold text-gray-800 ml-4 mb-4">Projet Final</h2>
+                <h1 className="text-2xl font-bold text-gray-800 ml-4 mb-4">Projet Final</h1>
                 <DropdownMenuSeparator className="ml-4 mr-4 flex items-center justify-end" />
                 <FinalProjectForm courseId={id} initialData={finalProject}/>                
             </div>

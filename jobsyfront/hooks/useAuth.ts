@@ -2,38 +2,17 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import api from "@/lib/api";
+import useSWR from "swr";
+import { CLE_UTILISATEUR, lireUtilisateur, OPTIONS_UTILISATEUR } from "./useCurrentUser";
 
+/** Garde d'une page : sans session, retour à la connexion ; avec un autre rôle, retour à l'accueil. Même requête que UserProvider. */
 export function useAuth(allowedRole: string) {
   const router = useRouter();
+  const { data: user, error } = useSWR<{ role?: string }>(CLE_UTILISATEUR, lireUtilisateur, OPTIONS_UTILISATEUR);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const res = await api.get("/user");
-        const user = res.data; 
-        
-        console.log("Utilisateur connecté :", user);
-
-        // Vérification du rôle
-        if (user.role !== allowedRole) {
-          console.log("CALL /user AVEC COOKIE...");
-          router.replace("/"); 
-          return;
-        }
-
-      } catch (error: any) {
-        // Si le cookie n’est pas valide => 401 Unauthorized
-        if (error?.response?.status === 401) {
-          console.log("Utilisateur non authentifié");
-          router.replace("/login");
-        } else {
-          console.error("Erreur inconnue :", error);
-          router.replace("/login");
-        }
-      }
-    };
-
-    checkAuth();
-  }, [router, allowedRole]);
+    // Session absente ou expirée (401), ou API injoignable : on repart de la connexion
+    if (error) router.replace("/login");
+    else if (user && user.role !== allowedRole) router.replace("/");
+  }, [user, error, router, allowedRole]);
 }

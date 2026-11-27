@@ -7,9 +7,10 @@ export type Contact = {
   whatsapp?: string | null;
 };
 
-export type Diplome = { id: number; intitule: string; fichier?: string | null };
-export type Certification = { id: number; titre: string; organisme?: string | null; certificat?: string | null };
-export type Cv = { id: number; fichier: string };
+// Lien signé donné par l'API, valable 30 minutes (fichiers personnels sur le disque privé)
+export type Diplome = { id: number; intitule: string; fichier?: string | null; fichier_url?: string | null };
+export type Certification = { id: number; titre: string; organisme?: string | null; certificat?: string | null; certificat_url?: string | null };
+export type Cv = { id: number; fichier: string; fichier_url?: string | null };
 
 /** GET /candidat/profile (CandidatController::candidatProfile) */
 export type Dossier = {

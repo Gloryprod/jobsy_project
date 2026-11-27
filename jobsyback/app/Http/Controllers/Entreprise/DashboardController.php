@@ -43,7 +43,13 @@ class DashboardController extends Controller
             })
             ->whereDoesntHave('mission_offers')
             ->where('status', '!=', 'draft') // un brouillon n'est pas une candidature
-            ->with(['candidat.user', 'mission'])
+            // Seulement ce que la liste affiche : nom, ville et rang du candidat, titre de la mission
+            ->with([
+                'candidat:id,user_id,ville,rank_id',
+                'candidat.user:id,nom,prenom',
+                'candidat.rank:id,rank,label,code_hexa',
+                'mission:id,title',
+            ])
             ->latest() // Les plus récentes en premier
             ->get();
 
@@ -52,7 +58,11 @@ class DashboardController extends Controller
             ->whereHas('applications.mission_offers', function ($query) {
                 $query->where('status', 'completed');
             })
-            ->withCount('applications')
+            ->withCount([
+                'applications',
+                // Candidats réellement recrutés : mission menée à terme et validée
+                'applications as hired_count' => fn ($query) => $query->whereHas('mission_offers', fn ($offer) => $offer->where('status', 'completed')),
+            ])
             ->latest()
             ->get();
 

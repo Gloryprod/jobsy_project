@@ -93,26 +93,26 @@ const MissionAdminCard = ({ mission }: { mission: Mission }) => {
         {/* SECTION 1: Titre et Entreprise */}
         <div className="flex-1 min-w-[250px]">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-bold text-slate-400">#{mission.id}</span>
+            <span className="text-[10px] font-bold text-slate-600">#{mission.id}</span>
             {mission.applications.some(app => app.mission_offers) && (
-              <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase border bg-green-50 text-green-600 border-green-100  `}>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase border bg-green-50 text-green-700 border-green-100  `}>
                 Confirmée
               </span>
             )}
             {mission.closed_at && (
-              <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase border bg-green-50 text-red-600 border-green-100  `}>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase border bg-green-50 text-red-700 border-green-100  `}>
                 Cloturée
               </span>
             )}
           </div>
-          <h3 className="text-lg font-black text-slate-800 group-hover:text-[#000080] transition-colors line-clamp-1">
+          <h2 className="text-lg font-black text-slate-800 group-hover:text-[#000080] transition-colors line-clamp-1">
             {mission.title}
-          </h3>
-          <div className="flex items-center gap-2 text-sm text-slate-500 mt-1">
-            <Briefcase size={14} className="text-slate-400" />
+          </h2>
+          <div className="flex items-center gap-2 text-sm text-slate-600 mt-1">
+            <Briefcase size={14} className="text-slate-600" />
             <span className="font-semibold">{mission.company}</span>
             <span>•</span>
-            <MapPin size={14} className="text-slate-400" />
+            <MapPin size={14} className="text-slate-600" />
             <span>{mission.location}</span>
           </div>
         </div>
@@ -124,18 +124,18 @@ const MissionAdminCard = ({ mission }: { mission: Mission }) => {
                 <Users size={18} className="font-bold" />
                 <span className="text-xl font-black">{mission.applications.length}</span>
                 </div>
-                <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Candidats</p>
+                <p className="text-[10px] text-slate-600 uppercase font-bold tracking-wider">Candidats</p>
             </div>
         </div>
 
         {/* SECTION 3: Détails Financiers & Temps */}
         <div className="flex flex-col gap-2 min-w-[180px]">
-          <div className="flex items-center gap-2 text-emerald-600 font-black">
+          <div className="flex items-center gap-2 text-emerald-700 font-black">
             <Banknote size={16} />
             <span>{mission.reward} FCFA</span>
-            <span className="text-[10px] bg-emerald-50 px-1.5 py-0.5 rounded text-emerald-600 uppercase">Gains</span>
+            <span className="text-[10px] bg-emerald-50 px-1.5 py-0.5 rounded text-emerald-700 uppercase">Gains</span>
           </div>
-          <div className="flex items-center gap-2 text-slate-500 text-xs font-medium">
+          <div className="flex items-center gap-2 text-slate-600 text-xs font-medium">
             <Clock size={14} />
             <span>{getExpirationText(mission.deadline)}</span>
           </div>
@@ -144,8 +144,8 @@ const MissionAdminCard = ({ mission }: { mission: Mission }) => {
         {/* SECTION 4: Actions */}
         <div className="flex items-center gap-2">
         {mission.applications.some(app => app.mission_offers) ? 
-          <button onClick={() => setShowDetails(true)} className="cursor-pointer h-12 w-12 flex items-center justify-center rounded-2xl bg-slate-50 text-slate-400 hover:bg-[#000080] hover:text-white transition-all group/btn">
-            <ArrowRight size={20} className="group-hover/btn:translate-x-1 transition-transform" />
+          <button aria-label={`Voir le détail de la mission ${mission.title}`} onClick={() => setShowDetails(true)} className="cursor-pointer h-12 w-12 flex items-center justify-center rounded-2xl bg-slate-50 text-slate-600 hover:bg-[#000080] hover:text-white transition-all group/btn">
+            <ArrowRight aria-hidden="true" size={20} className="group-hover/btn:translate-x-1 transition-transform" />
           </button> : null}
         </div>
 
@@ -153,11 +153,11 @@ const MissionAdminCard = ({ mission }: { mission: Mission }) => {
 
       {/* Footer discret pour les tags additionnels */}
         <div className="mt-4 pt-4 border-t border-slate-50 flex gap-4">
-            <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase italic">
+            <div className="flex items-center gap-1 text-[10px] font-bold text-slate-600 uppercase italic">
                 <Zap size={12} /> Test {mission.test_severity}
             </div>
            
-            <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase">
+            <div className="flex items-center gap-1 text-[10px] font-bold text-slate-600 uppercase">
                 <CheckCircle2 size={12} /> Contrat : {mission.type_contrat}
             </div>
         </div>
@@ -172,7 +172,7 @@ const MissionAdminCard = ({ mission }: { mission: Mission }) => {
                           <div className="flex justify-between items-end mb-8">
                             <div>
                               <h1 className="text-2xl font-black text-slate-800">Gestion des Engagements</h1>
-                              <p className="text-slate-500 text-sm">Suivi des confirmations candidats en temps réel</p>
+                              <p className="text-slate-600 text-sm">Suivi des confirmations candidats en temps réel</p>
                             </div>
                           </div>
                         </DialogTitle>
